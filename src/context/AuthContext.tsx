@@ -30,8 +30,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     return onAuthStateChanged(getFirebaseAuth(), async (nextUser) => {
       setUser(nextUser)
-      setProfile(nextUser ? await getUserProfile(nextUser.uid) : null)
-      setLoading(false)
+      try {
+        setProfile(nextUser ? await getUserProfile(nextUser.uid) : null)
+      } catch (error) {
+        console.warn('AuraFlow profile load failed.', error)
+        setProfile(null)
+      } finally {
+        setLoading(false)
+      }
     })
   }, [])
 

@@ -34,3 +34,32 @@ export function Sidebar({ collapsed, onLogout }: { collapsed: boolean; onLogout:
     </aside>
   )
 }
+
+export function MobileDashboardNav({ onLogout }: { onLogout: () => void }) {
+  return (
+    <nav aria-label="Dashboard" className="glass mb-4 overflow-x-auto rounded-lg p-2 md:hidden">
+      <div className="flex min-w-max items-center gap-1">
+        {dashboardLinks.map(({ Icon, label, to }) => (
+          <NavLink
+            key={to}
+            end={to === '/dashboard'}
+            to={to}
+            className={({ isActive }) =>
+              cn(
+                'inline-flex min-h-11 items-center gap-2 rounded-md px-3 py-2 text-sm text-aura-muted transition hover:bg-white/10 hover:text-white',
+                isActive && 'bg-cyan-300/10 text-white',
+              )
+            }
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            {label}
+          </NavLink>
+        ))}
+        <button onClick={onLogout} className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 py-2 text-sm text-aura-muted transition hover:bg-white/10 hover:text-white">
+          <LogOut className="h-4 w-4 shrink-0" />
+          Logout
+        </button>
+      </div>
+    </nav>
+  )
+}

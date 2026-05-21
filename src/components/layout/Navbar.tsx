@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { asErrorMessage, getInitials } from '../../lib/utils'
+import { asErrorMessage } from '../../lib/utils'
+import { UserAvatar } from '../shared/UserAvatar'
 import { ButtonLink } from '../ui/Button'
 import { Tooltip } from '../ui/Tooltip'
 
@@ -69,11 +70,11 @@ export function Navbar() {
           {user ? (
             <details className="group relative">
               <summary className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-lg border border-white/15 bg-white/10 font-bold text-white">
-                {profile?.avatarUrl || user.photoURL ? (
-                  <img className="h-full w-full rounded-lg object-cover" src={profile?.avatarUrl ?? user.photoURL ?? ''} alt="" />
-                ) : (
-                  getInitials(profile?.name ?? user.displayName)
-                )}
+                <UserAvatar
+                  className="h-full w-full rounded-lg"
+                  name={profile?.name ?? user.displayName}
+                  src={profile?.avatarUrl ?? user.photoURL}
+                />
               </summary>
               <div className="absolute right-0 top-14 grid w-52 gap-1 rounded-lg border border-white/10 bg-aura-card p-2 shadow-2xl">
                 <Link className="rounded-md px-3 py-2 text-sm text-white hover:bg-white/10" to="/dashboard">

@@ -26,8 +26,8 @@ export default function DashboardHome() {
 
   return (
     <div className="grid gap-4">
-      <Card className="grid gap-4 p-5 lg:grid-cols-[1fr_360px]">
-        <div>
+      <Card className="grid min-w-0 gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0">
           <p className="text-aura-muted">Welcome back</p>
           <h1 className="mt-2 text-3xl font-extrabold">{profile?.name ?? user?.displayName ?? 'AuraFlow Client'}</h1>
           <p className="mt-3 max-w-xl text-aura-muted">Projects, templates, and next actions stay in one calm place.</p>
@@ -37,7 +37,7 @@ export default function DashboardHome() {
             <ButtonLink to="/quote" variant="ghost">Get Quote</ButtonLink>
           </div>
         </div>
-        <div className="h-56 rounded-lg border border-white/10 bg-black/20 p-3">
+        <div className="h-56 min-w-0 rounded-lg border border-white/10 bg-black/20 p-3">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={sparkData}>
               <defs>
