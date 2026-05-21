@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  background: #050510;
+  color: #ffffff;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 0 0, rgba(108, 99, 255, 0.2), transparent 28rem),
+    radial-gradient(circle at 100% 5%, rgba(0, 212, 255, 0.12), transparent 32rem),
+    #050510;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(0, 212, 255, 0.34);
+  color: #fff;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-syne text-white;
+  }
+}
+
+@layer components {
+  .section-shell {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .glass {
+    @apply border border-white/10 bg-white/[0.07] backdrop-blur-2xl;
+  }
+
+  .aura-border {
+    @apply relative overflow-hidden border border-white/10;
+  }
+
+  .aura-border::before {
+    background: linear-gradient(120deg, transparent, rgba(108, 99, 255, 0.8), rgba(0, 212, 255, 0.72), transparent);
+    content: '';
+    inset: -1px;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity 220ms ease;
+    z-index: 0;
+  }
+
+  .aura-border:hover::before {
+    opacity: 0.35;
+  }
+
+  .aura-border > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .grid-texture {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+
+  .prose-aura {
+    @apply text-base leading-8 text-aura-muted;
+  }
+
+  .prose-aura h2 {
+    @apply mb-3 mt-10 text-2xl font-bold text-white sm:text-3xl;
+  }
+
+  .prose-aura p {
+    @apply mb-5;
+  }
+
+  .prose-aura pre {
+    @apply mb-6 overflow-x-auto rounded-lg border border-cyan-300/20 bg-black/40 p-5 font-mono text-sm text-cyan-100;
+  }
+}
+
+@media (pointer: fine) {
+  body.has-aura-cursor,
+  body.has-aura-cursor a,
+  body.has-aura-cursor button {
+    cursor: none;
+  }
+}

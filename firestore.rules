@@ -1,0 +1,157 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function stringBetween(data, field, minimum, maximum) {
+      return data[field] is string
+        && data[field].size() >= minimum
+        && data[field].size() <= maximum;
+    }
+
+    function optionalString(data, field, maximum) {
+      return !data.keys().hasAny([field])
+        || (data[field] is string && data[field].size() <= maximum);
+    }
+
+    function validContact() {
+      return request.resource.data.keys().hasOnly([
+          'name',
+          'email',
+          'phone',
+          'service',
+          'budget',
+          'message',
+          'createdAt'
+        ])
+        && stringBetween(request.resource.data, 'name', 2, 120)
+        && stringBetween(request.resource.data, 'email', 3, 254)
+        && optionalString(request.resource.data, 'phone', 40)
+        && stringBetween(request.resource.data, 'service', 1, 160)
+        && stringBetween(request.resource.data, 'budget', 1, 40)
+        && stringBetween(request.resource.data, 'message', 20, 4000)
+        && request.resource.data.createdAt == request.time;
+    }
+
+    function validQuote() {
+      return request.resource.data.keys().hasOnly([
+          'projectType',
+          'details',
+          'audience',
+          'features',
+          'budget',
+          'urgency',
+          'name',
+          'email',
+          'phone',
+          'contactMethod',
+          'templateSlug',
+          'createdAt'
+        ])
+        && stringBetween(request.resource.data, 'projectType', 1, 160)
+        && stringBetween(request.resource.data, 'details', 20, 6000)
+        && stringBetween(request.resource.data, 'audience', 1, 500)
+        && request.resource.data.features is list
+        && request.resource.data.features.size() <= 16
+        && request.resource.data.budget is int
+        && request.resource.data.budget >= 500
+        && request.resource.data.budget <= 50000
+        && stringBetween(request.resource.data, 'urgency', 1, 80)
+        && stringBetween(request.resource.data, 'name', 1, 120)
+        && stringBetween(request.resource.data, 'email', 3, 254)
+        && stringBetween(request.resource.data, 'phone', 0, 40)
+        && stringBetween(request.resource.data, 'contactMethod', 1, 40)
+        && optionalString(request.resource.data, 'templateSlug', 180)
+        && request.resource.data.createdAt == request.time;
+    }
+
+    function validProfile(uid) {
+      return request.resource.data.keys().hasOnly([
+          'uid',
+          'name',
+          'email',
+          'phone',
+          'avatarUrl',
+          'plan',
+          'savedTemplates',
+          'projectCount',
+          'notifications'
+        ])
+        && request.resource.data.uid == uid
+        && stringBetween(request.resource.data, 'name', 1, 120)
+        && stringBetween(request.resource.data, 'email', 0, 254)
+        && optionalString(request.resource.data, 'phone', 40)
+        && optionalString(request.resource.data, 'avatarUrl', 2048)
+        && stringBetween(request.resource.data, 'plan', 1, 80)
+        && request.resource.data.savedTemplates is list
+        && request.resource.data.savedTemplates.size() <= 100
+        && request.resource.data.projectCount is int
+        && request.resource.data.projectCount >= 0
+        && request.resource.data.projectCount <= 10000
+        && (!request.resource.data.keys().hasAny(['notifications']) || request.resource.data.notifications is bool);
+    }
+
+    match /contacts/{contactId} {
+      allow create: if validContact();
+      allow read, update, delete: if false;
+    }
+
+    match /quotes/{quoteId} {
+      allow create: if validQuote();
+      allow read, update, delete: if false;
+    }
+
+    match /newsletter/{subscriberId} {
+      allow create: if request.resource.data.keys().hasOnly(['email', 'createdAt'])
+        && stringBetween(request.resource.data, 'email', 3, 254)
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if owns(uid);
+      allow create: if owns(uid) && validProfile(uid);
+      allow update: if owns(uid)
+        && validProfile(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name',
+          'phone',
+          'avatarUrl',
+          'notifications',
+          'savedTemplates'
+        ]);
+      allow delete: if owns(uid);
+    }
+
+    match /projects/{projectId} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    match /blog/{postId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /templates/{templateId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
