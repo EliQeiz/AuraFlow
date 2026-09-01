@@ -17,6 +17,7 @@ import type { UserProfile } from '../types'
 
 const googleProvider = new GoogleAuthProvider()
 const maxAvatarBytes = 2 * 1024 * 1024
+const maxRequestAssetBytes = 10 * 1024 * 1024
 
 export async function loginWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(getFirebaseAuth(), email, password)
@@ -85,6 +86,25 @@ export async function uploadAvatar(user: User, file: File) {
   const avatarUrl = await getDownloadURL(uploadRef)
   await updateProfile(user, { photoURL: avatarUrl })
   return avatarUrl
+}
+
+export async function uploadProjectAsset(ownerUid: string, projectId: string, file: File, folder: 'references' | 'previews') {
+  if (file.size > maxRequestAssetBytes) throw new Error('Request files must be 10MB or smaller.')
+  if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+    throw new Error('Upload an image or PDF reference file.')
+  }
+
+  const extension = file.name.split('.').pop()?.replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 8) || 'file'
+  const safeName = file.name.replace(/[^a-z0-9.-]+/gi, '-').slice(0, 80)
+  const uploadRef = ref(getFirebaseStorage(), `projects/${ownerUid}/${projectId}/${folder}/${Date.now()}-${safeName}.${extension}`)
+  await uploadBytes(uploadRef, file)
+
+  return {
+    name: file.name,
+    path: uploadRef.fullPath,
+    contentType: file.type,
+    url: await getDownloadURL(uploadRef),
+  }
 }
 
 export async function removeAccount(user: User) {

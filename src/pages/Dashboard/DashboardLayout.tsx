@@ -1,7 +1,7 @@
-import { Bell, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { ExternalLink, MessageSquareMore, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { MobileDashboardNav, Sidebar } from '../../components/layout/Sidebar'
 import { useAuth } from '../../context/AuthContext'
@@ -10,7 +10,7 @@ import { UserAvatar } from '../../components/shared/UserAvatar'
 
 export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false)
-  const { logout, profile, user } = useAuth()
+  const { admin, logout, profile, user } = useAuth()
 
   const signOut = async () => {
     try {
@@ -21,10 +21,10 @@ export default function DashboardLayout() {
   }
 
   return (
-    <section className="section-shell flex gap-4 pb-20 pt-24 sm:pt-28">
-      <Sidebar collapsed={collapsed} onLogout={signOut} />
+    <section className="section-shell flex min-h-screen gap-4 py-4 sm:py-6">
+      <Sidebar admin={admin} collapsed={collapsed} onLogout={signOut} />
       <div className="min-w-0 flex-1">
-        <MobileDashboardNav onLogout={signOut} />
+        <MobileDashboardNav admin={admin} onLogout={signOut} />
         <header className="glass mb-5 flex items-center justify-between gap-3 rounded-lg p-3">
           <div className="flex min-w-0 items-center gap-3">
             <Button variant="secondary" className="hidden min-h-0 p-2 md:inline-flex" onClick={() => setCollapsed((current) => !current)} aria-label="Collapse dashboard sidebar">
@@ -36,9 +36,13 @@ export default function DashboardLayout() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="rounded-md border border-white/10 p-3 text-white" aria-label="Notifications">
-              <Bell className="h-4 w-4" />
-            </button>
+            <Link to="/" className="hidden rounded-md border border-white/10 px-3 py-2 text-sm font-bold text-cyan-100 transition hover:border-cyan-100 hover:bg-cyan-300/10 sm:inline-flex sm:items-center sm:gap-2">
+              <ExternalLink className="h-4 w-4" />
+              Website
+            </Link>
+            <Link to="/dashboard/messages" className="rounded-md border border-white/10 p-3 text-white transition hover:border-cyan-100 hover:bg-cyan-300/10" aria-label="Open project messages">
+              <MessageSquareMore className="h-4 w-4" />
+            </Link>
             <UserAvatar
               className="h-11 w-11 rounded-lg"
               name={profile?.name ?? user?.displayName}

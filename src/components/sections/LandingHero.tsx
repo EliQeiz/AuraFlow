@@ -2,6 +2,7 @@ import { ArrowDown, ArrowRight, Brush, Rocket } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { TypeAnimation } from 'react-type-animation'
 import { ButtonLink } from '../ui/Button'
+import { useAuth } from '../../context/AuthContext'
 import { FloatingCard } from '../animations/FloatingCard'
 import { GlowOrb } from '../animations/GlowOrb'
 import { ParticleBackground } from '../animations/ParticleBackground'
@@ -17,6 +18,8 @@ const item = {
 }
 
 export function LandingHero() {
+  const { user } = useAuth()
+
   return (
     <section className="relative isolate flex min-h-[calc(100svh-5rem)] items-center overflow-hidden bg-hero-mesh">
       <ParticleBackground />
@@ -42,9 +45,9 @@ export function LandingHero() {
             Premium websites. Powerful apps. Intelligent data. All under one roof.
           </motion.p>
           <motion.div variants={item} className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <ButtonLink to="/quote">
+            <ButtonLink to={user ? '/dashboard/requests/new' : '/register'}>
               <Rocket className="h-4 w-4" />
-              Start Your Project
+              {user ? 'Start Your Project' : 'Create Client Account'}
             </ButtonLink>
             <ButtonLink to="/templates" variant="secondary">
               <Brush className="h-4 w-4" />

@@ -1,5 +1,4 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ExternalLink } from 'lucide-react'
 import { useState } from 'react'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -18,10 +17,10 @@ export default function Portfolio() {
 
   return (
     <PageWrapper>
-      <SEOHead title="Portfolio" description="AuraFlow websites, product apps, dashboards, and template adaptations." />
+      <SEOHead title="Portfolio" description="AuraFlow concept previews for websites, product apps, dashboards, and template adaptations." />
       <section className="section-shell py-16">
-        <Badge>Work</Badge>
-        <h1 className="mt-5 max-w-4xl text-4xl font-extrabold sm:text-6xl">Selected builds shaped for action.</h1>
+        <Badge>Capability Previews</Badge>
+        <h1 className="mt-5 max-w-4xl text-4xl font-extrabold sm:text-6xl">Build directions shaped for action.</h1>
         <div className="mt-7 flex flex-wrap gap-2">
           {filters.map((item) => (
             <Button key={item} variant={item === filter ? 'primary' : 'secondary'} onClick={() => setFilter(item)}>
@@ -72,11 +71,7 @@ export default function Portfolio() {
                   </Badge>
                 ))}
               </div>
-              <blockquote className="mt-5 leading-7 text-aura-muted">“{selected.testimonial}”</blockquote>
-              <a href={selected.liveUrl} target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center gap-2 font-bold text-cyan-100">
-                Live site
-                <ExternalLink className="h-4 w-4" />
-              </a>
+              <p className="mt-5 leading-7 text-aura-muted">Concept preview for discussing scope, content, data, and a private build request inside the AuraFlow client app.</p>
             </aside>
           </div>
         ) : null}

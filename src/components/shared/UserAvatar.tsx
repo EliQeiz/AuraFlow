@@ -13,20 +13,29 @@ export function UserAvatar({
   src?: string | null
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null)
   const label = name?.trim() || 'AuraFlow Client'
-  const useImage = Boolean(src && src !== failedSrc)
+  const usableSrc = Boolean(src && src !== failedSrc)
+  const showImage = usableSrc && loadedSrc === src
 
   return (
     <span
       aria-label={`${label} avatar`}
-      className={cn('grid shrink-0 place-items-center overflow-hidden bg-aura-gradient font-bold text-white', className)}
+      className={cn('relative grid shrink-0 place-items-center overflow-hidden bg-aura-gradient font-bold text-white', className)}
       role="img"
     >
-      {useImage ? (
-        <img src={src ?? ''} alt="" onError={() => setFailedSrc(src ?? null)} className={cn('h-full w-full object-cover', imageClassName)} />
-      ) : (
-        <span aria-hidden>{getInitials(label)}</span>
-      )}
+      <span aria-hidden className={showImage ? 'opacity-0' : 'opacity-100'}>
+        {getInitials(label)}
+      </span>
+      {usableSrc ? (
+        <img
+          src={src ?? ''}
+          alt=""
+          onError={() => setFailedSrc(src ?? null)}
+          onLoad={() => setLoadedSrc(src ?? null)}
+          className={cn('absolute inset-0 h-full w-full object-cover transition-opacity', showImage ? 'opacity-100' : 'opacity-0', imageClassName)}
+        />
+      ) : null}
     </span>
   )
 }

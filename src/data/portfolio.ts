@@ -10,8 +10,6 @@ export const portfolioProjects: PortfolioProject[] = [
     image: IMAGES.templates.restaurant,
     screenshots: [IMAGES.templates.restaurant, IMAGES.templates.cafe],
     techStack: ['React', 'TailwindCSS', 'Firebase'],
-    liveUrl: 'https://example.com',
-    testimonial: 'The new reservation path feels like our service: composed and quick.',
   },
   {
     id: 'pulse-grid',
@@ -21,8 +19,6 @@ export const portfolioProjects: PortfolioProject[] = [
     image: IMAGES.services.mobileApps,
     screenshots: [IMAGES.services.mobileApps, IMAGES.services.webApps],
     techStack: ['Flutter', 'Firebase', 'Figma'],
-    liveUrl: 'https://example.com',
-    testimonial: 'Every field update now arrives with context instead of follow-up calls.',
   },
   {
     id: 'kite-ops',
@@ -32,8 +28,6 @@ export const portfolioProjects: PortfolioProject[] = [
     image: IMAGES.services.dataAnalytics,
     screenshots: [IMAGES.services.dataAnalytics, IMAGES.templates.logistics],
     techStack: ['React', 'Recharts', 'Firestore'],
-    liveUrl: 'https://example.com',
-    testimonial: 'We now find problems before clients have to ask about them.',
   },
   {
     id: 'north-clinic',
@@ -43,8 +37,6 @@ export const portfolioProjects: PortfolioProject[] = [
     image: IMAGES.templates.clinic,
     screenshots: [IMAGES.templates.clinic, IMAGES.templates.school],
     techStack: ['Vite', 'Firebase', 'Zod'],
-    liveUrl: 'https://example.com',
-    testimonial: 'Patients tell us the site feels simpler before they even arrive.',
   },
   {
     id: 'luma-shop',
@@ -54,8 +46,6 @@ export const portfolioProjects: PortfolioProject[] = [
     image: IMAGES.templates.ecommerce,
     screenshots: [IMAGES.templates.ecommerce, IMAGES.templates.interior],
     techStack: ['React', 'Stripe', 'Analytics'],
-    liveUrl: 'https://example.com',
-    testimonial: 'It feels premium and still makes shopping obvious.',
   },
   {
     id: 'forge-fitness',
@@ -65,7 +55,5 @@ export const portfolioProjects: PortfolioProject[] = [
     image: IMAGES.templates.gym,
     screenshots: [IMAGES.templates.gym, IMAGES.services.mobileApps],
     techStack: ['React Native', 'Firebase', 'Vercel'],
-    liveUrl: 'https://example.com',
-    testimonial: 'Members see the next class without searching for it.',
   },
 ]

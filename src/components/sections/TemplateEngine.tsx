@@ -17,8 +17,8 @@ export function TemplateEngine() {
     <section className="border-y border-white/10 bg-aura-surface/55 py-20">
       <div className="section-shell">
         <div className="max-w-4xl">
-          <h2 className="text-3xl font-extrabold sm:text-5xl">Templates for Every Business on Earth</h2>
-          <p className="mt-4 text-lg text-aura-muted">Switch industries and watch a live launch surface take shape.</p>
+          <h2 className="text-3xl font-extrabold sm:text-5xl">Templates grounded in Ghanaian and African business contexts.</h2>
+          <p className="mt-4 text-lg text-aura-muted">Switch industries to preview food, hospitality, service, retail, and product directions that can be localized in the client app.</p>
         </div>
         <div className="mt-7">
           <Swiper spaceBetween={12} slidesPerView={1.4} breakpoints={{ 640: { slidesPerView: 3 }, 1024: { slidesPerView: 5 } }}>

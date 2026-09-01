@@ -7,7 +7,7 @@ import { Card } from '../components/ui/Card'
 import { PageWrapper } from '../components/shared/PageWrapper'
 import { SEOHead } from '../components/shared/SEOHead'
 import { pricingFaq } from '../data/faq'
-import { pricingTiers, templatePricing } from '../data/pricing'
+import { hostedPlans, pricingTiers, templatePricing } from '../data/pricing'
 
 export default function Pricing() {
   const [yearly, setYearly] = useState(false)
@@ -46,7 +46,7 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <ButtonLink to="/quote" className="mt-7 w-full">
+            <ButtonLink to="/register" className="mt-7 w-full">
               {tier.monthly === null ? 'Start Enterprise Scope' : `Choose ${tier.name}`}
             </ButtonLink>
           </Card>
@@ -55,7 +55,27 @@ export default function Pricing() {
 
       <section className="border-y border-white/10 bg-aura-surface/60 py-20">
         <div className="section-shell">
-          <h2 className="text-3xl font-extrabold">Template Pricing</h2>
+          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+            <div>
+              <Badge>Managed Hosting</Badge>
+              <h2 className="mt-4 text-3xl font-extrabold">Low-cost hosted systems</h2>
+              <p className="mt-3 max-w-3xl text-aura-muted">Start on an AuraFlow-managed link with working admin tools, then upgrade to deeper custom ownership when the business is ready.</p>
+            </div>
+            <ButtonLink to="/solutions" variant="secondary" className="w-fit">Explore Systems</ButtonLink>
+          </div>
+          <div className="mt-6 grid gap-4 lg:grid-cols-4">
+            {hostedPlans.map((plan) => (
+              <Card key={plan.name} className="p-5">
+                <h3 className="text-2xl font-bold">{plan.name}</h3>
+                <strong className="mt-4 block font-orbitron text-3xl text-cyan-100">{plan.price}</strong>
+                <p className="mt-3 text-sm leading-6 text-aura-muted">{plan.bestFor}</p>
+                <p className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3 text-sm leading-6 text-aura-muted">{plan.includes}</p>
+                <ButtonLink to="/register" className="mt-5 w-full">Start In App</ButtonLink>
+              </Card>
+            ))}
+          </div>
+
+          <h2 className="mt-14 text-3xl font-extrabold">Template Pricing</h2>
           <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
             <table className="w-full border-collapse text-left">
               <thead className="bg-white/[0.07] text-sm text-aura-muted">
@@ -98,10 +118,14 @@ export default function Pricing() {
             ))}
           </div>
         </div>
-        <blockquote className="glass flex flex-col justify-center rounded-lg p-7 text-xl leading-9 text-white">
-          "Pricing stayed visible, scope stayed calm, and the first launch felt like a product instead of a promise."
-          <footer className="mt-4 text-sm text-aura-muted">Lena Park, Fieldnote</footer>
-        </blockquote>
+        <div className="glass flex flex-col justify-center rounded-lg p-7 text-xl leading-9 text-white">
+          <strong className="text-2xl">Private scope first.</strong>
+          <p className="mt-4 text-aura-muted">The account workspace collects the prototype, selected modules, assets, preview feedback, and chat history before AuraFlow commits to a build lane.</p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <ButtonLink to="/solutions" variant="secondary">Hosted Systems</ButtonLink>
+            <ButtonLink to="/register" className="w-fit">Create Client Account</ButtonLink>
+          </div>
+        </div>
       </section>
     </PageWrapper>
   )

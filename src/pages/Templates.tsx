@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Eye, Search, Sparkles } from 'lucide-react'
+import { Eye, LogIn, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Badge } from '../components/ui/Badge'
 import { ButtonLink } from '../components/ui/Button'
@@ -21,7 +21,7 @@ export default function Templates() {
       <section className="section-shell pb-10 pt-16">
         <Badge>Marketplace</Badge>
         <h1 className="mt-5 text-4xl font-extrabold sm:text-6xl">Premium templates with room to become your product.</h1>
-        <p className="mt-4 max-w-3xl text-lg text-aura-muted">Filter by industry, mood, page depth, and tier. Every preview can open into a quote path for customization.</p>
+        <p className="mt-4 max-w-3xl text-lg text-aura-muted">Filter public examples by industry, mood, page depth, and tier. Selection, uploads, and customization requests stay inside the private client app.</p>
       </section>
 
       <section className="section-shell grid gap-5 pb-20 lg:grid-cols-[280px_1fr]">
@@ -101,7 +101,6 @@ function TemplateCard({ template }: { template: Template }) {
             <h2 className="text-xl font-bold">{template.name}</h2>
             <p className="mt-1 line-clamp-2 text-sm leading-6 text-aura-muted">{template.description}</p>
           </div>
-          <p className="text-sm text-amber-100">***** {template.rating} ({template.reviewCount} reviews)</p>
           <div className="flex items-center justify-between text-sm text-aura-muted">
             <span>Pages: {template.pages.length}</span>
             <span>Firebase: yes</span>
@@ -112,9 +111,9 @@ function TemplateCard({ template }: { template: Template }) {
               <Eye className="h-4 w-4" />
               Preview
             </ButtonLink>
-            <ButtonLink to={`/quote?template=${template.slug}`} className="px-2">
-              <Sparkles className="h-4 w-4" />
-              Use This
+            <ButtonLink to="/register" className="px-2">
+              <LogIn className="h-4 w-4" />
+              Client App
             </ButtonLink>
           </div>
         </div>

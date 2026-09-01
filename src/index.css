@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 :root {
+  --aura-dark: 5 5 16;
+  --aura-surface: 13 13 31;
+  --aura-card: 18 18 42;
+  --aura-ink: 255 255 255;
+  --aura-muted: 160 168 192;
   color-scheme: dark;
   background: #050510;
   color: #ffffff;
@@ -11,6 +16,17 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme='light'] {
+  --aura-dark: 246 248 255;
+  --aura-surface: 232 237 249;
+  --aura-card: 255 255 255;
+  --aura-ink: 12 18 38;
+  --aura-muted: 79 91 124;
+  color-scheme: light;
+  background: #f6f8ff;
+  color: rgb(var(--aura-ink));
 }
 
 * {
@@ -31,6 +47,33 @@ body {
     radial-gradient(circle at 0 0, rgba(108, 99, 255, 0.2), transparent 28rem),
     radial-gradient(circle at 100% 5%, rgba(0, 212, 255, 0.12), transparent 32rem),
     #050510;
+}
+
+[data-theme='light'] body {
+  background:
+    radial-gradient(circle at 0 0, rgba(108, 99, 255, 0.18), transparent 28rem),
+    radial-gradient(circle at 100% 5%, rgba(0, 212, 255, 0.16), transparent 32rem),
+    #f6f8ff;
+  color: rgb(var(--aura-ink));
+}
+
+[data-theme='light'] .glass {
+  border-color: rgba(12, 18, 38, 0.12);
+  background-color: rgba(255, 255, 255, 0.76);
+}
+
+[data-theme='light'] h1,
+[data-theme='light'] h2,
+[data-theme='light'] h3,
+[data-theme='light'] h4,
+[data-theme='light'] .text-white {
+  color: rgb(var(--aura-ink));
+}
+
+[data-theme='light'] .bg-aura-gradient.text-white,
+[data-theme='light'] .bg-aura-gradient .text-white,
+[data-theme='light'] .text-white.bg-aura-gradient {
+  color: #fff;
 }
 
 button,

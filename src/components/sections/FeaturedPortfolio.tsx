@@ -14,8 +14,8 @@ export function FeaturedPortfolio() {
     <section className="section-shell py-20">
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
-          <Badge>Portfolio</Badge>
-          <h2 className="mt-4 text-3xl font-extrabold sm:text-5xl">Featured Builds</h2>
+          <Badge>Capability Previews</Badge>
+          <h2 className="mt-4 text-3xl font-extrabold sm:text-5xl">Build Directions</h2>
         </div>
         <div className="flex flex-wrap gap-2">
           {filters.map((item) => (

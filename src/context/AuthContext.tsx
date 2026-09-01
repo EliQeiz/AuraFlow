@@ -9,6 +9,7 @@ interface AuthValue {
   user: User | null
   profile: UserProfile | null
   loading: boolean
+  admin: boolean
   refreshProfile: () => Promise<void>
   logout: () => Promise<void>
 }
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthValue | null>(null)
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [admin, setAdmin] = useState(false)
   const [loading, setLoading] = useState(firebaseConfigured)
 
   const refreshProfile = useCallback(async () => {
@@ -31,6 +33,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return onAuthStateChanged(getFirebaseAuth(), async (nextUser) => {
       setUser(nextUser)
       try {
+        setAdmin(nextUser ? Boolean((await nextUser.getIdTokenResult()).claims.admin) : false)
         setProfile(nextUser ? await getUserProfile(nextUser.uid) : null)
       } catch (error) {
         console.warn('AuraFlow profile load failed.', error)
@@ -45,11 +48,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     () => ({
       user,
       profile,
+      admin,
       loading,
       refreshProfile,
       logout: logoutAccount,
     }),
-    [loading, profile, refreshProfile, user],
+    [admin, loading, profile, refreshProfile, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

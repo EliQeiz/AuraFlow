@@ -3,6 +3,30 @@ import type { Service } from '../types'
 
 export const services: Service[] = [
   {
+    id: 'hosted-platforms',
+    icon: 'server',
+    title: 'Managed Hosted Business Systems',
+    shortTitle: 'Hosted Systems',
+    description: 'Affordable hosted platforms for schools, shops, restaurants, hotels, clinics, portfolios, and service businesses on AuraFlow-managed links.',
+    features: ['Managed AuraFlow link', 'Configurable admin dashboard', 'Client-ready workflows', 'Upgrade path to custom ownership'],
+    techStack: ['React', 'Firebase Auth', 'Firestore', 'Storage', 'Vercel'],
+    timeline: '1-4 weeks',
+    priceRange: 'From $39/mo',
+    image: IMAGES.services.webApps,
+  },
+  {
+    id: 'prototype-studio',
+    icon: 'layers',
+    title: 'Prototype Studio & Template Systems',
+    shortTitle: 'Prototype Studio',
+    description: 'A guided private design workspace where clients choose modules, upload assets, describe workflows, and shape a complete build blueprint.',
+    features: ['Industry system blueprints', 'Module selection', 'Reference uploads', 'Admin review and preview handoff'],
+    techStack: ['React', 'TypeScript', 'Firebase', 'Framer Motion'],
+    timeline: 'Same day start',
+    priceRange: 'From $99',
+    image: IMAGES.services.uiux,
+  },
+  {
     id: 'websites',
     icon: 'globe',
     title: 'Premium Website Development',

@@ -14,6 +14,7 @@ import { Legal } from './pages/Legal'
 
 const Home = lazy(() => import('./pages/Home'))
 const Services = lazy(() => import('./pages/Services'))
+const Solutions = lazy(() => import('./pages/Solutions'))
 const Templates = lazy(() => import('./pages/Templates'))
 const TemplateDetail = lazy(() => import('./pages/TemplateDetail'))
 const Portfolio = lazy(() => import('./pages/Portfolio'))
@@ -30,21 +31,27 @@ const DashboardLayout = lazy(() => import('./pages/Dashboard/DashboardLayout'))
 const DashboardHome = lazy(() => import('./pages/Dashboard/DashboardHome'))
 const MyProjects = lazy(() => import('./pages/Dashboard/MyProjects'))
 const MyTemplates = lazy(() => import('./pages/Dashboard/MyTemplates'))
+const NewRequest = lazy(() => import('./pages/Dashboard/NewRequest'))
+const Messages = lazy(() => import('./pages/Dashboard/Messages'))
+const PrototypeStudio = lazy(() => import('./pages/Dashboard/PrototypeStudio'))
+const AdminConsole = lazy(() => import('./pages/Dashboard/AdminConsole'))
 const Settings = lazy(() => import('./pages/Dashboard/Settings'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 export default function App() {
   const location = useLocation()
+  const isDashboard = location.pathname.startsWith('/dashboard')
 
   return (
     <>
       <LoadingScreen />
-      <Navbar />
+      {!isDashboard ? <Navbar /> : null}
       <Suspense fallback={<PageFallback />}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Home />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/solutions" element={<Solutions />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/templates/:slug" element={<TemplateDetail />} />
             <Route path="/portfolio" element={<Portfolio />} />
@@ -53,7 +60,14 @@ export default function App() {
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/quote" element={<GetQuote />} />
+            <Route
+              path="/quote"
+              element={
+                <ProtectedRoute>
+                  <GetQuote />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -69,16 +83,21 @@ export default function App() {
             >
               <Route index element={<DashboardHome />} />
               <Route path="projects" element={<MyProjects />} />
+              <Route path="requests" element={<MyProjects />} />
+              <Route path="requests/new" element={<NewRequest />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="studio" element={<PrototypeStudio />} />
               <Route path="templates" element={<MyTemplates />} />
+              <Route path="admin" element={<AdminConsole />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AnimatePresence>
       </Suspense>
-      <Footer />
-      <ScrollToTop />
-      <WhatsAppButton />
+      {!isDashboard ? <Footer /> : null}
+      {!isDashboard ? <ScrollToTop /> : null}
+      {!isDashboard ? <WhatsAppButton /> : null}
       <EasterEgg />
       <CustomCursor />
     </>

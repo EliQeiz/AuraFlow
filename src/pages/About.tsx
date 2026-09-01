@@ -10,10 +10,10 @@ import elishaAfariPhoto from '../assets/images/elisha-afari.jpg'
 import { IMAGES } from '../lib/images'
 
 const milestones = [
-  ['2021', 'AuraFlow begins with conversion-focused websites.'],
-  ['2023', 'Firebase-backed client portals and dashboards join the studio.'],
-  ['2025', 'Template systems speed launches across 30 business categories.'],
-  ['2026', 'Web, mobile, analytics, and AI workflows share one delivery lane.'],
+  ['Now', 'AuraFlow focuses on Ghana-first websites and product requests with clear private briefs.'],
+  ['Client App', 'Clients can attach references, content images, previews, revision notes, and project chat in one workspace.'],
+  ['Template Systems', 'Industry previews help shape restaurant, hospitality, retail, service, and software starting points.'],
+  ['Delivery', 'Web, mobile, analytics, and AI workflows share one practical build lane.'],
 ]
 
 const values = ['Quality', 'Innovation', 'Speed', 'Transparency', 'Partnership', 'Excellence']
@@ -93,10 +93,10 @@ export default function About() {
             ))}
           </div>
           <div className="mt-8 rounded-lg border border-cyan-200/20 bg-cyan-300/10 p-6">
-            <h3 className="text-2xl font-bold">Join 200+ happy clients</h3>
-            <p className="mt-2 text-aura-muted">Start with a quote and leave with a launch path you can inspect.</p>
-            <ButtonLink to="/quote" className="mt-5">
-              Start a Project
+            <h3 className="text-2xl font-bold">Bring the brief into the client app.</h3>
+            <p className="mt-2 text-aura-muted">Create an account, share project details and files, then inspect progress without losing the conversation.</p>
+            <ButtonLink to="/register" className="mt-5">
+              Create Client Account
             </ButtonLink>
           </div>
         </div>

@@ -28,3 +28,30 @@ export const templatePricing = [
   { tier: 'Premium', price: '$99', includes: 'Large templates for complex organizations' },
   { tier: 'Custom', price: 'Quote', includes: 'Brand, feature, and backend customization' },
 ]
+
+export const hostedPlans = [
+  {
+    name: 'Hosted Starter',
+    price: '$39/mo',
+    bestFor: 'Portfolios, landing sites, salons, cafes, and simple business websites',
+    includes: 'Managed AuraFlow link, template customization, contact capture, updates, and basic dashboard access',
+  },
+  {
+    name: 'Hosted Business',
+    price: '$79/mo',
+    bestFor: 'Restaurants, shops, pharmacies, churches, NGOs, and appointment businesses',
+    includes: 'Business modules, admin dashboard, uploads, request forms, customer messages, and monthly support',
+  },
+  {
+    name: 'Hosted School',
+    price: '$99/mo',
+    bestFor: 'Schools, academies, training centers, and parent/staff portals',
+    includes: 'Admissions, records, classes, fees, announcements, staff roles, parent access, and reports',
+  },
+  {
+    name: 'Hosted Operations',
+    price: '$129/mo',
+    bestFor: 'Supermarkets, logistics, real estate, clinics, hotels, and multi-role teams',
+    includes: 'Advanced workflows, role permissions, dashboards, storage, previews, and upgrade planning',
+  },
+]

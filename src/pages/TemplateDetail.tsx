@@ -1,4 +1,4 @@
-import { Check, Copy, Monitor, Smartphone, Tablet } from 'lucide-react'
+import { Check, LockKeyhole, Monitor, Smartphone, Tablet } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Navigate, Link, useParams } from 'react-router-dom'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -97,7 +97,7 @@ export default function TemplateDetail() {
 
         <aside className="glass h-fit rounded-lg p-5 lg:sticky lg:top-24">
           <h2 className="text-2xl font-bold">{template.name}</h2>
-          <p className="mt-2 text-amber-100">***** {template.rating} ({template.reviewCount} reviews)</p>
+          <p className="mt-2 text-aura-muted">Public preview. Choose a starting point and attach project files in the private client app.</p>
           <div className="mt-5">
             <h3 className="font-bold text-white">Included pages</h3>
             <ul className="mt-3 grid gap-2 text-sm text-aura-muted">
@@ -125,12 +125,12 @@ export default function TemplateDetail() {
           </div>
           <strong className="mt-6 block font-orbitron text-3xl text-white">{formatPrice(template.price)}</strong>
           <div className="mt-4 grid gap-2">
-            <ButtonLink to={`/quote?template=${template.slug}`} className="w-full">
-              Use This Template - {formatPrice(template.price)}
+            <ButtonLink to="/register" className="w-full">
+              <LockKeyhole className="h-4 w-4" />
+              Use In Client App - {formatPrice(template.price)}
             </ButtonLink>
-            <ButtonLink to={`/contact?template=${template.slug}`} variant="secondary" className="w-full">
-              <Copy className="h-4 w-4" />
-              Request Customization
+            <ButtonLink to="/login" variant="secondary" className="w-full">
+              Existing Client Login
             </ButtonLink>
           </div>
         </aside>

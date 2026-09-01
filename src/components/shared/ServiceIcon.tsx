@@ -5,8 +5,10 @@ import {
   Database,
   Globe,
   Headphones,
+  Layers3,
   Palette,
   Search,
+  ServerCog,
   ShoppingBag,
   Smartphone,
 } from 'lucide-react'
@@ -22,6 +24,8 @@ const icons = {
   search: Search,
   'shopping-bag': ShoppingBag,
   headphones: Headphones,
+  server: ServerCog,
+  layers: Layers3,
 }
 
 export function ServiceIcon({ name, className = 'h-5 w-5' }: { name: string; className?: string }) {

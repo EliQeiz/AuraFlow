@@ -6,6 +6,7 @@ import { NewsletterForm } from '../forms/NewsletterForm'
 
 const quickLinks = [
   ['Services', '/services'],
+  ['Solutions', '/solutions'],
   ['Templates', '/templates'],
   ['Portfolio', '/portfolio'],
   ['Pricing', '/pricing'],

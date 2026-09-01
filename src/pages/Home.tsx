@@ -8,7 +8,7 @@ import { Newsletter } from '../components/sections/Newsletter'
 import { ServicesGrid } from '../components/sections/ServicesGrid'
 import { StatsBar } from '../components/sections/StatsBar'
 import { TemplateEngine } from '../components/sections/TemplateEngine'
-import { Testimonials } from '../components/sections/Testimonials'
+import { SolutionsPreview } from '../components/sections/SolutionsPreview'
 import { PageWrapper } from '../components/shared/PageWrapper'
 import { SEOHead } from '../components/shared/SEOHead'
 
@@ -22,9 +22,9 @@ export default function Home() {
       <LandingHero />
       <StatsBar />
       <ServicesGrid />
+      <SolutionsPreview />
       <TemplateEngine />
       <HowItWorks />
-      <Testimonials />
       <FeaturedPortfolio />
       <BlogPreview />
       <CTA />

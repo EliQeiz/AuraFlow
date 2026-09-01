@@ -12,6 +12,7 @@ import { Tooltip } from '../ui/Tooltip'
 const links = [
   ['Home', '/'],
   ['Services', '/services'],
+  ['Solutions', '/solutions'],
   ['Templates', '/templates'],
   ['Portfolio', '/portfolio'],
   ['Pricing', '/pricing'],
@@ -50,7 +51,7 @@ export function Navbar() {
           AuraFlow
         </Link>
 
-        <div className="hidden items-center gap-1 lg:flex">
+        <div className="hidden items-center gap-1 xl:flex">
           {links.map(([label, to]) => (
             <NavLink key={to} to={to} className="relative rounded-md px-3 py-2 text-sm text-aura-muted transition hover:text-white">
               {({ isActive }) => (
@@ -63,9 +64,9 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="hidden items-center gap-2 lg:flex">
-          <Tooltip text="Quote AuraFlow in Ghana">
-            <ButtonLink to="/quote">Get a Quote</ButtonLink>
+        <div className="hidden items-center gap-2 xl:flex">
+          <Tooltip text={user ? 'Open a private AuraFlow request' : 'Create a private AuraFlow client account'}>
+            <ButtonLink to={user ? '/dashboard/requests/new' : '/register'}>{user ? 'New Request' : 'Client Portal'}</ButtonLink>
           </Tooltip>
           {user ? (
             <details className="group relative">
@@ -94,7 +95,7 @@ export function Navbar() {
           )}
         </div>
 
-        <button onClick={() => setOpen((current) => !current)} className="rounded-md border border-white/15 p-2 text-white lg:hidden" aria-label="Toggle menu">
+        <button onClick={() => setOpen((current) => !current)} className="rounded-md border border-white/15 p-2 text-white xl:hidden" aria-label="Toggle menu">
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </nav>
@@ -105,7 +106,7 @@ export function Navbar() {
             initial={{ opacity: 0, y: -18 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -18 }}
-            className="fixed inset-x-0 top-20 h-[calc(100svh-5rem)] border-t border-white/10 bg-aura-dark/95 p-4 backdrop-blur-2xl lg:hidden"
+            className="fixed inset-x-0 top-20 h-[calc(100svh-5rem)] overflow-auto border-t border-white/10 bg-aura-dark/95 p-4 backdrop-blur-2xl xl:hidden"
           >
             <motion.div variants={{ visible: { transition: { staggerChildren: 0.06 } } }} initial="hidden" animate="visible" className="grid gap-2">
               {links.map(([label, to]) => (
@@ -116,8 +117,8 @@ export function Navbar() {
                 </motion.div>
               ))}
               <div className="mt-2 flex flex-col gap-2">
-                <ButtonLink onClick={() => setOpen(false)} to="/quote">
-                  Get a Quote
+                <ButtonLink onClick={() => setOpen(false)} to={user ? '/dashboard/requests/new' : '/register'}>
+                  {user ? 'New Request' : 'Client Portal'}
                 </ButtonLink>
                 <ButtonLink onClick={() => setOpen(false)} to={user ? '/dashboard' : '/login'} variant="secondary">
                   {user ? 'Dashboard' : 'Login'}

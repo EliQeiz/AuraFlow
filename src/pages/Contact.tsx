@@ -1,6 +1,7 @@
 import { Mail, MapPin, Phone } from 'lucide-react'
-import { ContactForm } from '../components/forms/ContactForm'
 import { Badge } from '../components/ui/Badge'
+import { ButtonLink } from '../components/ui/Button'
+import { Card } from '../components/ui/Card'
 import { PageWrapper } from '../components/shared/PageWrapper'
 import { SEOHead } from '../components/shared/SEOHead'
 
@@ -39,7 +40,15 @@ export default function Contact() {
             />
           </div>
         </aside>
-        <ContactForm />
+        <Card className="grid content-center gap-4 p-6">
+          <Badge className="w-fit">Private Requests</Badge>
+          <h2 className="text-3xl font-extrabold">Project briefs live inside the AuraFlow client app.</h2>
+          <p className="max-w-xl leading-7 text-aura-muted">Create an account to describe the build, choose or upload template references, attach photos and documents, track previews, send revision notes, and chat on the request that belongs to your account.</p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <ButtonLink to="/register">Create Client Account</ButtonLink>
+            <ButtonLink to="/login" variant="secondary">Login</ButtonLink>
+          </div>
+        </Card>
       </section>
     </PageWrapper>
   )

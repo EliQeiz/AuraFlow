@@ -62,8 +62,8 @@ export default function Services() {
                       </Badge>
                     ))}
                   </div>
-                  <ButtonLink to={`/quote?service=${service.id}`} className="w-fit">
-                    Get a Quote for This Service
+                  <ButtonLink to="/register" className="w-fit">
+                    Open Client Workspace
                   </ButtonLink>
                 </div>
               </details>

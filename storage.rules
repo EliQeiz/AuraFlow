@@ -6,15 +6,36 @@ service firebase.storage {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     function validAvatar() {
       return request.resource.size <= 2 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
+    }
+
+    function validRequestAsset() {
+      return request.resource.size <= 10 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf');
     }
 
     match /avatars/{uid}/{fileName} {
       allow read: if owns(uid);
       allow create, update: if owns(uid) && validAvatar();
       allow delete: if owns(uid);
+    }
+
+    match /projects/{uid}/{projectId}/references/{fileName} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, update: if owns(uid) && validRequestAsset();
+      allow delete: if owns(uid);
+    }
+
+    match /projects/{uid}/{projectId}/previews/{fileName} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, update, delete: if isAdmin() && validRequestAsset();
     }
 
     match /{allPaths=**} {

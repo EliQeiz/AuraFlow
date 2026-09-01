@@ -1,22 +1,30 @@
-import { Camera, Trash2 } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { Camera, LogOut, MonitorCog, MoonStar, ShieldCheck, Sun, Trash2 } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '../../components/ui/Button'
+import { Button, ButtonLink } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
 import { Modal } from '../../components/ui/Modal'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/ThemeContext'
 import { changePassword, removeAccount, uploadAvatar } from '../../lib/auth'
 import { patchUserProfile } from '../../lib/firestore'
 import { asErrorMessage } from '../../lib/utils'
+import type { ThemePreference } from '../../types'
 
 export default function Settings() {
-  const { profile, refreshProfile, user } = useAuth()
+  const { admin, logout, profile, refreshProfile, user } = useAuth()
+  const { resolvedTheme, setTheme, theme } = useTheme()
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const creatorHint = admin || user?.email?.toLowerCase() === 'elishaafari0@gmail.com'
+
+  useEffect(() => {
+    if (profile?.theme && profile.theme !== theme) setTheme(profile.theme)
+  }, [profile?.theme, setTheme, theme])
 
   const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -82,6 +90,22 @@ export default function Settings() {
     }
   }
 
+  const changeTheme = async (nextTheme: ThemePreference) => {
+    setTheme(nextTheme)
+    if (!user) return
+    try {
+      await patchUserProfile(user.uid, { theme: nextTheme })
+      await refreshProfile()
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    }
+  }
+
+  const logoutNow = async () => {
+    await logout()
+    navigate('/login')
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card className="p-5">
@@ -110,6 +134,33 @@ export default function Settings() {
 
       <div className="grid gap-4">
         <Card className="p-5">
+          <h2 className="text-2xl font-bold">Appearance</h2>
+          <p className="mt-2 text-aura-muted">Current theme: {resolvedTheme}.</p>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <ThemeButton active={theme === 'dark'} Icon={MoonStar} label="Dark" onClick={() => void changeTheme('dark')} />
+            <ThemeButton active={theme === 'light'} Icon={Sun} label="Light" onClick={() => void changeTheme('light')} />
+            <ThemeButton active={theme === 'system'} Icon={MonitorCog} label="Adaptive" onClick={() => void changeTheme('system')} />
+          </div>
+          <Button variant="secondary" className="mt-4 w-full" onClick={() => void logoutNow()}>
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
+        </Card>
+        {creatorHint ? (
+          <Card className="p-5">
+            <h2 className="inline-flex items-center gap-2 text-2xl font-bold"><ShieldCheck className="h-5 w-5 text-cyan-100" /> Creator Access</h2>
+            <p className="mt-2 leading-7 text-aura-muted">
+              {admin ? 'This signed-in account already has the admin claim.' : 'This account needs the Firebase admin claim before the admin console appears in navigation.'}
+            </p>
+            <label className="mt-4 grid gap-2 text-sm text-aura-muted">
+              Current Firebase UID
+              <Input readOnly value={user?.uid ?? ''} />
+            </label>
+            <p className="mt-3 rounded-md border border-white/10 bg-black/20 p-3 font-mono text-xs text-cyan-100">npm run grant-admin -- {user?.uid ?? '<uid>'}</p>
+            <ButtonLink to="/dashboard/admin" variant={admin ? 'primary' : 'secondary'} className="mt-4 w-full">Open Admin Console</ButtonLink>
+          </Card>
+        ) : null}
+        <Card className="p-5">
           <h2 className="text-2xl font-bold">Change Password</h2>
           <form onSubmit={updateSecret} className="mt-4 grid gap-3">
             <Input type="password" minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="New password" required />
@@ -133,5 +184,24 @@ export default function Settings() {
         </div>
       </Modal>
     </div>
+  )
+}
+
+function ThemeButton({
+  active,
+  Icon,
+  label,
+  onClick,
+}: {
+  active: boolean
+  Icon: typeof MoonStar
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <Button type="button" variant={active ? 'primary' : 'secondary'} className="min-w-0 flex-col gap-1 px-2" onClick={onClick}>
+      <Icon className="h-4 w-4" />
+      {label}
+    </Button>
   )
 }

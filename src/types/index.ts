@@ -1,4 +1,35 @@
 export type PriceTier = 'free' | 'starter' | 'pro' | 'enterprise'
+export type PlatformMode = 'managed-hosted' | 'custom-build' | 'prototype-only'
+
+export interface IndustrySolution {
+  id: string
+  slug: string
+  title: string
+  category: string
+  summary: string
+  image: string
+  audience: string
+  startingPrice: string
+  platformLabel: string
+  modules: string[]
+  adminTools: string[]
+  workflows: string[]
+  roles: string[]
+  recommendedTier: 'Starter' | 'Growth' | 'Enterprise'
+}
+
+export interface PrototypeSpec {
+  solutionSlug?: string
+  businessName: string
+  platformMode: PlatformMode
+  subdomainPreference?: string
+  selectedModules: string[]
+  brandTone: string
+  colorPreference: string
+  adminRoles: string[]
+  coreWorkflows: string
+  contentNotes: string
+}
 
 export interface Template {
   id: string
@@ -17,8 +48,6 @@ export interface Template {
   techStack: string[]
   price: number
   tier: PriceTier
-  rating: number
-  reviewCount: number
   popular: boolean
   tags: string[]
 }
@@ -34,16 +63,6 @@ export interface Service {
   timeline: string
   priceRange: string
   image: string
-}
-
-export interface Testimonial {
-  id: string
-  avatar: string
-  name: string
-  role: string
-  company: string
-  rating: number
-  quote: string
 }
 
 export interface BlogPost {
@@ -71,8 +90,8 @@ export interface PortfolioProject {
   image: string
   screenshots: string[]
   techStack: string[]
-  liveUrl: string
-  testimonial: string
+  liveUrl?: string
+  testimonial?: string
 }
 
 export interface UserProfile {
@@ -85,16 +104,61 @@ export interface UserProfile {
   savedTemplates: string[]
   projectCount: number
   notifications?: boolean
+  theme?: ThemePreference
 }
 
-export interface ProjectRecord {
+export type ThemePreference = 'dark' | 'light' | 'system'
+export type RequestStatus = 'Submitted' | 'Discovery' | 'Designing' | 'Building' | 'Review' | 'Completed' | 'On Hold'
+export type RequestAssetKind = 'reference' | 'content' | 'preview'
+
+export interface RequestAsset {
+  id: string
+  name: string
+  url: string
+  path?: string
+  contentType?: string
+  kind: RequestAssetKind
+  uploadedBy: string
+  createdAt?: unknown
+}
+
+export interface RequestMessage {
+  id: string
+  authorId: string
+  authorName: string
+  role: 'client' | 'admin'
+  text: string
+  createdAt?: unknown
+}
+
+export interface ProjectRequestRecord {
   id: string
   userId: string
+  clientName: string
+  clientEmail: string
   title: string
-  status: 'In Progress' | 'Review' | 'Completed' | 'On Hold'
+  projectType: string
+  description: string
+  audience: string
+  budget: number
+  timeline: string
+  referenceLinks: string[]
+  templateSlug?: string
+  solutionSlug?: string
+  platformMode?: PlatformMode
+  subdomainPreference?: string
+  prototypeSpec?: PrototypeSpec
+  status: RequestStatus
+  adminSummary?: string
+  assets: RequestAsset[]
+  previews: RequestAsset[]
+  lastClientNote?: string
   deadline?: string
-  updatedAt?: string
+  createdAt?: unknown
+  updatedAt?: unknown
 }
+
+export type ProjectRecord = ProjectRequestRecord
 
 export interface ContactPayload {
   name: string

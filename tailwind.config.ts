@@ -8,11 +8,11 @@ export default {
         aura: {
           violet: '#6C63FF',
           cyan: '#00D4FF',
-          dark: '#050510',
-          surface: '#0D0D1F',
-          card: '#12122A',
-          ink: '#FFFFFF',
-          muted: '#A0A8C0',
+          dark: 'rgb(var(--aura-dark) / <alpha-value>)',
+          surface: 'rgb(var(--aura-surface) / <alpha-value>)',
+          card: 'rgb(var(--aura-card) / <alpha-value>)',
+          ink: 'rgb(var(--aura-ink) / <alpha-value>)',
+          muted: 'rgb(var(--aura-muted) / <alpha-value>)',
         },
       },
       fontFamily: {

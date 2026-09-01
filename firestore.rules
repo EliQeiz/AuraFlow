@@ -10,6 +10,10 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
     function stringBetween(data, field, minimum, maximum) {
       return data[field] is string
         && data[field].size() >= minimum
@@ -19,6 +23,45 @@ service cloud.firestore {
     function optionalString(data, field, maximum) {
       return !data.keys().hasAny([field])
         || (data[field] is string && data[field].size() <= maximum);
+    }
+
+    function optionalStringList(data, field, maximum) {
+      return !data.keys().hasAny([field])
+        || (data[field] is list && data[field].size() <= maximum);
+    }
+
+    function validPlatformMode(data, field) {
+      return !data.keys().hasAny([field])
+        || data[field] in ['managed-hosted', 'custom-build', 'prototype-only'];
+    }
+
+    function validPrototypeSpec() {
+      return !request.resource.data.keys().hasAny(['prototypeSpec'])
+        || (
+          request.resource.data.prototypeSpec is map
+          && request.resource.data.prototypeSpec.keys().hasOnly([
+            'solutionSlug',
+            'businessName',
+            'platformMode',
+            'subdomainPreference',
+            'selectedModules',
+            'brandTone',
+            'colorPreference',
+            'adminRoles',
+            'coreWorkflows',
+            'contentNotes'
+          ])
+          && optionalString(request.resource.data.prototypeSpec, 'solutionSlug', 180)
+          && stringBetween(request.resource.data.prototypeSpec, 'businessName', 1, 160)
+          && validPlatformMode(request.resource.data.prototypeSpec, 'platformMode')
+          && optionalString(request.resource.data.prototypeSpec, 'subdomainPreference', 120)
+          && optionalStringList(request.resource.data.prototypeSpec, 'selectedModules', 30)
+          && optionalString(request.resource.data.prototypeSpec, 'brandTone', 120)
+          && optionalString(request.resource.data.prototypeSpec, 'colorPreference', 120)
+          && optionalStringList(request.resource.data.prototypeSpec, 'adminRoles', 20)
+          && stringBetween(request.resource.data.prototypeSpec, 'coreWorkflows', 30, 6000)
+          && stringBetween(request.resource.data.prototypeSpec, 'contentNotes', 20, 6000)
+        );
     }
 
     function validContact() {
@@ -82,7 +125,8 @@ service cloud.firestore {
           'plan',
           'savedTemplates',
           'projectCount',
-          'notifications'
+          'notifications',
+          'theme'
         ])
         && request.resource.data.uid == uid
         && stringBetween(request.resource.data, 'name', 1, 120)
@@ -95,16 +139,123 @@ service cloud.firestore {
         && request.resource.data.projectCount is int
         && request.resource.data.projectCount >= 0
         && request.resource.data.projectCount <= 10000
-        && (!request.resource.data.keys().hasAny(['notifications']) || request.resource.data.notifications is bool);
+        && (!request.resource.data.keys().hasAny(['notifications']) || request.resource.data.notifications is bool)
+        && (!request.resource.data.keys().hasAny(['theme']) || request.resource.data.theme in ['dark', 'light', 'system']);
+    }
+
+    function validStatus(value) {
+      return value in ['Submitted', 'Discovery', 'Designing', 'Building', 'Review', 'Completed', 'On Hold'];
+    }
+
+    function validProjectCreate() {
+      return request.resource.data.keys().hasOnly([
+          'userId',
+          'clientName',
+          'clientEmail',
+          'title',
+          'projectType',
+          'description',
+          'audience',
+          'budget',
+          'timeline',
+          'referenceLinks',
+          'templateSlug',
+          'solutionSlug',
+          'platformMode',
+          'subdomainPreference',
+          'prototypeSpec',
+          'assets',
+          'previews',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && stringBetween(request.resource.data, 'clientName', 1, 120)
+        && stringBetween(request.resource.data, 'clientEmail', 3, 254)
+        && stringBetween(request.resource.data, 'title', 2, 180)
+        && stringBetween(request.resource.data, 'projectType', 1, 180)
+        && stringBetween(request.resource.data, 'description', 40, 12000)
+        && stringBetween(request.resource.data, 'audience', 1, 800)
+        && request.resource.data.budget is int
+        && request.resource.data.budget >= 39
+        && request.resource.data.budget <= 100000
+        && stringBetween(request.resource.data, 'timeline', 1, 120)
+        && request.resource.data.referenceLinks is list
+        && request.resource.data.referenceLinks.size() <= 8
+        && optionalString(request.resource.data, 'templateSlug', 180)
+        && optionalString(request.resource.data, 'solutionSlug', 180)
+        && validPlatformMode(request.resource.data, 'platformMode')
+        && optionalString(request.resource.data, 'subdomainPreference', 120)
+        && validPrototypeSpec()
+        && request.resource.data.assets is list
+        && request.resource.data.assets.size() == 0
+        && request.resource.data.previews is list
+        && request.resource.data.previews.size() == 0
+        && request.resource.data.status == 'Submitted'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function clientProjectUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'assets',
+          'lastClientNote',
+          'status',
+          'updatedAt'
+        ])
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.assets is list
+        && request.resource.data.assets.size() <= 32
+        && request.resource.data.previews == resource.data.previews
+        && optionalString(request.resource.data, 'lastClientNote', 4000)
+        && (request.resource.data.status == resource.data.status || request.resource.data.status == 'Review')
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function adminProjectUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'adminSummary',
+          'deadline',
+          'previews',
+          'status',
+          'updatedAt'
+        ])
+        && request.resource.data.previews is list
+        && request.resource.data.previews.size() <= 32
+        && optionalString(request.resource.data, 'adminSummary', 6000)
+        && optionalString(request.resource.data, 'deadline', 120)
+        && validStatus(request.resource.data.status)
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function projectOwner(projectId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid;
+    }
+
+    function validMessage(role) {
+      return request.resource.data.keys().hasOnly([
+          'authorId',
+          'authorName',
+          'role',
+          'text',
+          'createdAt'
+        ])
+        && request.resource.data.authorId == request.auth.uid
+        && stringBetween(request.resource.data, 'authorName', 1, 120)
+        && stringBetween(request.resource.data, 'text', 2, 4000)
+        && request.resource.data.role == role
+        && request.resource.data.createdAt == request.time;
     }
 
     match /contacts/{contactId} {
-      allow create: if validContact();
+      allow create: if signedIn() && validContact();
       allow read, update, delete: if false;
     }
 
     match /quotes/{quoteId} {
-      allow create: if validQuote();
+      allow create: if signedIn() && validQuote();
       allow read, update, delete: if false;
     }
 
@@ -125,14 +276,25 @@ service cloud.firestore {
           'phone',
           'avatarUrl',
           'notifications',
-          'savedTemplates'
+          'savedTemplates',
+          'theme'
         ]);
       allow delete: if owns(uid);
     }
 
     match /projects/{projectId} {
-      allow read: if signedIn() && resource.data.userId == request.auth.uid;
-      allow create, update, delete: if false;
+      allow read: if (signedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if signedIn() && validProjectCreate();
+      allow update: if (signedIn() && resource.data.userId == request.auth.uid && clientProjectUpdate())
+        || (isAdmin() && adminProjectUpdate());
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if projectOwner(projectId) || isAdmin();
+        allow create: if (projectOwner(projectId) && validMessage('client'))
+          || (isAdmin() && validMessage('admin'));
+        allow update, delete: if false;
+      }
     }
 
     match /blog/{postId} {
@@ -141,11 +303,6 @@ service cloud.firestore {
     }
 
     match /templates/{templateId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    match /testimonials/{testimonialId} {
       allow read: if true;
       allow write: if false;
     }
