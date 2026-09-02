@@ -1,23 +1,32 @@
 import { applicationDefault, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
+import { config } from 'dotenv'
 
-const uid = process.argv[2]
+config({ path: '.env.local' })
 
-if (!uid) {
-  console.error('Usage: npm run grant-admin -- <firebase-auth-uid>')
+const identifier = process.argv[2]
+const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.VITE_FIREBASE_PROJECT_ID
+
+if (!identifier) {
+  console.error('Usage: npm run grant-admin -- <firebase-auth-uid-or-email>')
+  process.exit(1)
+}
+
+if (!projectId) {
+  console.error('Missing Firebase project id. Set FIREBASE_PROJECT_ID or VITE_FIREBASE_PROJECT_ID in .env.local.')
   process.exit(1)
 }
 
 const app = initializeApp({
   credential: applicationDefault(),
-  projectId: process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT,
+  projectId,
 })
 const auth = getAuth(app)
-const account = await auth.getUser(uid)
+const account = identifier.includes('@') ? await auth.getUserByEmail(identifier) : await auth.getUser(identifier)
 
-await auth.setCustomUserClaims(uid, {
+await auth.setCustomUserClaims(account.uid, {
   ...account.customClaims,
   admin: true,
 })
 
-console.log(`Granted AuraFlow admin access to ${account.email ?? uid}. Sign out and back in to refresh the claim.`)
+console.log(`Granted AuraFlow admin access to ${account.email ?? account.uid}. Sign out and back in to refresh the claim.`)

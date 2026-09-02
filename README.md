@@ -51,7 +51,7 @@ Before production release:
 1. Register or log in with the creator account.
 2. Open dashboard Settings and copy the Firebase UID shown in Creator Access.
 3. Authenticate a local trusted Admin SDK session, for example by setting `GOOGLE_APPLICATION_CREDENTIALS` to a Firebase service account JSON path.
-4. Run `npm run grant-admin -- <uid>`.
+4. Run `npm run grant-admin -- elishaafari0@gmail.com` after that account exists in Firebase Auth.
 5. Sign out and back in. The sidebar then shows Admin, and `/dashboard/admin` opens the client request console.
 
 Do not put service-account JSON in the repo or in browser environment variables.
