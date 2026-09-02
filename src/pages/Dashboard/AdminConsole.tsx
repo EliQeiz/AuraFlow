@@ -119,12 +119,33 @@ function AdminProject({ onRefresh, project, userId }: { onRefresh: () => void; p
               </div>
             </div>
           ) : null}
+          {project.prototypeSpec?.selectedBuilderFeatures?.length ? (
+            <div className="lg:col-span-3">
+              <strong className="text-white">Builder features</strong>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {project.prototypeSpec.selectedBuilderFeatures.map((feature) => (
+                  <Badge key={feature} className="bg-white/[0.07] text-white">{feature}</Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {project.prototypeSpec ? (
             <div className="lg:col-span-3">
               <strong className="text-white">Prototype brief</strong>
+              <div className="mt-2 grid gap-2 md:grid-cols-3">
+                <span className="rounded-md border border-white/10 bg-black/20 p-2">Theme: {project.prototypeSpec.themePreset ?? 'Default'}</span>
+                <span className="rounded-md border border-white/10 bg-black/20 p-2">Primary: {project.prototypeSpec.primaryColor ?? 'Not set'}</span>
+                <span className="rounded-md border border-white/10 bg-black/20 p-2">Accent: {project.prototypeSpec.accentColor ?? 'Not set'}</span>
+              </div>
               <p className="mt-2 whitespace-pre-line leading-7">{project.prototypeSpec.coreWorkflows}</p>
               <p className="mt-3 whitespace-pre-line leading-7">{project.prototypeSpec.contentNotes}</p>
+              {project.prototypeSpec.logoDirection ? <p className="mt-3 whitespace-pre-line leading-7">Logo direction: {project.prototypeSpec.logoDirection}</p> : null}
+              {project.prototypeSpec.bannerDirection ? <p className="mt-3 whitespace-pre-line leading-7">Banner direction: {project.prototypeSpec.bannerDirection}</p> : null}
+              {project.prototypeSpec.mediaPlan ? <p className="mt-3 whitespace-pre-line leading-7">Media plan: {project.prototypeSpec.mediaPlan}</p> : null}
               {project.prototypeSpec.dataSources ? <p className="mt-3 whitespace-pre-line leading-7">Data sources: {project.prototypeSpec.dataSources}</p> : null}
+              {project.prototypeSpec.automationNeeds?.length ? <p className="mt-3 whitespace-pre-line leading-7">Automations: {project.prototypeSpec.automationNeeds.join('; ')}</p> : null}
+              {project.prototypeSpec.paymentPlan ? <p className="mt-3 whitespace-pre-line leading-7">Payments/bookings: {project.prototypeSpec.paymentPlan}</p> : null}
+              {project.prototypeSpec.tenantAdminNotes ? <p className="mt-3 whitespace-pre-line leading-7">Owner/admin controls: {project.prototypeSpec.tenantAdminNotes}</p> : null}
               {project.prototypeSpec.complianceNotes ? <p className="mt-3 whitespace-pre-line leading-7">Security notes: {project.prototypeSpec.complianceNotes}</p> : null}
             </div>
           ) : null}
@@ -137,6 +158,7 @@ function AdminProject({ onRefresh, project, userId }: { onRefresh: () => void; p
           selectedModules={project.prototypeSpec?.selectedModules}
           selectedRoles={project.prototypeSpec?.selectedRoles}
           selectedWorkflows={project.prototypeSpec?.selectedWorkflows}
+          selectedBuilderFeatures={project.prototypeSpec?.selectedBuilderFeatures}
           className="mt-5"
         />
       ) : null}

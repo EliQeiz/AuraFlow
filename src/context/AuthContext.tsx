@@ -2,7 +2,7 @@ import { onAuthStateChanged, type User } from 'firebase/auth'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react'
 import { firebaseConfigured, getFirebaseAuth } from '../lib/firebase'
 import { getUserProfile } from '../lib/firestore'
-import { logoutAccount } from '../lib/auth'
+import { completeGoogleRedirectSignIn, ensureUserProfile, logoutAccount } from '../lib/auth'
 import type { UserProfile } from '../types'
 
 interface AuthValue {
@@ -30,11 +30,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (!firebaseConfigured) return
 
+    void completeGoogleRedirectSignIn().catch((error) => {
+      console.warn('AuraFlow Google redirect sign-in failed.', error)
+    })
+
     return onAuthStateChanged(getFirebaseAuth(), async (nextUser) => {
       setUser(nextUser)
       try {
         setAdmin(nextUser ? Boolean((await nextUser.getIdTokenResult()).claims.admin) : false)
-        setProfile(nextUser ? await getUserProfile(nextUser.uid) : null)
+        if (!nextUser) {
+          setProfile(null)
+        } else {
+          const nextProfile = await getUserProfile(nextUser.uid)
+          setProfile(nextProfile ?? (await ensureUserProfile(nextUser)))
+        }
       } catch (error) {
         console.warn('AuraFlow profile load failed.', error)
         setProfile(null)

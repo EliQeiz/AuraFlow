@@ -44,7 +44,7 @@ Before production release:
 5. Deploy the checked-in rules and indexes with `firebase deploy --only firestore:rules,firestore:indexes,storage --project <project-id>`.
 6. Validate rules in the Emulator Suite when Java 21+ is available.
 
-`firestore.rules` keeps project records, chat messages, client updates, suite prototype specs, and admin updates behind owner/admin checks. Public request forms are not exposed; legacy contact and quote writes require authentication. `storage.rules` keeps references owner/admin-readable, makes preview uploads admin-only, limits approved reference files to 25MB, and limits avatars to owner image uploads under 2MB.
+`firestore.rules` keeps project records, chat messages, client updates, suite prototype specs, and admin updates behind owner/admin checks. Public request forms are not exposed; legacy contact and quote writes require authentication. `storage.rules` keeps references owner/admin-readable, makes preview uploads admin-only, limits approved reference files to 50MB, allows approved image/video/document reference files, and limits avatars to owner image uploads under 2MB.
 
 ## Admin Access
 

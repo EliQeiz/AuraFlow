@@ -146,7 +146,7 @@ export default function NewRequest() {
           </div>
           <label className="grid gap-2 rounded-lg border border-dashed border-cyan-200/35 bg-cyan-300/10 p-4 text-sm text-aura-muted">
             <span className="inline-flex items-center gap-2 font-bold text-white"><UploadCloud className="h-4 w-4" /> Upload references and content</span>
-            <span>Images, PDFs, Office files, CSV/JSON/text, or ZIP packs up to 8 files and 25MB each. Add food photos, properties, people, screenshots, sketches, branding, data, or content files.</span>
+            <span>Images, videos, PDFs, Office files, CSV/JSON/text, or ZIP packs up to 8 files and 50MB each. Add food photos, properties, people, screenshots, sketches, branding, data, or content files.</span>
             <Input multiple accept={requestAssetAccept} type="file" onChange={(event) => setFiles(Array.from(event.target.files ?? []))} />
           </label>
           <Button type="submit" loading={loading} className="w-full sm:w-fit"><Send className="h-4 w-4" /> Send Private Request</Button>

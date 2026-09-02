@@ -74,6 +74,32 @@ export default function SolutionDetail() {
         <SuitePreviewPanel suite={suite} />
       </section>
 
+      <section className="section-shell pb-16">
+        <div className="mb-6 max-w-3xl">
+          <Badge>Prototype Tools</Badge>
+          <h2 className="mt-4 text-3xl font-extrabold sm:text-5xl">Design the system before AuraFlow builds it.</h2>
+          <p className="mt-4 leading-8 text-aura-muted">
+            Inside the client portal, each suite becomes a guided builder where clients choose screens, uploads, brand direction, automations, data, payments, and admin controls.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {suite.builderFeatures.map((feature, index) => (
+            <motion.article
+              key={feature.id}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.025 }}
+              className="rounded-lg border border-white/10 bg-white/[0.06] p-4"
+            >
+              <h3 className="text-xl font-bold">{feature.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-aura-muted">{feature.summary}</p>
+              <p className="mt-3 rounded-md border border-cyan-200/20 bg-cyan-300/10 p-3 text-xs leading-5 text-cyan-50">{feature.output}</p>
+            </motion.article>
+          ))}
+        </div>
+      </section>
+
       <section className="border-y border-white/10 bg-aura-surface/55 py-16">
         <div className="section-shell grid gap-8 lg:grid-cols-[0.72fr_1fr]">
           <div>

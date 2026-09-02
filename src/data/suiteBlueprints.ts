@@ -1,5 +1,5 @@
 import { IMAGES } from '../lib/images'
-import type { SuiteBlueprint, SuiteModule, SuiteRole, SuiteTier, SuiteWorkflow } from '../types'
+import type { SuiteBlueprint, SuiteBuilderFeature, SuiteModule, SuiteRole, SuiteTier, SuiteWorkflow } from '../types'
 
 const allTiers: SuiteTier[] = ['starter', 'business', 'operations', 'enterprise']
 const businessUp: SuiteTier[] = ['business', 'operations', 'enterprise']
@@ -33,6 +33,10 @@ function workflow(title: string, trigger: string, steps: string[], output: strin
   return { id: slugify(title), title, trigger, steps, output }
 }
 
+function builderFeature(title: string, summary: string, output: string): SuiteBuilderFeature {
+  return { id: slugify(title), title, summary, output }
+}
+
 const sharedSecurity = [
   'Firebase Authentication gates the client app before private requests, files, chats, and previews are available.',
   'Firestore rules keep each client restricted to their own project records while admin access requires a custom claim.',
@@ -44,6 +48,32 @@ const sharedThemes = [
   { name: 'Aura Dark', swatches: ['#050510', '#12122A', '#6C63FF', '#00D4FF'] },
   { name: 'Clean Light', swatches: ['#F6F8FF', '#FFFFFF', '#335CFF', '#00A6D6'] },
   { name: 'Local Warm', swatches: ['#17130D', '#2F2416', '#E8B44D', '#36D399'] },
+]
+
+const defaultBuilderFeatures = (suiteTitle: string) => [
+  builderFeature('Brand Kit Studio', 'Upload logo directions, color palette, typography preference, and visual references.', `A design-ready brand profile for the ${suiteTitle} build.`),
+  builderFeature('Page And Screen Planner', 'Choose public pages, portal dashboards, admin screens, and mobile-first views.', 'A scoped screen map AuraFlow can turn into wireframes and previews.'),
+  builderFeature('Media Library Brief', 'Group photos, videos, banners, room/product images, menu shots, and portfolio visuals.', 'A structured media plan tied to the exact suite sections.'),
+  builderFeature('Workflow Automation Picks', 'Select the repeated actions that should become automatic status updates, reminders, or handoffs.', 'A first automation backlog for the hosted system.'),
+  builderFeature('Role Permission Sketch', 'Define what owners, staff, customers, guests, parents, or vendors should see and control.', 'A permission outline before custom rules are implemented.'),
+  builderFeature('Data Migration Map', 'Explain existing spreadsheets, paper forms, product lists, student records, menus, or booking records.', 'A data import and cleanup checklist.'),
+  builderFeature('Payment And Booking Logic', 'Capture deposits, balances, checkout requests, fees, reservation rules, or invoice workflows.', 'A finance and booking behavior summary.'),
+  builderFeature('Client Preview Loop', 'Use AuraFlow uploads, links, and revision messages to approve each design stage.', 'A review workflow that keeps decisions attached to the request.'),
+  builderFeature('Admin Console Planner', 'Describe the no-code controls the business owner should have after launch.', 'A tailored admin dashboard scope.'),
+  builderFeature('Security And Privacy Matrix', 'State private fields, approval gates, upload limits, admin-only data, and staff boundaries.', 'A security brief for Firebase/Supabase rules and admin access.'),
+]
+
+const schoolBuilderFeatures = [
+  builderFeature('School Brand Kit And Crest Studio', 'Upload the school logo, crest, colors, uniforms, campus photos, prospectus, and preferred homepage mood.', 'A school identity pack for the public site, portals, reports, and login pages.'),
+  builderFeature('Campus Media And Video Library', 'Attach classroom photos, facility videos, student-life galleries, event banners, and admissions media.', 'A media plan mapped to homepage, admissions, gallery, parent portal, and news sections.'),
+  builderFeature('Admissions Form Builder', 'Choose applicant fields, guardian fields, document requirements, interview stages, and acceptance messages.', 'A custom admissions workflow ready for implementation.'),
+  builderFeature('Class Structure Wizard', 'Define levels, streams, terms, subjects, grading scales, teacher assignments, and timetable preferences.', 'A clean academic setup plan before the SMS is configured.'),
+  builderFeature('Fee And Payment Rules', 'Describe tuition, daily fees, discounts, scholarships, arrears, receipts, and payment channels.', 'A bursary and invoice rulebook for the school finance module.'),
+  builderFeature('Parent Communication Builder', 'Set announcement groups, emergency messages, fee reminders, report notifications, and parent-teacher chat rules.', 'A communication flow that protects student privacy while keeping guardians updated.'),
+  builderFeature('Report Card Designer', 'Choose grading style, remarks, attendance summaries, signatures, promotion notes, and PDF layout direction.', 'A report card specification AuraFlow can convert into printable exports.'),
+  builderFeature('Student And Staff Data Import Map', 'Upload spreadsheet formats or describe existing student, guardian, staff, class, fee, and grade records.', 'A migration checklist for moving the school from paper or old systems.'),
+  builderFeature('AI Tutor And Lesson Plan Scope', 'Pick subjects, age levels, guardrails, teacher review rules, prompt tone, and usage limits.', 'An AI feature brief that keeps teachers in control.'),
+  builderFeature('Security And Role Approval Matrix', 'Define what owners, admins, teachers, parents, students, finance officers, HR, library, and IT users can access.', 'A role-by-role security map for private school data.'),
 ]
 
 const schoolModules = [
@@ -144,6 +174,7 @@ export const suiteBlueprints: SuiteBlueprint[] = [
       { label: 'Open tickets', value: '7', trend: 'IT, finance, and parent follow-up' },
     ],
     themes: sharedThemes,
+    builderFeatures: schoolBuilderFeatures,
     sourceNote: 'Derived from the included Crestview ISMS Next.js/Supabase folder: route map, roles, RLS-backed table model, and operations modules were translated into this reusable AuraFlow suite blueprint.',
   },
   makeSuite({
@@ -151,15 +182,16 @@ export const suiteBlueprints: SuiteBlueprint[] = [
     slug: 'ecommerce-storefront',
     title: 'E-commerce Storefront',
     category: 'Retail',
-    summary: 'Product catalog, cart, checkout requests, order tracking, inventory, seller dashboard, and customer accounts.',
+    summary: 'Catalog, variants, cart, checkout requests, order tracking, inventory, payments, fulfilment, customer accounts, and owner analytics.',
     image: IMAGES.templates.ecommerce,
     audience: 'Fashion stores, electronics shops, cosmetics brands, bookstores, supermarkets, and local retail businesses',
     startingPrice: 'Managed from $79/mo',
     platformLabel: 'yourshop.auraflow.app',
-    moduleTitles: ['Product Catalog', 'Cart And Checkout Request', 'Inventory', 'Order Pipeline', 'Customer Accounts', 'Promotions', 'Delivery Notes', 'Sales Dashboard'],
-    roleTitles: ['Owner', 'Store Manager', 'Sales Staff', 'Customer'],
-    entities: ['products', 'categories', 'orders', 'order_items', 'inventory_movements', 'customers', 'promotions', 'delivery_notes'],
-    imageScreens: ['Storefront', 'Product Detail', 'Cart', 'Seller Dashboard'],
+    moduleTitles: ['Product Catalog', 'Product Variants', 'Cart And Checkout Request', 'Payment Instructions', 'Inventory And Stock Alerts', 'Order Pipeline', 'Delivery And Pickup Rules', 'Customer Accounts', 'Promotions And Coupons', 'Reviews And Wishlists', 'Sales Dashboard', 'Owner Content Manager'],
+    roleTitles: ['Owner', 'Store Manager', 'Inventory Staff', 'Sales Staff', 'Delivery Staff', 'Customer'],
+    entities: ['products', 'categories', 'variants', 'orders', 'order_items', 'payments', 'inventory_movements', 'customers', 'promotions', 'delivery_notes', 'reviews', 'wishlists'],
+    imageScreens: ['Storefront', 'Product Detail', 'Cart And Checkout', 'Order Tracker', 'Inventory Admin', 'Seller Dashboard'],
+    sourceNote: "Expanded as AuraFlow's ecommerce suite path for shops, supermarkets, boutiques, pharmacies, bookstores, and product-led businesses.",
   }),
   makeSuite({
     id: 'suite-supermarket-mall',
@@ -181,30 +213,32 @@ export const suiteBlueprints: SuiteBlueprint[] = [
     slug: 'restaurant-ordering-booking',
     title: 'Restaurant Ordering And Booking',
     category: 'Food',
-    summary: 'Menus, local dish categories, reservations, delivery requests, catering enquiries, gallery, and kitchen status.',
+    summary: 'Menus, local dish galleries, reservations, delivery requests, catering enquiries, offers, payments, gallery, reviews, and kitchen status.',
     image: pexelsPhoto(32612769),
     audience: 'Restaurants, chop bars, cafes, diners, food trucks, bakeries, and catering teams',
     startingPrice: 'Managed from $69/mo',
     platformLabel: 'yourrestaurant.auraflow.app',
-    moduleTitles: ['Menu Builder', 'Ghanaian Dish Gallery', 'Reservation Board', 'Delivery Requests', 'Catering Enquiries', 'Kitchen Status', 'Reviews', 'WhatsApp Handoff'],
-    roleTitles: ['Owner', 'Manager', 'Kitchen', 'Wait Staff', 'Customer'],
-    entities: ['dishes', 'menu_categories', 'reservations', 'orders', 'order_notes', 'gallery_images', 'reviews', 'catering_requests'],
-    imageScreens: ['Menu', 'Dish Detail', 'Booking', 'Kitchen Board'],
+    moduleTitles: ['Menu Builder', 'Local Dish Gallery', 'Branches And Tables', 'Reservation Board', 'Delivery Requests', 'Online Ordering', 'Catering Enquiries', 'Kitchen Display', 'Ingredients And Stock', 'Promo Banners', 'Reviews', 'WhatsApp And Payment Handoff', 'Daily Sales Snapshot'],
+    roleTitles: ['Owner', 'Manager', 'Kitchen', 'Wait Staff', 'Delivery Staff', 'Customer'],
+    entities: ['dishes', 'menu_categories', 'branches', 'tables', 'reservations', 'orders', 'order_notes', 'ingredients', 'gallery_images', 'reviews', 'catering_requests', 'promo_banners', 'sales_days'],
+    imageScreens: ['Menu', 'Dish Detail', 'Reservation Flow', 'Kitchen Board', 'Catering Request', 'Owner Dashboard'],
+    sourceNote: 'Inspired by the uploaded Edma 1 restaurant site: hero, menu filters, Ghanaian dish storytelling, gallery, reservations, and WhatsApp ordering were translated into a configurable hospitality suite.',
   }),
   makeSuite({
     id: 'suite-hospitality',
     slug: 'hotel-lodge-guesthouse-booking',
     title: 'Hotel, Lodge And Guest House Booking',
     category: 'Hospitality',
-    summary: 'Rooms, rates, availability requests, amenities, event halls, guest profiles, galleries, and booking status.',
+    summary: 'Rooms, rates, availability requests, lodges, guesthouses, event halls, guest profiles, galleries, housekeeping, payments, and booking status.',
     image: IMAGES.templates.hotel,
     audience: 'Hotels, lodges, resorts, guest houses, hostels, serviced apartments, and event halls',
     startingPrice: 'Managed from $99/mo',
     platformLabel: 'yourhotel.auraflow.app',
-    moduleTitles: ['Room Catalog', 'Availability Requests', 'Rate Manager', 'Guest Profiles', 'Amenities', 'Event Hall Enquiries', 'Gallery', 'Occupancy Reports'],
-    roleTitles: ['Owner', 'Reception', 'Manager', 'Guest'],
-    entities: ['rooms', 'rates', 'bookings', 'guests', 'amenities', 'event_halls', 'gallery_images', 'occupancy_reports'],
-    imageScreens: ['Rooms', 'Booking', 'Guest Profile', 'Reception Board'],
+    moduleTitles: ['Room Catalog', 'Lodge And Guesthouse Profiles', 'Availability Requests', 'Rate Manager', 'Booking Calendar', 'Guest Profiles', 'Amenities', 'Event Hall Enquiries', 'Housekeeping Tasks', 'Gallery And Banners', 'Deposit Tracking', 'Occupancy Reports'],
+    roleTitles: ['Owner', 'Reception', 'Manager', 'Housekeeping', 'Guest'],
+    entities: ['rooms', 'room_types', 'rates', 'bookings', 'guests', 'payments', 'amenities', 'event_halls', 'housekeeping_tasks', 'gallery_images', 'promo_banners', 'occupancy_reports'],
+    imageScreens: ['Rooms', 'Booking Calendar', 'Guest Profile', 'Reception Board', 'Event Hall Enquiry', 'Owner Occupancy Report'],
+    sourceNote: 'Tailored from the Edma-style hospitality direction into a broader hotel, lodge, guesthouse, and event-hall suite.',
   }),
   makeSuite({
     id: 'suite-clinic',
@@ -348,6 +382,7 @@ function makeSuite(input: {
   roleTitles: string[]
   entities: string[]
   imageScreens: string[]
+  sourceNote?: string
 }): SuiteBlueprint {
   const modules = input.moduleTitles.map((title, index) =>
     suiteModule(
@@ -394,8 +429,10 @@ function makeSuite(input: {
       { label: 'Modules', value: `${modules.length}`, trend: 'Configurable before build' },
       { label: 'Roles', value: `${input.roleTitles.length}`, trend: 'Permission-aware portals' },
       { label: 'Launch path', value: '2 lanes', trend: 'Hosted or custom' },
-      { label: 'Assets', value: '25MB', trend: 'Per uploaded reference file' },
+      { label: 'Assets', value: '50MB', trend: 'Per uploaded reference file' },
     ],
     themes: sharedThemes,
+    builderFeatures: defaultBuilderFeatures(input.title),
+    sourceNote: input.sourceNote,
   }
 }

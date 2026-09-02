@@ -138,6 +138,21 @@ function RequestDetail({ onRefresh, project, userId, userName }: { onRefresh: ()
                 </div>
               </div>
             ) : null}
+            {project.prototypeSpec?.selectedBuilderFeatures?.length ? (
+              <div className="mt-4">
+                <span className="text-sm font-bold text-white">Builder features</span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {project.prototypeSpec.selectedBuilderFeatures.map((feature) => <Badge key={feature} className="bg-white/[0.07] text-white">{feature}</Badge>)}
+                </div>
+              </div>
+            ) : null}
+            {project.prototypeSpec ? (
+              <div className="mt-4 grid gap-2 text-sm text-aura-muted md:grid-cols-3">
+                <Info label="Theme" value={project.prototypeSpec.themePreset ?? 'Default'} />
+                <Info label="Primary" value={project.prototypeSpec.primaryColor ?? 'Not set'} />
+                <Info label="Accent" value={project.prototypeSpec.accentColor ?? 'Not set'} />
+              </div>
+            ) : null}
           </div>
         ) : null}
       </Card>
@@ -148,6 +163,7 @@ function RequestDetail({ onRefresh, project, userId, userName }: { onRefresh: ()
           selectedModules={project.prototypeSpec?.selectedModules}
           selectedRoles={project.prototypeSpec?.selectedRoles}
           selectedWorkflows={project.prototypeSpec?.selectedWorkflows}
+          selectedBuilderFeatures={project.prototypeSpec?.selectedBuilderFeatures}
         />
       ) : null}
       <div className="grid gap-4 lg:grid-cols-2">

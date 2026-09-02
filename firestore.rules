@@ -30,6 +30,11 @@ service cloud.firestore {
         || (data[field] is list && data[field].size() <= maximum);
     }
 
+    function optionalBool(data, field) {
+      return !data.keys().hasAny([field])
+        || data[field] is bool;
+    }
+
     function validPlatformMode(data, field) {
       return !data.keys().hasAny([field])
         || data[field] in ['managed-hosted', 'custom-build', 'prototype-only'];
@@ -55,7 +60,18 @@ service cloud.firestore {
             'contentNotes',
             'dataSources',
             'complianceNotes',
-            'launchModel'
+            'launchModel',
+            'selectedBuilderFeatures',
+            'themePreset',
+            'primaryColor',
+            'accentColor',
+            'logoDirection',
+            'bannerDirection',
+            'mediaPlan',
+            'automationNeeds',
+            'paymentPlan',
+            'tenantAdminNotes',
+            'contentOwnershipConfirmed'
           ])
           && optionalString(request.resource.data.prototypeSpec, 'solutionSlug', 180)
           && optionalString(request.resource.data.prototypeSpec, 'suiteSlug', 180)
@@ -73,6 +89,19 @@ service cloud.firestore {
           && optionalString(request.resource.data.prototypeSpec, 'dataSources', 6000)
           && optionalString(request.resource.data.prototypeSpec, 'complianceNotes', 4000)
           && optionalString(request.resource.data.prototypeSpec, 'launchModel', 120)
+          && optionalStringList(request.resource.data.prototypeSpec, 'selectedBuilderFeatures', 20)
+          && optionalString(request.resource.data.prototypeSpec, 'themePreset', 120)
+          && optionalString(request.resource.data.prototypeSpec, 'primaryColor', 32)
+          && optionalString(request.resource.data.prototypeSpec, 'accentColor', 32)
+          && optionalString(request.resource.data.prototypeSpec, 'logoDirection', 4000)
+          && optionalString(request.resource.data.prototypeSpec, 'bannerDirection', 4000)
+          && optionalString(request.resource.data.prototypeSpec, 'mediaPlan', 5000)
+          && optionalStringList(request.resource.data.prototypeSpec, 'automationNeeds', 12)
+          && optionalString(request.resource.data.prototypeSpec, 'paymentPlan', 4000)
+          && optionalString(request.resource.data.prototypeSpec, 'tenantAdminNotes', 5000)
+          && optionalBool(request.resource.data.prototypeSpec, 'contentOwnershipConfirmed')
+          && (!request.resource.data.prototypeSpec.keys().hasAny(['contentOwnershipConfirmed'])
+            || request.resource.data.prototypeSpec.contentOwnershipConfirmed == true)
         );
     }
 

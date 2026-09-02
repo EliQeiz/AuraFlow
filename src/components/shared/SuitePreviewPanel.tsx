@@ -1,4 +1,4 @@
-import { CheckCircle2, DatabaseZap, LockKeyhole, MonitorSmartphone, Route, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, DatabaseZap, LockKeyhole, MonitorSmartphone, Route, ShieldCheck, Sparkles } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import type { SuiteBlueprint } from '../../types'
 import { Badge } from '../ui/Badge'
@@ -9,6 +9,7 @@ export function SuitePreviewPanel({
   selectedModules = [],
   selectedRoles = [],
   selectedWorkflows = [],
+  selectedBuilderFeatures = [],
   suite,
 }: {
   className?: string
@@ -16,11 +17,13 @@ export function SuitePreviewPanel({
   selectedModules?: string[]
   selectedRoles?: string[]
   selectedWorkflows?: string[]
+  selectedBuilderFeatures?: string[]
   suite: SuiteBlueprint
 }) {
   const modules = pickSelected(suite.modules, selectedModules, (module) => module.title).slice(0, compact ? 4 : 8)
   const roles = pickSelected(suite.roles, selectedRoles, (role) => role.title).slice(0, compact ? 4 : 7)
   const workflows = pickSelected(suite.workflows, selectedWorkflows, (item) => item.title).slice(0, compact ? 2 : 4)
+  const builderFeatures = pickSelected(suite.builderFeatures, selectedBuilderFeatures, (feature) => feature.title).slice(0, compact ? 3 : 5)
   const screens = suite.prototypeScreens.slice(0, compact ? 3 : 5)
 
   return (
@@ -121,6 +124,21 @@ export function SuitePreviewPanel({
               </div>
             </div>
           ) : null}
+
+          <div className="rounded-lg border border-white/10 bg-white/[0.05] p-3">
+            <span className="inline-flex items-center gap-2 text-sm font-bold text-white">
+              <Sparkles className="h-4 w-4 text-cyan-100" />
+              Builder features
+            </span>
+            <div className="mt-3 grid gap-2">
+              {builderFeatures.map((feature) => (
+                <div key={feature.id} className="rounded-md bg-black/25 p-3">
+                  <strong className="text-sm text-white">{feature.title}</strong>
+                  <p className="mt-1 text-xs leading-5 text-aura-muted">{feature.output}</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="rounded-lg border border-white/10 bg-white/[0.05] p-3">
             <span className="text-sm font-bold text-white">Workflow preview</span>

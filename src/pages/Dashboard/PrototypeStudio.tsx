@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, DatabaseZap, FileImage, Layers3, MonitorSmartphone, Send, ServerCog, Sparkles, UploadCloud, UsersRound, Waypoints } from 'lucide-react'
+import { Check, DatabaseZap, FileImage, Layers3, MonitorSmartphone, Palette, Send, ServerCog, Sparkles, UploadCloud, UsersRound, Waypoints } from 'lucide-react'
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -19,6 +19,7 @@ import type { PlatformMode, PrototypeSpec } from '../../types'
 const initialModulesFor = (slug: string) => (getSuiteBlueprint(slug) ?? suiteBlueprints[0]).modules.slice(0, 6).map((module) => module.title)
 const initialRolesFor = (slug: string) => (getSuiteBlueprint(slug) ?? suiteBlueprints[0]).roles.slice(0, 5).map((role) => role.title)
 const initialWorkflowsFor = (slug: string) => (getSuiteBlueprint(slug) ?? suiteBlueprints[0]).workflows.slice(0, 3).map((workflow) => workflow.title)
+const initialBuilderFeaturesFor = (slug: string) => (getSuiteBlueprint(slug) ?? suiteBlueprints[0]).builderFeatures.slice(0, 5).map((feature) => feature.title)
 
 export default function PrototypeStudio() {
   const { profile, user } = useAuth()
@@ -29,6 +30,7 @@ export default function PrototypeStudio() {
   const [selectedModules, setSelectedModules] = useState<string[]>(initialModulesFor(initial.slug))
   const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRolesFor(initial.slug))
   const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>(initialWorkflowsFor(initial.slug))
+  const [selectedBuilderFeatures, setSelectedBuilderFeatures] = useState<string[]>(initialBuilderFeaturesFor(initial.slug))
   const [platformMode, setPlatformMode] = useState<PlatformMode>('managed-hosted')
   const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
@@ -41,6 +43,7 @@ export default function PrototypeStudio() {
     setSelectedModules(initialModulesFor(next.slug))
     setSelectedRoles(initialRolesFor(next.slug))
     setSelectedWorkflows(initialWorkflowsFor(next.slug))
+    setSelectedBuilderFeatures(initialBuilderFeaturesFor(next.slug))
   }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -56,6 +59,10 @@ export default function PrototypeStudio() {
     }
 
     const data = new FormData(event.currentTarget)
+    if (!data.has('contentOwnershipConfirmed')) {
+      toast.error('Confirm that uploaded content is safe for AuraFlow to use.')
+      return
+    }
     const businessName = String(data.get('businessName') ?? '').trim()
     const subdomainPreference = String(data.get('subdomainPreference') ?? '').trim()
     const coreWorkflows = String(data.get('coreWorkflows') ?? '').trim()
@@ -63,6 +70,19 @@ export default function PrototypeStudio() {
     const dataSources = String(data.get('dataSources') ?? '').trim()
     const complianceNotes = String(data.get('complianceNotes') ?? '').trim()
     const launchModel = platformModes.find((mode) => mode.id === platformMode)?.label ?? 'Custom build'
+    const themePreset = String(data.get('themePreset') ?? active.themes[0]?.name ?? 'Aura Dark')
+    const primaryColor = String(data.get('primaryColor') ?? '#6C63FF')
+    const accentColor = String(data.get('accentColor') ?? '#00D4FF')
+    const logoDirection = String(data.get('logoDirection') ?? '').trim()
+    const bannerDirection = String(data.get('bannerDirection') ?? '').trim()
+    const mediaPlan = String(data.get('mediaPlan') ?? '').trim()
+    const paymentPlan = String(data.get('paymentPlan') ?? '').trim()
+    const tenantAdminNotes = String(data.get('tenantAdminNotes') ?? '').trim()
+    const automationNeeds = String(data.get('automationNeeds') ?? '')
+      .split(/\r?\n/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 12)
     const prototypeSpec: PrototypeSpec = {
       solutionSlug: active.slug,
       suiteSlug: active.slug,
@@ -80,6 +100,17 @@ export default function PrototypeStudio() {
       dataSources,
       complianceNotes,
       launchModel,
+      selectedBuilderFeatures,
+      themePreset,
+      primaryColor,
+      accentColor,
+      logoDirection,
+      bannerDirection,
+      mediaPlan,
+      automationNeeds,
+      paymentPlan,
+      tenantAdminNotes,
+      contentOwnershipConfirmed: true,
     }
 
     setLoading(true)
@@ -96,9 +127,17 @@ export default function PrototypeStudio() {
           `Selected modules: ${selectedModules.join(', ')}.`,
           `Selected portals: ${selectedRoles.join(', ')}.`,
           `Priority workflows: ${selectedWorkflows.join(', ') || 'To be scoped with AuraFlow'}.`,
+          `Builder features: ${selectedBuilderFeatures.join(', ') || 'Core design brief only'}.`,
+          `Theme: ${themePreset} (${primaryColor} / ${accentColor}).`,
           `Core workflows: ${coreWorkflows}`,
           `Content/assets: ${contentNotes}`,
+          mediaPlan ? `Media plan: ${mediaPlan}` : '',
+          logoDirection ? `Logo direction: ${logoDirection}` : '',
+          bannerDirection ? `Banner direction: ${bannerDirection}` : '',
           dataSources ? `Data sources: ${dataSources}` : '',
+          automationNeeds.length ? `Automation needs: ${automationNeeds.join('; ')}` : '',
+          paymentPlan ? `Payment and booking logic: ${paymentPlan}` : '',
+          tenantAdminNotes ? `Owner/admin controls: ${tenantAdminNotes}` : '',
           complianceNotes ? `Security and compliance notes: ${complianceNotes}` : '',
         ]
           .filter(Boolean)
@@ -117,7 +156,7 @@ export default function PrototypeStudio() {
         prototypeSpec,
       })
 
-      for (const file of files.slice(0, 10)) {
+      for (const file of files.slice(0, 12)) {
         const uploaded = await uploadProjectAsset(user.uid, request.id, file, 'references')
         await attachProjectAsset(request.id, {
           id: crypto.randomUUID(),
@@ -188,7 +227,7 @@ export default function PrototypeStudio() {
           </div>
         </Card>
 
-        <SuitePreviewPanel suite={active} selectedModules={selectedModules} selectedRoles={selectedRoles} selectedWorkflows={selectedWorkflows} />
+        <SuitePreviewPanel suite={active} selectedModules={selectedModules} selectedRoles={selectedRoles} selectedWorkflows={selectedWorkflows} selectedBuilderFeatures={selectedBuilderFeatures} />
 
         <form onSubmit={submit} className="grid gap-4">
           <Card className="p-5">
@@ -205,6 +244,54 @@ export default function PrototypeStudio() {
                   <span className="mt-2 block text-sm leading-6 text-aura-muted">{mode.description}</span>
                 </button>
               ))}
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="inline-flex items-center gap-2 text-2xl font-bold"><Palette className="h-5 w-5 text-cyan-100" /> Design and automation studio</h2>
+            <p className="mt-2 max-w-3xl text-aura-muted">Pick the exact tools AuraFlow should include in the prototype brief. These selections are saved with the request for admin review.</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {active.builderFeatures.map((feature) => (
+                <button
+                  key={feature.id}
+                  type="button"
+                  onClick={() => toggleValue(feature.title, selectedBuilderFeatures, setSelectedBuilderFeatures)}
+                  className={`rounded-lg border p-4 text-left transition ${selectedBuilderFeatures.includes(feature.title) ? 'border-cyan-200 bg-cyan-300/12' : 'border-white/10 bg-black/20 hover:border-white/25'}`}
+                >
+                  <strong className="block text-white">{feature.title}</strong>
+                  <span className="mt-2 block text-sm leading-6 text-aura-muted">{feature.summary}</span>
+                  <span className="mt-3 inline-flex text-xs font-bold text-cyan-100">{feature.output}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <Field label="Theme preset">
+                <Select name="themePreset" defaultValue={active.themes[0]?.name}>
+                  {active.themes.map((theme) => <option key={theme.name}>{theme.name}</option>)}
+                </Select>
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Primary color"><Input name="primaryColor" type="color" defaultValue="#6C63FF" className="h-12 p-1" /></Field>
+                <Field label="Accent color"><Input name="accentColor" type="color" defaultValue="#00D4FF" className="h-12 p-1" /></Field>
+              </div>
+              <Field label="Logo and brand direction">
+                <Textarea name="logoDirection" className="min-h-24" placeholder="Logo, crest, symbol, uniforms, menu identity, packaging, signage, or brand references." />
+              </Field>
+              <Field label="Hero banners and campaign visuals">
+                <Textarea name="bannerDirection" className="min-h-24" placeholder="Homepage banner, admissions banner, hotel room hero, food campaign, sale banner, dashboard welcome screen..." />
+              </Field>
+              <Field label="Media plan">
+                <Textarea name="mediaPlan" className="min-h-24" placeholder="Photos/videos needed: rooms, foods, products, classrooms, team, customers, gallery, behind-the-scenes, location..." />
+              </Field>
+              <Field label="Payment, booking, fees, or checkout logic">
+                <Textarea name="paymentPlan" className="min-h-24" placeholder="Deposits, school fees, delivery fees, room booking payments, order confirmation, invoice flow, mobile money notes..." />
+              </Field>
+              <Field label="Automation needs">
+                <Textarea name="automationNeeds" className="min-h-24" placeholder="One per line: fee reminder, booking confirmation, low stock alert, admission follow-up, order status message..." />
+              </Field>
+              <Field label="Owner/admin controls after launch">
+                <Textarea name="tenantAdminNotes" className="min-h-24" placeholder="What should the owner be able to change without coding? Menu prices, rooms, products, students, staff, gallery, banners..." />
+              </Field>
             </div>
           </Card>
 
@@ -284,8 +371,12 @@ export default function PrototypeStudio() {
             </Field>
             <label className="grid gap-2 rounded-lg border border-dashed border-cyan-200/35 bg-cyan-300/10 p-4 text-sm text-aura-muted">
               <span className="inline-flex items-center gap-2 font-bold text-white"><UploadCloud className="h-4 w-4" /> Upload templates, content, data, and references</span>
-              <span>Images, PDFs, Office files, CSV/JSON/text, or ZIP packs up to 10 files and 25MB each. Do not upload secrets, passwords, or private data you are not allowed to share.</span>
+              <span>Images, videos, PDFs, Office files, CSV/JSON/text, or ZIP packs up to 12 files and 50MB each. Do not upload secrets, passwords, or private data you are not allowed to share.</span>
               <Input multiple accept={requestAssetAccept} type="file" onChange={(event) => setFiles(Array.from(event.target.files ?? []))} />
+            </label>
+            <label className="flex items-start gap-3 rounded-lg border border-white/10 bg-black/20 p-3 text-sm leading-6 text-aura-muted">
+              <input name="contentOwnershipConfirmed" required type="checkbox" className="mt-1 accent-cyan-300" />
+              <span>I confirm I have permission to share these files and references with AuraFlow for this request.</span>
             </label>
             <Button type="submit" loading={loading} className="w-full sm:w-fit">
               <Send className="h-4 w-4" />

@@ -26,6 +26,12 @@ The school management suite currently includes:
 - AI tutor and lesson planner integration points with rate-limit and audit posture.
 - Library, transport, boarding, inventory, IT support, preschool, learner care, and audit trail modules.
 
+## Edma Hospitality Transformation
+
+The uploaded `Edma 1` restaurant site is reviewed as a source direction for AuraFlow's food and hospitality suites. Its hero, menu filtering, Ghanaian dish storytelling, gallery, reservation/order language, and WhatsApp handoff have been translated into configurable suite modules for restaurants, chop bars, cafes, catering teams, hotels, lodges, guesthouses, event halls, and ecommerce-style ordering.
+
+AuraFlow does not commit the raw `Edma 1` application folder. The production app commits the reusable blueprint layer instead: menu builder, local dish gallery, branches/tables, reservations, delivery, catering, kitchen display, stock, promo banners, payment handoff, room catalog, booking calendar, guest profiles, housekeeping, deposit tracking, occupancy reporting, and owner dashboards.
+
 This gives AuraFlow a pitchable, configurable SMS product path:
 
 1. Client chooses the school suite in the authenticated Suite Builder.
@@ -41,7 +47,7 @@ This gives AuraFlow a pitchable, configurable SMS product path:
 - Admin access is not granted by the frontend. Use a trusted Firebase Admin SDK session and `npm run grant-admin -- <uid>`.
 - Firestore rules restrict project reads to the owner or an admin claim.
 - Project chat is stored under each project and follows the same owner/admin boundary.
-- Storage allows approved reference file types only and limits request assets to 25MB per file.
+- Storage allows approved reference file types only and limits request assets to 50MB per file.
 - Service-account JSON, private keys, production credentials, and third-party login details must not be committed or placed in browser variables.
 
 ## Future Build Path

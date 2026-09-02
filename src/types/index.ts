@@ -42,6 +42,13 @@ export interface SuiteMetric {
   trend: string
 }
 
+export interface SuiteBuilderFeature {
+  id: string
+  title: string
+  summary: string
+  output: string
+}
+
 export interface SuiteBlueprint {
   id: string
   slug: string
@@ -63,6 +70,7 @@ export interface SuiteBlueprint {
   prototypeScreens: SuiteScreen[]
   metrics: SuiteMetric[]
   themes: Array<{ name: string; swatches: string[] }>
+  builderFeatures: SuiteBuilderFeature[]
   sourceNote?: string
 }
 
@@ -100,6 +108,17 @@ export interface PrototypeSpec {
   dataSources?: string
   complianceNotes?: string
   launchModel?: string
+  selectedBuilderFeatures?: string[]
+  themePreset?: string
+  primaryColor?: string
+  accentColor?: string
+  logoDirection?: string
+  bannerDirection?: string
+  mediaPlan?: string
+  automationNeeds?: string[]
+  paymentPlan?: string
+  tenantAdminNotes?: string
+  contentOwnershipConfirmed?: boolean
 }
 
 export interface Template {
