@@ -1,4 +1,4 @@
-import { PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 export function AuraFlowProvider({ children }: PropsWithChildren) {

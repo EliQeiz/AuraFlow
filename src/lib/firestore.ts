@@ -107,7 +107,7 @@ export async function getAdminProjects() {
   return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as ProjectRequestRecord)
 }
 
-export async function updateAdminProject(projectId: string, update: { adminSummary?: string; deadline?: string; status?: RequestStatus }) {
+export async function updateAdminProject(projectId: string, update: { adminSummary?: string; deadline?: string; productionUrl?: string; stagingUrl?: string; status?: RequestStatus; tenantSlug?: string }) {
   return updateDoc(doc(getFirebaseDb(), 'projects', projectId), { ...withoutUndefined(update), updatedAt: serverTimestamp() })
 }
 

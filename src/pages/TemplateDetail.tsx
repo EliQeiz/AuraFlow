@@ -8,6 +8,7 @@ import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 import { PageWrapper } from '../components/shared/PageWrapper'
 import { SEOHead } from '../components/shared/SEOHead'
+import { useAuth } from '../context/AuthContext'
 import { buildTemplatePreviewDocument } from '../lib/templatePreview'
 import { formatPrice } from '../lib/utils'
 import { templates } from '../data/templates'
@@ -20,6 +21,7 @@ const devices = {
 
 export default function TemplateDetail() {
   const { slug } = useParams()
+  const { user } = useAuth()
   const template = templates.find((item) => item.slug === slug)
   const [device, setDevice] = useState<keyof typeof devices>('Desktop')
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -125,12 +127,12 @@ export default function TemplateDetail() {
           </div>
           <strong className="mt-6 block font-orbitron text-3xl text-white">{formatPrice(template.price)}</strong>
           <div className="mt-4 grid gap-2">
-            <ButtonLink to="/register" className="w-full">
+            <ButtonLink to={user ? `/dashboard/requests/new?template=${template.slug}` : '/register'} className="w-full">
               <LockKeyhole className="h-4 w-4" />
-              Use In Client App - {formatPrice(template.price)}
+              {user ? 'Use In Private Request' : `Use In Client App - ${formatPrice(template.price)}`}
             </ButtonLink>
-            <ButtonLink to="/login" variant="secondary" className="w-full">
-              Existing Client Login
+            <ButtonLink to={user ? '/dashboard/studio' : '/login'} variant="secondary" className="w-full">
+              {user ? 'Open Suite Builder' : 'Existing Client Login'}
             </ButtonLink>
           </div>
         </aside>

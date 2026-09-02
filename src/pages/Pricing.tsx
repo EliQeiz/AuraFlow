@@ -6,11 +6,14 @@ import { ButtonLink } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { PageWrapper } from '../components/shared/PageWrapper'
 import { SEOHead } from '../components/shared/SEOHead'
+import { useAuth } from '../context/AuthContext'
 import { pricingFaq } from '../data/faq'
 import { hostedPlans, pricingTiers, templatePricing } from '../data/pricing'
 
 export default function Pricing() {
+  const { user } = useAuth()
   const [yearly, setYearly] = useState(false)
+  const appEntry = user ? '/dashboard/studio' : '/register'
 
   return (
     <PageWrapper>
@@ -46,7 +49,7 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <ButtonLink to="/register" className="mt-7 w-full">
+            <ButtonLink to={appEntry} className="mt-7 w-full">
               {tier.monthly === null ? 'Start Enterprise Scope' : `Choose ${tier.name}`}
             </ButtonLink>
           </Card>
@@ -70,7 +73,7 @@ export default function Pricing() {
                 <strong className="mt-4 block font-orbitron text-3xl text-cyan-100">{plan.price}</strong>
                 <p className="mt-3 text-sm leading-6 text-aura-muted">{plan.bestFor}</p>
                 <p className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3 text-sm leading-6 text-aura-muted">{plan.includes}</p>
-                <ButtonLink to="/register" className="mt-5 w-full">Start In App</ButtonLink>
+                <ButtonLink to={appEntry} className="mt-5 w-full">Start In App</ButtonLink>
               </Card>
             ))}
           </div>
@@ -123,7 +126,7 @@ export default function Pricing() {
           <p className="mt-4 text-aura-muted">The account workspace collects the prototype, selected modules, assets, preview feedback, and chat history before AuraFlow commits to a build lane.</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <ButtonLink to="/solutions" variant="secondary">Hosted Systems</ButtonLink>
-            <ButtonLink to="/register" className="w-fit">Create Client Account</ButtonLink>
+            <ButtonLink to={appEntry} className="w-fit">{user ? 'Open Suite Builder' : 'Create Client Account'}</ButtonLink>
           </div>
         </div>
       </section>

@@ -5,7 +5,7 @@ import { cn } from '../../lib/utils'
 const dashboardLinks = [
   { label: 'Home', to: '/dashboard', Icon: Home },
   { label: 'New Request', to: '/dashboard/requests/new', Icon: PlusCircle },
-  { label: 'Studio', to: '/dashboard/studio', Icon: SlidersHorizontal },
+  { label: 'Suite Builder', to: '/dashboard/studio', Icon: SlidersHorizontal },
   { label: 'Requests', to: '/dashboard/requests', Icon: MessageSquareMore },
   { label: 'Messages', to: '/dashboard/messages', Icon: MessagesSquare },
   { label: 'Templates', to: '/dashboard/templates', Icon: LayoutTemplate },

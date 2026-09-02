@@ -10,7 +10,6 @@ export function useProjects(accessToken?: string, refreshKey = 0) {
 
   useEffect(() => {
     if (!accessToken) {
-      setProjects([]);
       return;
     }
 
@@ -42,5 +41,5 @@ export function useProjects(accessToken?: string, refreshKey = 0) {
     };
   }, [accessToken, refreshKey]);
 
-  return { projects, isLoading };
+  return { projects: accessToken ? projects : [], isLoading: Boolean(accessToken) && isLoading };
 }

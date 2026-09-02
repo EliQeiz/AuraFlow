@@ -1,6 +1,71 @@
 export type PriceTier = 'free' | 'starter' | 'pro' | 'enterprise'
 export type PlatformMode = 'managed-hosted' | 'custom-build' | 'prototype-only'
 
+export type SuiteTier = 'starter' | 'business' | 'operations' | 'enterprise'
+
+export interface SuiteModule {
+  id: string
+  title: string
+  category: string
+  summary: string
+  records: string[]
+  actions: string[]
+  includedIn: SuiteTier[]
+}
+
+export interface SuiteRole {
+  id: string
+  title: string
+  portal: string
+  summary: string
+  permissions: string[]
+}
+
+export interface SuiteWorkflow {
+  id: string
+  title: string
+  trigger: string
+  steps: string[]
+  output: string
+}
+
+export interface SuiteScreen {
+  title: string
+  route: string
+  audience: string
+  description: string
+}
+
+export interface SuiteMetric {
+  label: string
+  value: string
+  trend: string
+}
+
+export interface SuiteBlueprint {
+  id: string
+  slug: string
+  title: string
+  category: string
+  summary: string
+  longDescription: string
+  image: string
+  audience: string
+  startingPrice: string
+  platformLabel: string
+  modules: SuiteModule[]
+  roles: SuiteRole[]
+  workflows: SuiteWorkflow[]
+  adminControls: string[]
+  dataEntities: string[]
+  integrations: string[]
+  securityControls: string[]
+  prototypeScreens: SuiteScreen[]
+  metrics: SuiteMetric[]
+  themes: Array<{ name: string; swatches: string[] }>
+  sourceNote?: string
+}
+
 export interface IndustrySolution {
   id: string
   slug: string
@@ -20,15 +85,21 @@ export interface IndustrySolution {
 
 export interface PrototypeSpec {
   solutionSlug?: string
+  suiteSlug?: string
   businessName: string
   platformMode: PlatformMode
   subdomainPreference?: string
   selectedModules: string[]
+  selectedWorkflows?: string[]
+  selectedRoles?: string[]
   brandTone: string
   colorPreference: string
   adminRoles: string[]
   coreWorkflows: string
   contentNotes: string
+  dataSources?: string
+  complianceNotes?: string
+  launchModel?: string
 }
 
 export interface Template {
@@ -147,6 +218,9 @@ export interface ProjectRequestRecord {
   solutionSlug?: string
   platformMode?: PlatformMode
   subdomainPreference?: string
+  tenantSlug?: string
+  stagingUrl?: string
+  productionUrl?: string
   prototypeSpec?: PrototypeSpec
   status: RequestStatus
   adminSummary?: string

@@ -9,14 +9,14 @@ export function useSupabaseSession() {
   useEffect(() => {
     let active = true;
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
       if (active) {
         setSession(data.session);
         setIsLoading(false);
       }
     });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data } = supabase.auth.onAuthStateChange((_event: string, nextSession: Session | null) => {
       setSession(nextSession);
       setIsLoading(false);
     });

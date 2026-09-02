@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { twMerge } from "tailwind-merge";
 import { Cpu } from "lucide-react";

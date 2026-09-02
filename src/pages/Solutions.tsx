@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, BadgeDollarSign, Check, LayoutDashboard, LockKeyhole, Search, ServerCog, Sparkles } from 'lucide-react'
+import { BadgeDollarSign, Check, Eye, LayoutDashboard, Search, ServerCog, Sparkles } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Badge } from '../components/ui/Badge'
 import { Button, ButtonLink } from '../components/ui/Button'
@@ -115,13 +115,13 @@ export default function Solutions() {
                     <span className="font-mono text-cyan-100">{solution.platformLabel}</span>
                   </div>
                   <div className="mt-5 grid grid-cols-2 gap-2">
-                    <ButtonLink to={`${studioBase}${user ? `?solution=${solution.slug}` : ''}`} className="px-2">
-                      <LockKeyhole className="h-4 w-4" />
-                      Design
+                    <ButtonLink to={`/solutions/${solution.slug}`} variant="secondary" className="px-2">
+                      <Eye className="h-4 w-4" />
+                      View Suite
                     </ButtonLink>
-                    <ButtonLink to={user ? `/dashboard/requests/new?solution=${solution.slug}` : '/register'} variant="secondary" className="px-2">
-                      <ArrowRight className="h-4 w-4" />
-                      Request
+                    <ButtonLink to={`${studioBase}${user ? `?solution=${solution.slug}` : ''}`} className="px-2">
+                      <Sparkles className="h-4 w-4" />
+                      Design
                     </ButtonLink>
                   </div>
                 </div>

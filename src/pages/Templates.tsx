@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { PageWrapper } from '../components/shared/PageWrapper'
 import { SEOHead } from '../components/shared/SEOHead'
+import { useAuth } from '../context/AuthContext'
 import { colorOptions, pageOptions, priceOptions, styleOptions, useTemplates } from '../hooks/useTemplates'
 import { formatPrice } from '../lib/utils'
 import { marketplaceCategories } from '../data/templates'
@@ -14,6 +15,7 @@ import type { Template } from '../types'
 
 export default function Templates() {
   const filters = useTemplates()
+  const { user } = useAuth()
 
   return (
     <PageWrapper>
@@ -70,7 +72,7 @@ export default function Templates() {
           <motion.div layout className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <AnimatePresence>
               {filters.results.map((template) => (
-                <TemplateCard key={template.id} template={template} />
+                <TemplateCard key={template.id} template={template} signedIn={Boolean(user)} />
               ))}
             </AnimatePresence>
           </motion.div>
@@ -80,7 +82,7 @@ export default function Templates() {
   )
 }
 
-function TemplateCard({ template }: { template: Template }) {
+function TemplateCard({ signedIn, template }: { signedIn: boolean; template: Template }) {
   return (
     <motion.div layout initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.94 }} whileHover={{ y: -12 }}>
       <Card className="group h-full overflow-hidden">
@@ -111,9 +113,9 @@ function TemplateCard({ template }: { template: Template }) {
               <Eye className="h-4 w-4" />
               Preview
             </ButtonLink>
-            <ButtonLink to="/register" className="px-2">
+            <ButtonLink to={signedIn ? `/dashboard/requests/new?template=${template.slug}` : '/register'} className="px-2">
               <LogIn className="h-4 w-4" />
-              Client App
+              {signedIn ? 'Use' : 'Client App'}
             </ButtonLink>
           </div>
         </div>

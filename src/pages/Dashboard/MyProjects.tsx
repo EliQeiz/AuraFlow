@@ -1,11 +1,13 @@
-import { FolderKanban, Layers3, MessageSquareMore, Send, ServerCog, Wand2 } from 'lucide-react'
+import { ExternalLink, FolderKanban, Layers3, MessageSquareMore, Send, ServerCog, Wand2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
+import { SuitePreviewPanel } from '../../components/shared/SuitePreviewPanel'
 import { Badge } from '../../components/ui/Badge'
 import { Button, ButtonLink } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Textarea } from '../../components/ui/Input'
 import { useAuth } from '../../context/AuthContext'
+import { getSuiteBlueprint } from '../../data/suiteBlueprints'
 import { useProjectMessages, useProjects } from '../../hooks/useFirebase'
 import { requestRevision, sendProjectMessage } from '../../lib/firestore'
 import { asErrorMessage } from '../../lib/utils'
@@ -51,6 +53,7 @@ export default function MyProjects() {
 function RequestDetail({ onRefresh, project, userId, userName }: { onRefresh: () => void; project: ProjectRecord; userId: string; userName: string }) {
   const messages = useProjectMessages(project.id)
   const [loading, setLoading] = useState(false)
+  const suite = getSuiteBlueprint(project.prototypeSpec?.suiteSlug ?? project.solutionSlug)
 
   const revise = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -101,9 +104,16 @@ function RequestDetail({ onRefresh, project, userId, userName }: { onRefresh: ()
             <Info label="Timeline" value={project.timeline} />
             <Info label="Deadline" value={project.deadline ?? 'Awaiting AuraFlow update'} />
             <Info label="Budget" value={`$${project.budget.toLocaleString()}`} />
+            <Info label="Hosted slug" value={project.tenantSlug ?? project.subdomainPreference ?? 'To be confirmed'} />
           </dl>
         </div>
         {project.adminSummary ? <p className="mt-5 rounded-lg border border-cyan-200/20 bg-cyan-300/10 p-4 text-cyan-50">{project.adminSummary}</p> : null}
+        {project.stagingUrl || project.productionUrl ? (
+          <div className="mt-5 flex flex-wrap gap-3">
+            {project.stagingUrl ? <RequestLink href={project.stagingUrl} label="Open Staging Preview" /> : null}
+            {project.productionUrl ? <RequestLink href={project.productionUrl} label="Open Live Platform" /> : null}
+          </div>
+        ) : null}
         {project.solutionSlug || project.prototypeSpec ? (
           <div className="mt-5 rounded-lg border border-white/10 bg-black/20 p-4">
             <h3 className="inline-flex items-center gap-2 text-xl font-bold"><ServerCog className="h-5 w-5 text-cyan-100" /> Platform blueprint</h3>
@@ -120,9 +130,26 @@ function RequestDetail({ onRefresh, project, userId, userName }: { onRefresh: ()
                 </div>
               </div>
             ) : null}
+            {project.prototypeSpec?.selectedRoles?.length ? (
+              <div className="mt-4">
+                <span className="text-sm font-bold text-white">Requested portals</span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {project.prototypeSpec.selectedRoles.map((role) => <Badge key={role} className="bg-white/[0.07] text-white">{role}</Badge>)}
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </Card>
+      {suite ? (
+        <SuitePreviewPanel
+          suite={suite}
+          compact
+          selectedModules={project.prototypeSpec?.selectedModules}
+          selectedRoles={project.prototypeSpec?.selectedRoles}
+          selectedWorkflows={project.prototypeSpec?.selectedWorkflows}
+        />
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
           <h3 className="text-2xl font-bold">AuraFlow previews</h3>
@@ -180,4 +207,13 @@ function RequestEmpty() {
 
 function Info({ label, value }: { label: string; value: string }) {
   return <div><dt className="text-aura-muted">{label}</dt><dd className="mt-0.5 text-white">{value}</dd></div>
+}
+
+function RequestLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-cyan-200/35 px-4 py-2 text-sm font-bold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10">
+      <ExternalLink className="h-4 w-4" />
+      {label}
+    </a>
+  )
 }

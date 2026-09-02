@@ -1,4 +1,5 @@
-import { FormEvent, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { useMemo, useState } from "react";
 import { Upload, LogIn, CheckCircle2, AlertTriangle } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../api/supabase";

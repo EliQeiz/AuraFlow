@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 Ad/
+Crestview/
 *.pem
 *.p12
 *service-account*.json

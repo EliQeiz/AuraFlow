@@ -17,7 +17,40 @@ import type { UserProfile } from '../types'
 
 const googleProvider = new GoogleAuthProvider()
 const maxAvatarBytes = 2 * 1024 * 1024
-const maxRequestAssetBytes = 10 * 1024 * 1024
+const maxRequestAssetBytes = 25 * 1024 * 1024
+const allowedRequestAssetTypes = new Set([
+  'application/json',
+  'application/msword',
+  'application/pdf',
+  'application/vnd.ms-excel',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/x-zip-compressed',
+  'application/zip',
+  'text/csv',
+  'text/plain',
+])
+
+export const requestAssetAccept = [
+  'image/*',
+  'application/pdf',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.ppt',
+  '.pptx',
+  '.csv',
+  '.json',
+  '.txt',
+  '.zip',
+].join(',')
+
+function isAllowedRequestAsset(file: File) {
+  return file.type.startsWith('image/') || allowedRequestAssetTypes.has(file.type)
+}
 
 export async function loginWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(getFirebaseAuth(), email, password)
@@ -89,14 +122,14 @@ export async function uploadAvatar(user: User, file: File) {
 }
 
 export async function uploadProjectAsset(ownerUid: string, projectId: string, file: File, folder: 'references' | 'previews') {
-  if (file.size > maxRequestAssetBytes) throw new Error('Request files must be 10MB or smaller.')
-  if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-    throw new Error('Upload an image or PDF reference file.')
+  if (file.size > maxRequestAssetBytes) throw new Error('Request files must be 25MB or smaller.')
+  if (!isAllowedRequestAsset(file)) {
+    throw new Error('Upload an approved reference file: image, PDF, Office document, CSV, JSON, text, or ZIP.')
   }
 
   const extension = file.name.split('.').pop()?.replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 8) || 'file'
-  const safeName = file.name.replace(/[^a-z0-9.-]+/gi, '-').slice(0, 80)
-  const uploadRef = ref(getFirebaseStorage(), `projects/${ownerUid}/${projectId}/${folder}/${Date.now()}-${safeName}.${extension}`)
+  const safeBase = (file.name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9.-]+/gi, '-').slice(0, 80) || 'asset').replace(/^-+|-+$/g, '')
+  const uploadRef = ref(getFirebaseStorage(), `projects/${ownerUid}/${projectId}/${folder}/${Date.now()}-${safeBase}.${extension}`)
   await uploadBytes(uploadRef, file)
 
   return {

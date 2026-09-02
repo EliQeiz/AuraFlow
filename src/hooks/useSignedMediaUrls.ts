@@ -11,7 +11,6 @@ export function useSignedFrameUrls(frames: FrameAsset[], accessToken?: string) {
 
   useEffect(() => {
     if (!accessToken || frames.length === 0) {
-      setUrls({});
       return;
     }
 
@@ -49,7 +48,7 @@ export function useSignedFrameUrls(frames: FrameAsset[], accessToken?: string) {
     };
   }, [accessToken, frameKey, frames]);
 
-  return urls;
+  return accessToken && frames.length ? urls : {};
 }
 
 export function useSignedProjectAsset(
@@ -61,12 +60,10 @@ export function useSignedProjectAsset(
 
   useEffect(() => {
     if (!path || !accessToken) {
-      setUrl(null);
       return;
     }
 
     if (/^https?:\/\//i.test(path)) {
-      setUrl(path);
       return;
     }
 
@@ -84,5 +81,7 @@ export function useSignedProjectAsset(
     };
   }, [accessToken, bucket, path]);
 
+  if (!path || !accessToken) return null;
+  if (/^https?:\/\//i.test(path)) return path;
   return url;
 }

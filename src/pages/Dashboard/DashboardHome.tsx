@@ -1,8 +1,9 @@
-import { CalendarClock, FolderKanban, LayoutTemplate, MessageSquareMore, Sparkles } from 'lucide-react'
+import { CalendarClock, FolderKanban, LayoutTemplate, MessageSquareMore, ServerCog, Shield, Sparkles } from 'lucide-react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { ButtonLink } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { useAuth } from '../../context/AuthContext'
+import { suiteBlueprints } from '../../data/suiteBlueprints'
 import { useProjects } from '../../hooks/useFirebase'
 
 const activity = [
@@ -20,7 +21,7 @@ const sparkData = [
 ]
 
 export default function DashboardHome() {
-  const { profile, user } = useAuth()
+  const { admin, profile, user } = useAuth()
   const { data: projects } = useProjects(user?.uid)
   const activeProjects = projects.filter((project) => !['Completed', 'On Hold'].includes(project.status))
 
@@ -33,13 +34,22 @@ export default function DashboardHome() {
           <p className="mt-3 max-w-xl text-aura-muted">Projects, templates, and next actions stay in one calm place.</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <ButtonLink to="/dashboard/requests/new">New Request</ButtonLink>
-            <ButtonLink to="/dashboard/studio" variant="secondary">Prototype Studio</ButtonLink>
+            <ButtonLink to="/dashboard/studio" variant="secondary">
+              <ServerCog className="h-4 w-4" />
+              Suite Builder
+            </ButtonLink>
             <ButtonLink to="/dashboard/templates" variant="ghost">Browse Templates</ButtonLink>
             <ButtonLink to="/dashboard/requests" variant="ghost">Track Requests</ButtonLink>
             <ButtonLink to="/dashboard/messages" variant="ghost">
               <MessageSquareMore className="h-4 w-4" />
               Messages
             </ButtonLink>
+            {admin ? (
+              <ButtonLink to="/dashboard/admin" variant="secondary">
+                <Shield className="h-4 w-4" />
+                Admin Console
+              </ButtonLink>
+            ) : null}
           </div>
         </div>
         <div className="h-56 min-w-0 rounded-lg border border-white/10 bg-black/20 p-3">
@@ -59,8 +69,9 @@ export default function DashboardHome() {
         </div>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Stat icon={FolderKanban} label="Active Projects" value={`${activeProjects.length || profile?.projectCount || 0}`} />
+        <Stat icon={ServerCog} label="Suites Available" value={`${suiteBlueprints.length}`} />
         <Stat icon={LayoutTemplate} label="Templates Saved" value={`${profile?.savedTemplates.length ?? 0}`} />
         <Stat icon={CalendarClock} label="Next Deadline" value={projects[0]?.deadline ?? 'Discovery'} />
       </div>

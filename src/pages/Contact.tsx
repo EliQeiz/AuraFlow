@@ -4,8 +4,11 @@ import { ButtonLink } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { PageWrapper } from '../components/shared/PageWrapper'
 import { SEOHead } from '../components/shared/SEOHead'
+import { useAuth } from '../context/AuthContext'
 
 export default function Contact() {
+  const { user } = useAuth()
+
   return (
     <PageWrapper>
       <SEOHead title="Contact" description="Contact AuraFlow in Ghana for websites, mobile apps, Firebase work, dashboards, AI integrations, and templates." />
@@ -45,8 +48,8 @@ export default function Contact() {
           <h2 className="text-3xl font-extrabold">Project briefs live inside the AuraFlow client app.</h2>
           <p className="max-w-xl leading-7 text-aura-muted">Create an account to describe the build, choose or upload template references, attach photos and documents, track previews, send revision notes, and chat on the request that belongs to your account.</p>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <ButtonLink to="/register">Create Client Account</ButtonLink>
-            <ButtonLink to="/login" variant="secondary">Login</ButtonLink>
+            <ButtonLink to={user ? '/dashboard/requests/new' : '/register'}>{user ? 'Start Private Request' : 'Create Client Account'}</ButtonLink>
+            <ButtonLink to={user ? '/dashboard/messages' : '/login'} variant="secondary">{user ? 'Open Messages' : 'Login'}</ButtonLink>
           </div>
         </Card>
       </section>

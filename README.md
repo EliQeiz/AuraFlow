@@ -9,10 +9,12 @@ AuraFlow is a React, TypeScript, Vite, TailwindCSS, Framer Motion, and Firebase 
 - The private client app includes Requests, Prototype Studio, Templates, Messages, Settings, status tracking, client uploads, revision notes, and preview files.
 - The owner/admin console is hidden unless the signed-in Firebase account has the `admin: true` custom claim.
 - Managed hosted systems let small businesses start with a lower-cost AuraFlow-hosted link, such as `yourschool.auraflow.app`, and upgrade later to a custom build or domain.
+- Suite blueprints turn systems such as school management, ecommerce, restaurants, hotels, clinics, pharmacies, supermarkets, portfolios, logistics, real estate, salons, construction, and finance portals into configurable client-app starting points.
+- The included Crestview school system is translated into a reusable SMS blueprint rather than exposed as a public demo with credentials. See `docs/suite-blueprint-model.md`.
 
 ## Core Routes
 
-- Public: `/`, `/services`, `/solutions`, `/templates`, `/templates/:slug`, `/portfolio`, `/pricing`, `/blog`, `/about`, `/contact`, `/login`, `/register`, `/forgot-password`.
+- Public: `/`, `/services`, `/solutions`, `/solutions/:slug`, `/templates`, `/templates/:slug`, `/portfolio`, `/pricing`, `/blog`, `/about`, `/contact`, `/login`, `/register`, `/forgot-password`.
 - Private client app: `/dashboard`, `/dashboard/studio`, `/dashboard/requests/new`, `/dashboard/requests`, `/dashboard/messages`, `/dashboard/templates`, `/dashboard/settings`.
 - Owner/admin: `/dashboard/admin`, visible in navigation only after the admin custom claim is granted.
 
@@ -42,7 +44,7 @@ Before production release:
 5. Deploy the checked-in rules and indexes with `firebase deploy --only firestore:rules,firestore:indexes,storage --project <project-id>`.
 6. Validate rules in the Emulator Suite when Java 21+ is available.
 
-`firestore.rules` keeps project records, chat messages, client updates, prototype specs, and admin updates behind owner/admin checks. Public request forms are not exposed; legacy contact and quote writes require authentication. `storage.rules` keeps references owner/admin-readable, makes preview uploads admin-only, limits request assets to images/PDFs under 10MB, and limits avatars to owner image uploads under 2MB.
+`firestore.rules` keeps project records, chat messages, client updates, suite prototype specs, and admin updates behind owner/admin checks. Public request forms are not exposed; legacy contact and quote writes require authentication. `storage.rules` keeps references owner/admin-readable, makes preview uploads admin-only, limits approved reference files to 25MB, and limits avatars to owner image uploads under 2MB.
 
 ## Admin Access
 
@@ -69,4 +71,4 @@ npm audit --audit-level=high
 
 ## Routes
 
-Public routes cover home, services, marketing template previews, portfolio concepts, pricing, blog, about, contact, login, register, password reset, privacy, and terms. `/quote` and `/dashboard/*` are protected and redirect unauthenticated visitors to `/login`; `/dashboard/requests/*` is the private intake, preview, revision, and chat workspace.
+Public routes cover home, services, hosted suite details, marketing template previews, portfolio concepts, pricing, blog, about, contact, login, register, password reset, privacy, and terms. `/quote` and `/dashboard/*` are protected and redirect unauthenticated visitors to `/login`; `/dashboard/requests/*` is the private intake, preview, revision, and chat workspace.

@@ -15,6 +15,7 @@ import { Legal } from './pages/Legal'
 const Home = lazy(() => import('./pages/Home'))
 const Services = lazy(() => import('./pages/Services'))
 const Solutions = lazy(() => import('./pages/Solutions'))
+const SolutionDetail = lazy(() => import('./pages/SolutionDetail'))
 const Templates = lazy(() => import('./pages/Templates'))
 const TemplateDetail = lazy(() => import('./pages/TemplateDetail'))
 const Portfolio = lazy(() => import('./pages/Portfolio'))
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/services" element={<Services />} />
             <Route path="/solutions" element={<Solutions />} />
+            <Route path="/solutions/:slug" element={<SolutionDetail />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/templates/:slug" element={<TemplateDetail />} />
             <Route path="/portfolio" element={<Portfolio />} />

@@ -1,12 +1,14 @@
 import { Layers3, MessageSquareMore, Send, ServerCog, Shield, UploadCloud } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
+import { SuitePreviewPanel } from '../../components/shared/SuitePreviewPanel'
 import { Badge } from '../../components/ui/Badge'
 import { Button, ButtonLink } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Input, Select, Textarea } from '../../components/ui/Input'
 import { useAuth } from '../../context/AuthContext'
-import { uploadProjectAsset } from '../../lib/auth'
+import { getSuiteBlueprint } from '../../data/suiteBlueprints'
+import { requestAssetAccept, uploadProjectAsset } from '../../lib/auth'
 import { attachProjectPreview, sendProjectMessage, updateAdminProject } from '../../lib/firestore'
 import { useAdminProjects, useProjectMessages } from '../../hooks/useFirebase'
 import { asErrorMessage } from '../../lib/utils'
@@ -48,12 +50,20 @@ export default function AdminConsole() {
 
 function AdminProject({ onRefresh, project, userId }: { onRefresh: () => void; project: ProjectRecord; userId: string }) {
   const [loading, setLoading] = useState(false)
+  const suite = getSuiteBlueprint(project.prototypeSpec?.suiteSlug ?? project.solutionSlug)
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const data = new FormData(event.currentTarget)
     setLoading(true)
     try {
-      await updateAdminProject(project.id, { status: String(data.get('status')) as RequestStatus, deadline: String(data.get('deadline')), adminSummary: String(data.get('summary')) })
+      await updateAdminProject(project.id, {
+        status: String(data.get('status')) as RequestStatus,
+        deadline: String(data.get('deadline')),
+        adminSummary: String(data.get('summary')),
+        tenantSlug: String(data.get('tenantSlug')),
+        stagingUrl: String(data.get('stagingUrl')),
+        productionUrl: String(data.get('productionUrl')),
+      })
       const preview = (data.get('preview') as File | null)
       if (preview?.size) {
         const uploaded = await uploadProjectAsset(project.userId, project.id, preview, 'previews')
@@ -89,22 +99,57 @@ function AdminProject({ onRefresh, project, userId }: { onRefresh: () => void; p
               {!project.prototypeSpec?.selectedModules?.length ? <span>{project.solutionSlug}</span> : null}
             </div>
           </div>
+          {project.prototypeSpec?.selectedRoles?.length ? (
+            <div className="lg:col-span-3">
+              <strong className="text-white">Requested portals</strong>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {project.prototypeSpec.selectedRoles.map((role) => (
+                  <Badge key={role} className="bg-white/[0.07] text-white">{role}</Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {project.prototypeSpec?.selectedWorkflows?.length ? (
+            <div className="lg:col-span-3">
+              <strong className="text-white">Priority workflows</strong>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {project.prototypeSpec.selectedWorkflows.map((workflow) => (
+                  <Badge key={workflow} className="bg-white/[0.07] text-white">{workflow}</Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {project.prototypeSpec ? (
             <div className="lg:col-span-3">
               <strong className="text-white">Prototype brief</strong>
               <p className="mt-2 whitespace-pre-line leading-7">{project.prototypeSpec.coreWorkflows}</p>
               <p className="mt-3 whitespace-pre-line leading-7">{project.prototypeSpec.contentNotes}</p>
+              {project.prototypeSpec.dataSources ? <p className="mt-3 whitespace-pre-line leading-7">Data sources: {project.prototypeSpec.dataSources}</p> : null}
+              {project.prototypeSpec.complianceNotes ? <p className="mt-3 whitespace-pre-line leading-7">Security notes: {project.prototypeSpec.complianceNotes}</p> : null}
             </div>
           ) : null}
         </div>
+      ) : null}
+      {suite ? (
+        <SuitePreviewPanel
+          suite={suite}
+          compact
+          selectedModules={project.prototypeSpec?.selectedModules}
+          selectedRoles={project.prototypeSpec?.selectedRoles}
+          selectedWorkflows={project.prototypeSpec?.selectedWorkflows}
+          className="mt-5"
+        />
       ) : null}
       <form onSubmit={save} className="mt-6 grid gap-4">
         <div className="grid gap-4 md:grid-cols-2">
           <label className="grid gap-2 text-sm text-aura-muted">Status<Select name="status" defaultValue={project.status}>{statuses.map((status) => <option key={status}>{status}</option>)}</Select></label>
           <label className="grid gap-2 text-sm text-aura-muted">Deadline<Input name="deadline" defaultValue={project.deadline} placeholder="July 18, 2026" /></label>
+          <label className="grid gap-2 text-sm text-aura-muted">Tenant or hosted slug<Input name="tenantSlug" defaultValue={project.tenantSlug ?? project.subdomainPreference ?? ''} placeholder="crestview-academy" /></label>
+          <label className="grid gap-2 text-sm text-aura-muted">Staging preview URL<Input name="stagingUrl" defaultValue={project.stagingUrl ?? ''} placeholder="https://preview.auraflow.app/..." /></label>
+          <label className="grid gap-2 text-sm text-aura-muted md:col-span-2">Production URL<Input name="productionUrl" defaultValue={project.productionUrl ?? ''} placeholder="https://client.auraflow.app or custom domain" /></label>
         </div>
         <label className="grid gap-2 text-sm text-aura-muted">Client-visible progress summary<Textarea name="summary" defaultValue={project.adminSummary} placeholder="What has moved forward, what preview means, and the next step." /></label>
-        <label className="grid gap-2 rounded-lg border border-dashed border-white/15 p-4 text-sm text-aura-muted"><span className="inline-flex items-center gap-2 font-bold text-white"><UploadCloud className="h-4 w-4" /> Upload preview</span><Input name="preview" accept="image/*,application/pdf" type="file" /></label>
+        <label className="grid gap-2 rounded-lg border border-dashed border-white/15 p-4 text-sm text-aura-muted"><span className="inline-flex items-center gap-2 font-bold text-white"><UploadCloud className="h-4 w-4" /> Upload preview or delivery file</span><Input name="preview" accept={requestAssetAccept} type="file" /></label>
         <Button type="submit" loading={loading} className="w-fit">Save Client Workspace</Button>
       </form>
       <AdminChat project={project} userId={userId} />

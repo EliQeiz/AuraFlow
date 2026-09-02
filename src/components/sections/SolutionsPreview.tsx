@@ -1,4 +1,4 @@
-import { ArrowRight, ServerCog, Sparkles } from 'lucide-react'
+import { ArrowRight, Eye, ServerCog, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { industrySolutions } from '../../data/solutions'
 import { useAuth } from '../../context/AuthContext'
@@ -43,10 +43,16 @@ export function SolutionsPreview() {
                     <Badge key={module} className="bg-white/[0.07] text-white">{module}</Badge>
                   ))}
                 </div>
-                <ButtonLink to={user ? `/dashboard/studio?solution=${solution.slug}` : '/register'} className="mt-5 w-full">
-                  <Sparkles className="h-4 w-4" />
-                  {user ? 'Open In Studio' : 'Create To Design'}
-                </ButtonLink>
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  <ButtonLink to={`/solutions/${solution.slug}`} variant="secondary" className="px-2">
+                    <Eye className="h-4 w-4" />
+                    View
+                  </ButtonLink>
+                  <ButtonLink to={user ? `/dashboard/studio?solution=${solution.slug}` : '/register'} className="px-2">
+                    <Sparkles className="h-4 w-4" />
+                    Design
+                  </ButtonLink>
+                </div>
               </div>
             </Card>
           </motion.div>

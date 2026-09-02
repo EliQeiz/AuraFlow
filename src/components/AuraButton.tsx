@@ -1,5 +1,6 @@
-import { ReactNode } from "react";
-import { HTMLMotionProps, motion } from "framer-motion";
+import type { ReactNode } from "react";
+import type { HTMLMotionProps } from "framer-motion";
+import { motion } from "framer-motion";
 import { twMerge } from "tailwind-merge";
 
 type AuraButtonVariant = "primary" | "secondary" | "icon-purple" | "ghost" | "danger";

@@ -41,26 +41,38 @@ service cloud.firestore {
           request.resource.data.prototypeSpec is map
           && request.resource.data.prototypeSpec.keys().hasOnly([
             'solutionSlug',
+            'suiteSlug',
             'businessName',
             'platformMode',
             'subdomainPreference',
             'selectedModules',
+            'selectedWorkflows',
+            'selectedRoles',
             'brandTone',
             'colorPreference',
             'adminRoles',
             'coreWorkflows',
-            'contentNotes'
+            'contentNotes',
+            'dataSources',
+            'complianceNotes',
+            'launchModel'
           ])
           && optionalString(request.resource.data.prototypeSpec, 'solutionSlug', 180)
+          && optionalString(request.resource.data.prototypeSpec, 'suiteSlug', 180)
           && stringBetween(request.resource.data.prototypeSpec, 'businessName', 1, 160)
           && validPlatformMode(request.resource.data.prototypeSpec, 'platformMode')
           && optionalString(request.resource.data.prototypeSpec, 'subdomainPreference', 120)
           && optionalStringList(request.resource.data.prototypeSpec, 'selectedModules', 30)
+          && optionalStringList(request.resource.data.prototypeSpec, 'selectedWorkflows', 20)
+          && optionalStringList(request.resource.data.prototypeSpec, 'selectedRoles', 20)
           && optionalString(request.resource.data.prototypeSpec, 'brandTone', 120)
           && optionalString(request.resource.data.prototypeSpec, 'colorPreference', 120)
           && optionalStringList(request.resource.data.prototypeSpec, 'adminRoles', 20)
           && stringBetween(request.resource.data.prototypeSpec, 'coreWorkflows', 30, 6000)
           && stringBetween(request.resource.data.prototypeSpec, 'contentNotes', 20, 6000)
+          && optionalString(request.resource.data.prototypeSpec, 'dataSources', 6000)
+          && optionalString(request.resource.data.prototypeSpec, 'complianceNotes', 4000)
+          && optionalString(request.resource.data.prototypeSpec, 'launchModel', 120)
         );
     }
 
@@ -218,13 +230,19 @@ service cloud.firestore {
           'adminSummary',
           'deadline',
           'previews',
+          'productionUrl',
+          'stagingUrl',
           'status',
+          'tenantSlug',
           'updatedAt'
         ])
         && request.resource.data.previews is list
         && request.resource.data.previews.size() <= 32
         && optionalString(request.resource.data, 'adminSummary', 6000)
         && optionalString(request.resource.data, 'deadline', 120)
+        && optionalString(request.resource.data, 'productionUrl', 2048)
+        && optionalString(request.resource.data, 'stagingUrl', 2048)
+        && optionalString(request.resource.data, 'tenantSlug', 120)
         && validStatus(request.resource.data.status)
         && request.resource.data.updatedAt == request.time;
     }

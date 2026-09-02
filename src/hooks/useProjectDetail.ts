@@ -10,18 +10,19 @@ export interface ProjectDetailState {
   error: string | null;
 }
 
+const emptyProjectDetail: ProjectDetailState = {
+  project: null,
+  jobs: [],
+  frames: [],
+  isLoading: false,
+  error: null,
+};
+
 export function useProjectDetail(projectId?: string | null, accessToken?: string, refreshKey = 0) {
-  const [state, setState] = useState<ProjectDetailState>({
-    project: null,
-    jobs: [],
-    frames: [],
-    isLoading: false,
-    error: null,
-  });
+  const [state, setState] = useState<ProjectDetailState>(emptyProjectDetail);
 
   useEffect(() => {
     if (!projectId || !accessToken) {
-      setState({ project: null, jobs: [], frames: [], isLoading: false, error: null });
       return;
     }
 
@@ -53,5 +54,5 @@ export function useProjectDetail(projectId?: string | null, accessToken?: string
     };
   }, [accessToken, projectId, refreshKey]);
 
-  return state;
+  return projectId && accessToken ? state : emptyProjectDetail;
 }
