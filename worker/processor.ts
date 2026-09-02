@@ -1,5 +1,5 @@
 import type { SupabaseAdminClient } from "../server/supabaseAdmin.js";
-import type { ProcessingJobType } from "../src/types/media";
+import type { ProcessingJobType } from "../src/types/media.js";
 import { detectFaces } from "./processors/faces.js";
 import { createImageThumbnail, upscaleImage } from "./processors/image.js";
 import { extractVideoThumbnails, upscaleVideo } from "./processors/video.js";

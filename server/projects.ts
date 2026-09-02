@@ -1,7 +1,6 @@
-import path from "node:path";
 import { ApiError } from "./http.js";
 import type { SupabaseAdminClient } from "./supabaseAdmin.js";
-import type { MediaType, ProcessingJobType } from "../src/types/media";
+import type { MediaType, ProcessingJobType } from "../src/types/media.js";
 
 const bucketByMediaType: Record<"original" | "processed" | "thumbnails", string> = {
   original: "original-media",
@@ -10,8 +9,10 @@ const bucketByMediaType: Record<"original" | "processed" | "thumbnails", string>
 };
 
 export function buildStoragePath(userId: string, fileName: string) {
-  const extension = path.extname(fileName).toLowerCase();
-  const safeExtension = extension && extension.length <= 12 ? extension : "";
+  const baseName = fileName.split(/[\\/]/).pop() ?? fileName;
+  const dotIndex = baseName.lastIndexOf(".");
+  const extension = dotIndex > 0 ? baseName.slice(dotIndex).toLowerCase() : "";
+  const safeExtension = /^\.[a-z0-9]{1,12}$/.test(extension) ? extension : "";
   return `${userId}/${crypto.randomUUID()}/original${safeExtension}`;
 }
 
