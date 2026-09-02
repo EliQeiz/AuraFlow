@@ -1,0 +1,14 @@
+.git/
+.vercel/
+node_modules/
+dist/
+dist-ssr/
+Ad/
+Crestview/
+*.log
+*.local
+*.pem
+*.p12
+*service-account*.json
+serviceAccountKey.json
+firebase-adminsdk*.json
