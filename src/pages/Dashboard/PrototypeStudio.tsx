@@ -14,10 +14,32 @@ import {
   Tablet,
   Trash2,
   Undo2,
+  Download,
+  Upload,
+  Type,
+  Square,
+  Circle,
+  MousePointer2,
+  BarChart3,
+  Gauge,
+  Grid2X2,
 } from 'lucide-react'
 import { collection, doc, getDoc, orderBy, query } from 'firebase/firestore'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { DesignArtboard } from '../../components/shared/DesignArtboard'
+import {
+  LayerInspector,
+  LayerList,
+  VisualInspector,
+} from '../../components/shared/DesignInspector'
+import {
+  defaultVisual,
+  fontFamilies,
+  newLayer,
+  starterLayers,
+  type DesignLayer,
+} from '../../domain/composition'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Button } from '../../components/ui/Button'
@@ -91,12 +113,23 @@ function StudioEditor({
   const [draft, setDraft] = useState<StudioDraft>(() =>
     saved
       ? draftSchema.parse(saved)
-      : defaultDraft(
-          initialSuite.slug,
-          'Untitled project',
-          initialSuite.modules.slice(0, 4).map((m) => m.title),
-          initialSuite.roles.slice(0, 2).map((r) => r.title),
-        ),
+      : {
+          ...defaultDraft(
+            initialSuite.slug,
+            'Untitled project',
+            initialSuite.modules.slice(0, 4).map((m) => m.title),
+            initialSuite.roles.slice(0, 2).map((r) => r.title),
+          ),
+          layers: starterLayers(
+            'Home',
+            initialSuite.slug.includes('industrial')
+              ? 'industrial'
+              : initialSuite.category === 'Education'
+                ? 'dashboard'
+                : 'landing',
+          ),
+          visual: defaultVisual,
+        },
   )
   const [baseline, setBaseline] = useState(JSON.stringify(draft))
   const [past, setPast] = useState<StudioDraft[]>([])
@@ -105,11 +138,18 @@ function StudioEditor({
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [open, setOpen] = useState(false)
-  const [page, setPage] = useState('Home')
+  const [page, setPage] = useState(draft.pages[0])
   const [newPage, setNewPage] = useState('')
   const [device, setDevice] = useState('desktop')
-  const [view, setView] = useState<'system' | 'website'>('system')
-  const [panel, setPanel] = useState<'brand' | 'workflows' | 'content'>('brand')
+  const [view, setView] = useState<'system' | 'website' | 'design'>('design')
+  const [panel, setPanel] = useState<
+    'brand' | 'workflows' | 'content' | 'layer'
+  >('brand')
+  const [selectedLayer, setSelectedLayer] = useState('')
+  const [zoom, setZoom] = useState(1)
+  const [grid, setGrid] = useState(true)
+  const [preview, setPreview] = useState(false)
+  const layer = draft.layers?.find((item) => item.id === selectedLayer)
   const dirty = JSON.stringify(draft) !== baseline
   useUnsavedChanges(dirty)
   const suite = getSuiteBlueprint(draft.suiteSlug) ?? initialSuite
@@ -122,9 +162,141 @@ function StudioEditor({
   const logoUrl = usePrivateMedia(draft.logoPath)
   const bannerUrl = usePrivateMedia(draft.bannerPath)
   function update(change: Partial<StudioDraft>) {
+    if (change.visual && draft.layers && !change.layers) {
+      const before = draft.visual || defaultVisual
+      const after = change.visual
+      change.layers = draft.layers.map((layer) => ({
+        ...layer,
+        color: layer.color === before.ink ? after.ink : layer.color,
+        fill: layer.fill === before.surface ? after.surface : layer.fill,
+        radius: layer.radius === before.radius ? after.radius : layer.radius,
+        ...(layer.kind === 'image' ? {
+          brightness: layer.brightness === before.brightness ? after.brightness : layer.brightness,
+          saturation: layer.saturation === before.saturation ? after.saturation : layer.saturation,
+          opacity: layer.opacity === before.imageOpacity ? after.imageOpacity : layer.opacity,
+        } : {}),
+      }))
+    }
+    if (
+      !change.layers &&
+      draft.layers &&
+      (change.primaryColor || change.font)
+    ) {
+      change.layers = draft.layers.map((layer) => ({
+        ...layer,
+        ...(change.primaryColor && layer.fill === draft.primaryColor
+          ? { fill: change.primaryColor, stroke: change.primaryColor }
+          : {}),
+        ...(change.font && layer.font === draft.font
+          ? { font: change.font }
+          : {}),
+      }))
+    }
     setPast((items) => [...items.slice(-39), draft])
     setFuture([])
     setDraft((current) => ({ ...current, ...change }))
+  }
+  function selectLayer(id: string) {
+    if (id.startsWith('page:')) {
+      setPage(id.slice(5))
+      return
+    }
+    setSelectedLayer(id)
+    if (id) {
+      const target = draft.layers?.find((item) => item.id === id)
+      if (target) setPage(target.page)
+      setPanel('layer')
+    }
+  }
+  function addLayer(kind: DesignLayer['kind']) {
+    if ((draft.layers?.length || 0) >= 12) {
+      toast.error('A design supports up to 12 layers.')
+      return
+    }
+    const added = newLayer(kind, page, draft.primaryColor)
+    if (kind === 'text') added.color = (draft.visual || defaultVisual).ink
+    update({ layers: [...(draft.layers || []), added] })
+    selectLayer(added.id)
+    setView('design')
+  }
+  function preset(kind: 'landing' | 'dashboard' | 'industrial') {
+    if (
+      draft.layers?.length &&
+      !window.confirm(
+        'Replace canvas layers with this layout? You can undo this change.',
+      )
+    )
+      return
+    update({ layers: starterLayers(page, kind, draft.primaryColor) })
+    setSelectedLayer('')
+  }
+  async function exportDesign(format: 'json' | 'png') {
+    setPending(true)
+    try {
+      let url: string
+      if (format === 'json')
+        url = URL.createObjectURL(
+          new Blob([JSON.stringify(draftSchema.parse(draft), null, 2)], {
+            type: 'application/json',
+          }),
+        )
+      else {
+        const node = document.getElementById('design-artboard')
+        if (!node)
+          throw new Error('Open the Canvas view before exporting an image.')
+        const { toPng } = await import('html-to-image')
+        node.dataset.exporting = 'true'
+        try {
+          url = await toPng(node, {
+            width: 1200,
+            height: 900,
+            pixelRatio: 1,
+            skipFonts: true,
+            style: { transform: 'none', backgroundImage: 'none' },
+            filter: (item) =>
+              !(
+                item instanceof HTMLElement &&
+                item.dataset.exportIgnore === 'true'
+              ),
+          })
+        } finally {
+          delete node.dataset.exporting
+        }
+      }
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${draft.name.replace(/[^a-z0-9-]/gi, '-').slice(0, 80)}.${format}`
+      link.click()
+      if (format === 'json') setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    } finally {
+      setPending(false)
+    }
+  }
+  async function importDesign(file?: File) {
+    if (!file) return
+    try {
+      if (file.size > 250_000)
+        throw new Error('Design files must be under 250KB.')
+      const imported = draftSchema.parse(JSON.parse(await file.text()))
+      if (!getSuiteBlueprint(imported.suiteSlug))
+        throw new Error('This business suite is not available.')
+      if (
+        dirty &&
+        !window.confirm('Replace the current design with this file?')
+      )
+        return
+      update({ ...imported, logoPath: '', bannerPath: '', mediaPaths: [] })
+      setPage(imported.pages[0])
+      setSelectedLayer('')
+      setView('design')
+      toast.success(
+        'Design imported. Reattach private media and save to your workspace.',
+      )
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    }
   }
   function toggle(field: 'modules' | 'roles' | 'workflows', value: string) {
     const current = draft[field]
@@ -292,6 +464,28 @@ function StudioEditor({
           </span>
         </div>
         <div className="page-actions">
+          <button
+            className="icon-button"
+            title="Download design JSON"
+            aria-label="Download design JSON"
+            disabled={pending}
+            onClick={() => void exportDesign('json')}
+          >
+            <Download />
+          </button>
+          <label className="icon-button" title="Import design JSON">
+            <Upload />
+            <span className="sr-only">Import design JSON</span>
+            <input
+              className="sr-only"
+              type="file"
+              accept="application/json,.json"
+              onChange={(e) => {
+                void importDesign(e.target.files?.[0])
+                e.target.value = ''
+              }}
+            />
+          </label>
           <Button
             variant="ghost"
             onClick={duplicate}
@@ -350,7 +544,7 @@ function StudioEditor({
               <button
                 onClick={() => {
                   setPage(item)
-                  setView('website')
+                  if (view !== 'design') setView('website')
                 }}
               >
                 <File size={13} />
@@ -381,7 +575,20 @@ function StudioEditor({
                 disabled={draft.pages.length === 1}
                 onClick={() => {
                   const pages = draft.pages.filter((p) => p !== item)
-                  update({ pages })
+                  update({
+                    pages,
+                    ...(draft.layers
+                      ? {
+                          layers: draft.layers
+                            .filter((layer) => layer.page !== item)
+                            .map((layer) =>
+                              layer.targetPage === item
+                                ? { ...layer, targetPage: '' }
+                                : layer,
+                            ),
+                        }
+                      : {}),
+                  })
                   if (page === item) setPage(pages[0])
                 }}
               >
@@ -412,6 +619,15 @@ function StudioEditor({
               <Plus />
             </button>
           </div>
+          <p className="studio-panel-heading mt-7">
+            Layers <span>{draft.layers?.length || 0}/12</span>
+          </p>
+          <LayerList
+            layers={draft.layers || []}
+            selected={selectedLayer}
+            onSelect={selectLayer}
+            onChange={(layers) => update({ layers })}
+          />
           <p className="studio-panel-heading mt-7">System modules</p>
           {suite.modules.map((module) => (
             <label className="studio-module" key={module.id}>
@@ -427,6 +643,12 @@ function StudioEditor({
         <div className="studio-canvas-area">
           <div className="studio-canvas-toolbar">
             <div className="studio-choice">
+              <button
+                aria-pressed={view === 'design'}
+                onClick={() => setView('design')}
+              >
+                Canvas
+              </button>
               <button
                 aria-pressed={view === 'system'}
                 onClick={() => setView('system')}
@@ -452,30 +674,140 @@ function StudioEditor({
                   aria-label={`${name} preview`}
                   title={`${name} preview`}
                   aria-pressed={device === name}
-                  onClick={() => setDevice(name)}
+                  onClick={() => {
+                    setDevice(name)
+                    if (view === 'design') setView('website')
+                  }}
                 >
                   <Icon />
                 </button>
               ))}
             </div>
           </div>
-          <div
-            className="studio-preview-frame"
-            style={{
-              maxWidth:
-                device === 'mobile' ? 320 : device === 'tablet' ? 540 : '100%',
-            }}
-          >
-            <SuiteCanvas
-              key={draft.suiteSlug}
-              draft={draft}
-              website={view === 'website'}
-              page={view === 'website' ? page : 'Overview'}
-              bannerUrl={bannerUrl}
-              logoUrl={logoUrl}
-              onPageChange={setPage}
-            />
-          </div>
+          {view === 'design' ? (
+            <>
+              <div className="design-tools">
+                {(
+                  [
+                    { kind: 'text', Icon: Type },
+                    { kind: 'rectangle', Icon: Square },
+                    { kind: 'ellipse', Icon: Circle },
+                    { kind: 'button', Icon: MousePointer2 },
+                    { kind: 'image', Icon: ImagePlus },
+                    { kind: 'metric', Icon: Gauge },
+                    { kind: 'chart', Icon: BarChart3 },
+                    { kind: 'silo', Icon: Grid2X2 },
+                  ] as const
+                ).map(({ kind, Icon }) => (
+                  <button
+                    className="icon-button"
+                    key={kind}
+                    title={`Add ${kind}`}
+                    aria-label={`Add ${kind}`}
+                    disabled={(draft.layers?.length || 0) >= 12}
+                    onClick={() => addLayer(kind)}
+                  >
+                    <Icon />
+                  </button>
+                ))}
+                <Select
+                  aria-label="Canvas zoom"
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                >
+                  <option value={0.5}>50%</option>
+                  <option value={0.75}>75%</option>
+                  <option value={1}>Fit</option>
+                  <option value={1.5}>150%</option>
+                </Select>
+                <Select
+                  aria-label="Apply canvas layout"
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value)
+                      preset(
+                        e.target.value as
+                          'landing' | 'dashboard' | 'industrial',
+                      )
+                  }}
+                >
+                  <option value="">Layout</option>
+                  <option value="landing">Landing page</option>
+                  <option value="dashboard">Dashboard</option>
+                  <option value="industrial">Industrial</option>
+                </Select>
+                <button
+                  className="icon-button"
+                  title="Snap to grid"
+                  aria-label="Snap to grid"
+                  aria-pressed={grid}
+                  onClick={() => setGrid(!grid)}
+                >
+                  <Grid2X2 />
+                </button>
+                <button
+                  className="af-button af-button--secondary"
+                  aria-pressed={preview}
+                  onClick={() => setPreview(!preview)}
+                >
+                  {preview ? 'Edit' : 'Preview'}
+                </button>
+                <button
+                  className="icon-button"
+                  title="Download canvas PNG"
+                  aria-label="Download canvas PNG"
+                  disabled={pending}
+                  onClick={() => void exportDesign('png')}
+                >
+                  <Download />
+                </button>
+              </div>
+              {!draft.layers?.length && (
+                <div className="design-presets">
+                  <strong>Start with a layout</strong>
+                  <button onClick={() => preset('landing')}>
+                    Landing page
+                  </button>
+                  <button onClick={() => preset('dashboard')}>Dashboard</button>
+                  <button onClick={() => preset('industrial')}>
+                    Industrial process
+                  </button>
+                </div>
+              )}
+              <DesignArtboard
+                draft={draft}
+                page={page}
+                selected={selectedLayer}
+                onSelect={selectLayer}
+                onChange={(layers) => update({ layers })}
+                zoom={zoom}
+                grid={grid}
+                preview={preview}
+              />
+            </>
+          ) : (
+            <div
+              className="studio-preview-frame"
+              style={{
+                maxWidth:
+                  device === 'mobile'
+                    ? 320
+                    : device === 'tablet'
+                      ? 540
+                      : '100%',
+              }}
+            >
+              <SuiteCanvas
+                key={draft.suiteSlug}
+                draft={draft}
+                website={view === 'website'}
+                page={view === 'website' ? page : 'Overview'}
+                bannerUrl={bannerUrl}
+                logoUrl={logoUrl}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
           <p className="product-caption">
             Interactive design preview · Sample content
           </p>
@@ -486,18 +818,36 @@ function StudioEditor({
             role="tablist"
             aria-label="Design properties"
           >
-            {(['brand', 'workflows', 'content'] as const).map((item) => (
-              <button
-                key={item}
-                role="tab"
-                aria-selected={panel === item}
-                onClick={() => setPanel(item)}
-              >
-                {item[0].toUpperCase() + item.slice(1)}
-              </button>
-            ))}
+            {(['brand', 'layer', 'workflows', 'content'] as const).map(
+              (item) => (
+                <button
+                  key={item}
+                  role="tab"
+                  aria-selected={panel === item}
+                  onClick={() => setPanel(item)}
+                >
+                  {item[0].toUpperCase() + item.slice(1)}
+                </button>
+              ),
+            )}
           </div>
-          {panel === 'brand' ? (
+          {panel === 'layer' ? (
+            layer ? (
+              <LayerInspector
+                layer={layer}
+                draft={draft}
+                onChange={(next) =>
+                  update({
+                    layers: draft.layers!.map((item) =>
+                      item.id === next.id ? next : item,
+                    ),
+                  })
+                }
+              />
+            ) : (
+              <p className="field-hint">Select a canvas layer.</p>
+            )
+          ) : panel === 'brand' ? (
             <>
               <Field label="Business name">
                 <Input
@@ -538,8 +888,11 @@ function StudioEditor({
                     update({ font: e.target.value as StudioDraft['font'] })
                   }
                 >
-                  <option value="modern">Modern sans serif</option>
-                  <option value="classic">Classic serif</option>
+                  {Object.keys(fontFamilies).map((font) => (
+                    <option key={font} value={font}>
+                      {font}
+                    </option>
+                  ))}
                 </Select>
               </Field>
               <div>
@@ -549,7 +902,25 @@ function StudioEditor({
                     <button
                       key={theme}
                       aria-pressed={draft.theme === theme}
-                      onClick={() => update({ theme })}
+                      onClick={() =>
+                        update({
+                          theme,
+                          visual: {
+                            ...(draft.visual || defaultVisual),
+                            ...(theme === 'dark'
+                              ? {
+                                  background: '#12151a',
+                                  surface: '#20252d',
+                                  ink: '#f1f5f9',
+                                }
+                              : {
+                                  background: defaultVisual.background,
+                                  surface: defaultVisual.surface,
+                                  ink: defaultVisual.ink,
+                                }),
+                          },
+                        })
+                      }
                     >
                       {theme === 'light' ? 'Light' : 'Dark'}
                     </button>
@@ -564,6 +935,7 @@ function StudioEditor({
                   placeholder="What makes your business different?"
                 />
               </Field>
+              <VisualInspector draft={draft} update={update} />
             </>
           ) : panel === 'workflows' ? (
             <>

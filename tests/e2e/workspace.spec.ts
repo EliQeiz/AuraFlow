@@ -492,9 +492,9 @@ test('a stale editor cannot silently overwrite a newer saved design', async ({
   await expect(page.getByText('Saved · Version 2')).toBeVisible()
   await other.getByLabel('Business name', { exact: true }).fill('Stale school')
   await other.getByRole('button', { name: 'Save design', exact: true }).click()
-  await expect(other.getByRole('status')).toContainText(
-    /another tab|another window|changed/i,
-  )
+  await expect(
+    other.getByText('This design changed in another tab.', { exact: false }),
+  ).toBeVisible()
   await page.reload()
   await expect(page.getByLabel('Business name', { exact: true })).toHaveValue(
     'Newest school',
@@ -514,6 +514,7 @@ test('suite-specific canvas, brand controls, page navigation, and mobile studio'
   })
   await signIn(page, address)
   await page.goto('/dashboard/studio?suite=clinic-patient-portal')
+  await page.getByRole('button', { name: 'System', exact: true }).click()
   const canvas = page.locator('.suite-canvas')
   await expect(canvas).toContainText('Appointments')
   await expect(canvas).not.toContainText('#AF-1028')

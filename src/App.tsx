@@ -85,6 +85,14 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/dashboard/admin" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/quote"
           element={
             <Navigate

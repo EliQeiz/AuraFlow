@@ -12,6 +12,60 @@ import {
   timestampDate,
 } from '../src/domain/projects'
 import { defaultDraft, draftSchema } from '../src/domain/studio'
+import {
+  clampLayer,
+  defaultVisual,
+  layerSchema,
+  newLayer,
+  starterLayers,
+} from '../src/domain/composition'
+import {
+  suiteArtwork,
+  templateArtwork,
+  previewArt,
+} from '../src/data/previewArt'
+
+test('canvas layers validate bounds, styling, identity, and category artwork', () => {
+  const layers = starterLayers('Home', 'industrial')
+  const draft = {
+    ...defaultDraft(
+      'industrial-plant-monitoring',
+      'Plant design',
+      ['Silos'],
+      [],
+    ),
+    visual: defaultVisual,
+    layers,
+  }
+  assert.equal(draftSchema.safeParse(draft).success, true)
+  assert.equal(
+    draftSchema.safeParse({ ...draft, layers: [layers[0], layers[0]] }).success,
+    false,
+  )
+  for (const change of [
+    { fill: 'url(https://example.com)' },
+    { x: 1190 },
+    { width: 1400 },
+    { opacity: 2 },
+    { imageIndex: 20 },
+    { html: '<script>bad</script>' },
+  ]) {
+    assert.equal(
+      layerSchema.safeParse({ ...layers[0], ...change }).success,
+      false,
+    )
+  }
+  assert.equal(clampLayer({ ...newLayer('text', 'Home'), x: 1150 }).x, 640)
+  assert.equal(suiteArtwork('school-management-system'), previewArt.education)
+  assert.notEqual(
+    suiteArtwork('restaurant-ordering-booking'),
+    previewArt.education,
+  )
+  assert.equal(
+    templateArtwork({ category: 'Restaurant', subcategory: 'Cafe' }),
+    previewArt.cafe,
+  )
+})
 import { buildTemplatePreviewDocument } from '../src/lib/templatePreview'
 
 test('auth preserves an internal destination including query and fragment', () => {

@@ -362,6 +362,27 @@ export const suiteBlueprints: SuiteBlueprint[] = [
   }),
 ]
 
+suiteBlueprints.push(makeSuite({
+  id: 'suite-industrial', slug: 'industrial-plant-monitoring', title: 'Industrial Plant & Sensor Operations', category: 'Engineering',
+  summary: 'Design a plant workspace for silo levels, sensor trends, production lines, alarms, maintenance, and shift handovers. Simulation only until commissioned integrations are implemented.',
+  image: '/template-previews/industrial-operations.png', audience: 'Mining, manufacturing, processing plants, utilities, and bulk storage operators',
+  startingPrice: 'Scoped after technical discovery', platformLabel: 'Private operations workspace',
+  moduleTitles: ['Process Overview', 'Sensor Registry', 'Silo Levels', 'Telemetry Trends', 'Alarm Console', 'Maintenance Planner', 'Shift Handover', 'Production Reports'],
+  roleTitles: ['Plant Manager', 'Operator', 'Maintenance Engineer', 'Read-only Analyst'],
+  entities: ['assets', 'sensors', 'silos', 'readings', 'alarms', 'work_orders', 'shifts', 'production_batches'],
+  imageScreens: ['Process Overview', 'Trends', 'Alarm Console', 'Asset Details'],
+  sourceNote: 'Design concept with simulated values. No live sensor connections or equipment-control commands.',
+}), makeSuite({
+  id: 'suite-pharmacy', slug: 'pharmacy-retail-workspace', title: 'Pharmacy Website & Inventory', category: 'Healthcare',
+  summary: 'Plan a pharmacy storefront, prescription enquiries, batch and expiry tracking, stock alerts, and pharmacist review workflows.',
+  image: '/template-previews/everwell-pharmacy.png', audience: 'Community pharmacies and health retail teams',
+  startingPrice: 'Scoped after consultation', platformLabel: 'Private pharmacy workspace',
+  moduleTitles: ['Health Essentials', 'Prescription Enquiries', 'Inventory', 'Batch Expiry', 'Supplier Orders', 'Pharmacist Review'],
+  roleTitles: ['Owner', 'Pharmacist', 'Stock Controller', 'Customer'],
+  entities: ['products', 'enquiries', 'batches', 'suppliers', 'orders', 'reviews'],
+  imageScreens: ['Storefront', 'Inventory', 'Expiry Alerts', 'Review Queue'],
+}))
+
 export const suiteCategories = ['All', ...Array.from(new Set(suiteBlueprints.map((suite) => suite.category)))]
 
 export function getSuiteBlueprint(slug?: string | null) {

@@ -13,13 +13,12 @@ import {
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SEOHead } from '../components/shared/SEOHead'
-import { SuiteCanvas } from '../components/shared/SuiteCanvas'
+import { SuiteCover } from '../components/shared/TemplateCover'
 import { ButtonLink } from '../components/ui/Button'
 import { useAuth } from '../context/AuthContext'
 import { defaultDraft } from '../domain/studio'
 import { suiteBlueprints } from '../data/suiteBlueprints'
 import founder from '../assets/images/elisha-afari.jpg'
-import { MotionMedia } from '../components/shared/MotionMedia'
 import { TemplateCover } from '../components/shared/TemplateCover'
 import { templates } from '../data/templates'
 
@@ -131,7 +130,7 @@ export default function Home() {
                 ))}
               </aside>
               <div className="editor-canvas">
-                <SuiteCanvas key={selected} draft={draft} />
+                <SuiteCover key={selected} suite={suite} />
               </div>
               <aside className="editor-right">
                 <p className="editor-label">PROJECT DESIGN</p>
@@ -208,7 +207,7 @@ export default function Home() {
               return (
                 <article key={item.slug} className="suite-tile">
                   <div className="suite-tile-media">
-                    <MotionMedia images={[data.image]} alt={item.name} />
+                    <SuiteCover suite={data} />
                   </div>
                   <h3>
                     <Link to={`/solutions/${item.slug}`}>{item.name}</Link>

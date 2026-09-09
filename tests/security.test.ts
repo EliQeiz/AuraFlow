@@ -21,6 +21,89 @@ import {
 } from 'firebase/firestore'
 import { getBytes, ref, uploadBytes } from 'firebase/storage'
 import { defaultDraft, draftSchema } from '../src/domain/studio'
+import { defaultVisual, newLayer } from '../src/domain/composition'
+
+test('full canvas saves are validated and only claimed admins can list clients', async () => {
+  const alice = env.authenticatedContext('canvas-client').firestore()
+  const bob = env.authenticatedContext('canvas-other').firestore()
+  const admin = env
+    .authenticatedContext('canvas-owner', { admin: true })
+    .firestore()
+  const impersonator = env
+    .authenticatedContext('canvas-impostor', {
+      email: 'elishaafari0@gmail.com',
+      email_verified: true,
+    })
+    .firestore()
+  const layers = Array.from({ length: 12 }, () => newLayer('rectangle', 'Home'))
+  const draft = {
+    ...defaultDraft(
+      'industrial-plant-monitoring',
+      'Plant design',
+      ['Silos'],
+      [],
+    ),
+    visual: defaultVisual,
+    layers,
+    userId: 'canvas-client',
+    revision: 1,
+    mediaPaths: Array.from(
+      { length: 20 },
+      (_, i) => `drafts/canvas-client/canvas/photo-${i}.png`,
+    ),
+    updatedAt: serverTimestamp(),
+  }
+  const path = 'users/canvas-client/drafts/canvas'
+  const batch = writeBatch(alice)
+  for (let i = 0; i < layers.length; i += 2) {
+    batch.set(doc(alice, `${path}/layerGroups/${i / 2}`), {
+      first: layers[i],
+      second: layers[i + 1] || null,
+    })
+  }
+  batch.set(doc(alice, path), draft)
+  batch.set(doc(alice, `${path}/versions/1`), draft)
+  await assertSucceeds(batch.commit())
+  await assertFails(getDoc(doc(bob, path)))
+  await assertFails(getDoc(doc(admin, path)))
+  await assertFails(getDoc(doc(bob, `${path}/layerGroups/0`)))
+  await assertFails(
+    setDoc(doc(alice, `${path}/layerGroups/0`), {
+      first: { ...layers[0], fill: 'url(https://evil.test)' },
+      second: null,
+    }),
+  )
+  await assertFails(
+    setDoc(doc(alice, `${path}/layerGroups/0`), {
+      first: { ...layers[0], opacity: 2 },
+      second: null,
+    }),
+  )
+  await assertFails(getDocs(collection(alice, 'users')))
+  await assertFails(getDocs(collection(impersonator, 'users')))
+  await assertSucceeds(getDocs(collection(admin, 'users')))
+  await assertFails(
+    updateDoc(doc(alice, path), {
+      layers: [{ ...layers[0], opacity: 2 }],
+      revision: 2,
+      updatedAt: serverTimestamp(),
+    }),
+  )
+  await assertFails(
+    updateDoc(doc(alice, path), {
+      layers: [...layers, newLayer('text', 'Home')],
+      revision: 2,
+      updatedAt: serverTimestamp(),
+    }),
+  )
+  await assertSucceeds(
+    setDoc(doc(alice, 'projects/canvas-submission'), {
+      ...project('canvas-client'),
+      design: draftSchema.parse(draft),
+      designDraftId: 'canvas',
+    }),
+  )
+})
 
 let env: RulesTestEnvironment
 const storageEnabled = Boolean(process.env.FIREBASE_STORAGE_EMULATOR_HOST)
@@ -57,6 +140,7 @@ before(async () => {
         }
       : undefined,
   })
+  await env.clearFirestore()
 })
 after(async () => {
   await env?.cleanup()

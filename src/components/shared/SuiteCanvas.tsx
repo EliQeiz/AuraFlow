@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useState, type CSSProperties } from 'react'
 import type { StudioDraft } from '../../domain/studio'
+import { fontFamilies } from '../../domain/composition'
 import { IMAGES } from '../../lib/images'
 import { getSuiteBlueprint } from '../../data/suiteBlueprints'
 
@@ -97,54 +98,81 @@ export function SuiteCanvas({
     | 'font'
     | 'pages'
     | 'modules'
-  >
+  > &
+    Pick<StudioDraft, 'visual'>
   page?: string
   website?: boolean
   bannerUrl?: string
   logoUrl?: string
   onPageChange?: (page: string) => void
 }) {
-  const key = draft.suiteSlug.includes('school')
-    ? 'school'
-    : draft.suiteSlug.includes('restaurant')
-      ? 'restaurant'
-      : draft.suiteSlug.includes('hotel')
-        ? 'hotel'
-        : draft.suiteSlug.includes('ecommerce')
-          ? 'shop'
-          : 'other'
+  const key = draft.suiteSlug.includes('industrial')
+    ? 'industrial'
+    : draft.suiteSlug.includes('school')
+      ? 'school'
+      : draft.suiteSlug.includes('restaurant')
+        ? 'restaurant'
+        : draft.suiteSlug.includes('hotel')
+          ? 'hotel'
+          : draft.suiteSlug.includes('ecommerce')
+            ? 'shop'
+            : 'other'
   const suite = getSuiteBlueprint(draft.suiteSlug)
   const example =
-    key === 'other'
+    key === 'industrial'
       ? {
-          name: suite?.title || 'Your business',
-          section: 'Selected modules',
+          name: 'Plant operations',
+          section: 'Sensor registry',
           icon: LayoutDashboard,
-          metrics: ['Pages', 'Modules', 'Preview'],
-          values: [
-            String(draft.pages.length),
-            String(draft.modules.length),
-            'Design',
+          metrics: ['Silo fill', 'Throughput', 'Advisories'],
+          values: ['68%', '124 t/h', '2'],
+          columns: ['Sensor', 'Reading', 'Condition'],
+          rows: [
+            ['SILO-01 Level', '68%', 'Normal'],
+            ['CV-02 Vibration', '2.4 mm/s', 'Review'],
+            ['MOTOR-03 Temperature', '64 C', 'Normal'],
           ],
-          columns: ['Module', 'Scope', 'Status'],
-          rows: draft.modules
-            .slice(0, 6)
-            .map((module) => [
-              module,
-              suite?.category || 'Business',
-              'Selected',
-            ]),
-          image: suite?.image || IMAGES.services.webApps,
+          image: '/template-previews/industrial-operations.png',
         }
-      : examples[key]
+      : key === 'other'
+        ? {
+            name: suite?.title || 'Your business',
+            section: 'Selected modules',
+            icon: LayoutDashboard,
+            metrics: ['Pages', 'Modules', 'Preview'],
+            values: [
+              String(draft.pages.length),
+              String(draft.modules.length),
+              'Design',
+            ],
+            columns: ['Module', 'Scope', 'Status'],
+            rows: draft.modules
+              .slice(0, 6)
+              .map((module) => [
+                module,
+                suite?.category || 'Business',
+                'Selected',
+              ]),
+            image: suite?.image || IMAGES.services.webApps,
+          }
+        : examples[key]
   const [search, setSearch] = useState('')
   const [selectedRow, setSelectedRow] = useState<string[] | null>(null)
   const Icon = example.icon
   const style = {
     '--canvas-primary': draft.primaryColor,
     '--canvas-accent': draft.accentColor,
-    fontFamily:
-      draft.font === 'classic' ? 'Georgia, serif' : 'DM Sans, sans-serif',
+    fontFamily: fontFamilies[draft.font],
+    ...(draft.visual
+      ? {
+          '--canvas-bg': draft.visual.surface,
+          '--canvas-soft': draft.visual.background,
+          '--canvas-ink': draft.visual.ink,
+          '--design-radius': `${draft.visual.radius}px`,
+          '--design-spacing': `${draft.visual.spacing}px`,
+          '--design-font-size': `${draft.visual.fontSize}px`,
+        }
+      : {}),
   } as CSSProperties
   const displayName = draft.name || example.name
   return (
@@ -181,6 +209,14 @@ export function SuiteCanvas({
           <div className="canvas-site-hero">
             <img
               src={bannerUrl || example.image}
+              style={
+                draft.visual
+                  ? {
+                      filter: `brightness(${draft.visual.brightness}%) saturate(${draft.visual.saturation}%)`,
+                      opacity: draft.visual.imageOpacity,
+                    }
+                  : undefined
+              }
               alt={
                 key === 'school'
                   ? 'School campus'

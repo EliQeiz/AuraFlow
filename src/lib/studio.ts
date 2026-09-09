@@ -37,6 +37,12 @@ export async function saveDraft(
         updatedAt: serverTimestamp(),
       }
       transaction.set(reference, snapshot)
+      for (let i = 0; i < (data.layers?.length || 0); i += 2) {
+        transaction.set(doc(reference, 'layerGroups', String(i / 2)), {
+          first: data.layers![i],
+          second: data.layers![i + 1] || null,
+        })
+      }
       transaction.set(
         doc(reference, 'versions', String(currentRevision + 1)),
         snapshot,

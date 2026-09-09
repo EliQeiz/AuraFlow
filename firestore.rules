@@ -200,7 +200,9 @@ service cloud.firestore {
       let joined = paths.join('|');
       return paths is list && n <= 20 && joined.size() <= 12000
         && (n == 0 || joined.matches('^drafts/[^/|]+/[^/|]+/[^/|]+(\\|drafts/[^/|]+/[^/|]+/[^/|]+)*$'))
-        && (n < 1 || paths[0].split('/')[1] == uid) && (n < 2 || paths[1].split('/')[1] == uid)
+        && (uid.matches('^[A-Za-z0-9_-]{1,128}$')
+          ? (n == 0 || joined.matches('^drafts/' + uid + '/[^/|]+/[^/|]+(\\|drafts/' + uid + '/[^/|]+/[^/|]+)*$'))
+          : ((n < 1 || paths[0].split('/')[1] == uid) && (n < 2 || paths[1].split('/')[1] == uid)
         && (n < 3 || paths[2].split('/')[1] == uid) && (n < 4 || paths[3].split('/')[1] == uid)
         && (n < 5 || paths[4].split('/')[1] == uid) && (n < 6 || paths[5].split('/')[1] == uid)
         && (n < 7 || paths[6].split('/')[1] == uid) && (n < 8 || paths[7].split('/')[1] == uid)
@@ -209,34 +211,84 @@ service cloud.firestore {
         && (n < 13 || paths[12].split('/')[1] == uid) && (n < 14 || paths[13].split('/')[1] == uid)
         && (n < 15 || paths[14].split('/')[1] == uid) && (n < 16 || paths[15].split('/')[1] == uid)
         && (n < 17 || paths[16].split('/')[1] == uid) && (n < 18 || paths[17].split('/')[1] == uid)
-        && (n < 19 || paths[18].split('/')[1] == uid) && (n < 20 || paths[19].split('/')[1] == uid);
+        && (n < 19 || paths[18].split('/')[1] == uid) && (n < 20 || paths[19].split('/')[1] == uid)));
     }
 
+    function validLayer(d) {
+      return d is map
+        && d.keys().hasOnly(['id','page','kind','text','x','y','width','height','fill','color','stroke','opacity','radius','fontSize','font','weight','align','brightness','saturation','rotation','locked','hidden','imageIndex','targetPage'])
+        && d.id.matches('^[a-zA-Z0-9-]{1,80}$')
+        && d.page is string && d.page.size() >= 1 && d.page.size() <= 80
+        && d.text is string && d.text.size() <= 500
+        && d.kind in ['text','rectangle','ellipse','button','image','metric','chart','silo']
+        && d.x is int && d.x >= 0 && d.x <= 1180
+        && d.y is int && d.y >= 0 && d.y <= 880
+        && d.width is int && d.width >= 20 && d.width <= 1200
+        && d.height is int && d.height >= 20 && d.height <= 900
+        && d.x + d.width <= 1200 && d.y + d.height <= 900
+        && d.fill.matches('^#[a-fA-F0-9]{6}$') && d.color.matches('^#[a-fA-F0-9]{6}$') && d.stroke.matches('^#[a-fA-F0-9]{6}$')
+        && d.opacity is number && d.opacity >= 0 && d.opacity <= 1
+        && d.radius is int && d.radius >= 0 && d.radius <= 100
+        && d.fontSize is int && d.fontSize >= 8 && d.fontSize <= 96
+        && d.font in ['modern','classic','geometric','humanist','mono','display']
+        && d.weight in ['400','600','700'] && d.align in ['left','center','right']
+        && d.brightness is int && d.brightness >= 25 && d.brightness <= 200
+        && d.saturation is int && d.saturation >= 0 && d.saturation <= 200
+        && d.rotation is int && d.rotation >= -180 && d.rotation <= 180
+        && d.locked is bool && d.hidden is bool
+        && d.imageIndex is int && d.imageIndex >= -2 && d.imageIndex <= 19
+        && d.targetPage is string && d.targetPage.size() <= 80;
+    }
+    // Each group validates at most two layers in its own rule evaluation.
+    function layerGroupMatches(uid, draftId, items, index) {
+      let group = getAfter(/databases/$(database)/documents/users/$(uid)/drafts/$(draftId)/layerGroups/$(string(index))).data;
+      return group.first == items[index * 2]
+        && group.second == (items.size() > index * 2 + 1 ? items[index * 2 + 1] : null);
+    }
+    function validLayers(items, uid, draftId) {
+      return items is list && items.size() <= 12
+        && (items.size() < 1 || layerGroupMatches(uid, draftId, items, 0))
+        && (items.size() < 3 || layerGroupMatches(uid, draftId, items, 1))
+        && (items.size() < 5 || layerGroupMatches(uid, draftId, items, 2))
+        && (items.size() < 7 || layerGroupMatches(uid, draftId, items, 3))
+        && (items.size() < 9 || layerGroupMatches(uid, draftId, items, 4))
+        && (items.size() < 11 || layerGroupMatches(uid, draftId, items, 5));
+    }
+    function validVisual(d) {
+      return d is map && d.keys().hasOnly(['background','surface','ink','radius','spacing','fontSize','brightness','saturation','imageOpacity'])
+        && d.background.matches('^#[a-fA-F0-9]{6}$') && d.surface.matches('^#[a-fA-F0-9]{6}$') && d.ink.matches('^#[a-fA-F0-9]{6}$')
+        && d.radius is int && d.radius >= 0 && d.radius <= 32
+        && d.spacing is int && d.spacing >= 8 && d.spacing <= 40
+        && d.fontSize is int && d.fontSize >= 12 && d.fontSize <= 24
+        && d.brightness is int && d.brightness >= 25 && d.brightness <= 200
+        && d.saturation is int && d.saturation >= 0 && d.saturation <= 200
+        && d.imageOpacity is number && d.imageOpacity >= 0 && d.imageOpacity <= 1;
+    }
     function validDesign(data, uid) {
       return data is map
         && data.schemaVersion == 1
-        && stringBetween(data, 'suiteSlug', 1, 180)
-        && stringBetween(data, 'name', 2, 120)
-        && stringBetween(data, 'headline', 0, 160)
-        && stringBetween(data, 'description', 0, 6000)
+        && data.suiteSlug is string && data.suiteSlug.size() >= 1 && data.suiteSlug.size() <= 180
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 120
+        && data.headline is string && data.headline.size() <= 160
+        && data.description is string && data.description.size() <= 6000
         && data.primaryColor.matches('^#[a-fA-F0-9]{6}$')
         && data.accentColor.matches('^#[a-fA-F0-9]{6}$')
         && data.theme in ['light', 'dark']
-        && data.font in ['modern', 'classic']
+        && data.font in ['modern', 'classic', 'geometric', 'humanist', 'mono', 'display']
+        && (!data.keys().hasAny(['visual']) || validVisual(data.visual))
         && data.modules is list && data.modules.size() >= 1 && data.modules.size() <= 30
         && data.roles is list && data.roles.size() <= 20
         && data.workflows is list && data.workflows.size() <= 20
         && data.pages is list && data.pages.size() >= 1 && data.pages.size() <= 15
-        && stringBetween(data, 'notes', 0, 6000)
-        && stringBetween(data, 'logoPath', 0, 600)
-        && stringBetween(data, 'bannerPath', 0, 600)
+        && data.notes is string && data.notes.size() <= 6000
         && draftPath(data.logoPath, uid) && draftPath(data.bannerPath, uid)
         && validDraftMedia(data.mediaPaths, uid);
     }
 
-    function validDraft(uid) {
+    function validDraft(uid, draftId) {
       return validDesign(request.resource.data, uid)
-        && request.resource.data.keys().hasOnly(['schemaVersion', 'suiteSlug', 'name', 'headline', 'description', 'primaryColor', 'accentColor', 'theme', 'font', 'modules', 'roles', 'workflows', 'pages', 'notes', 'logoPath', 'bannerPath', 'mediaPaths', 'userId', 'revision', 'updatedAt'])
+        && (!request.resource.data.keys().hasAny(['layers']) || validLayers(request.resource.data.layers, uid, draftId))
+        && request.resource.data.keys().hasOnly(['schemaVersion', 'suiteSlug', 'name', 'headline', 'description', 'primaryColor', 'accentColor', 'theme', 'font', 'modules', 'roles', 'workflows', 'pages', 'notes', 'logoPath', 'bannerPath', 'mediaPaths', 'visual', 'layers', 'userId', 'revision', 'updatedAt'])
         && request.resource.data.userId == uid
         && request.resource.data.revision is int
         && request.resource.data.updatedAt == request.time;
@@ -404,7 +456,7 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow read: if owns(uid);
+      allow read: if owns(uid) || isAdmin();
       allow create: if owns(uid) && validProfile(uid)
         && request.resource.data.plan == 'Starter'
         && request.resource.data.projectCount == 0;
@@ -422,10 +474,18 @@ service cloud.firestore {
 
       match /drafts/{draftId} {
         allow read: if owns(uid);
-        allow create: if owns(uid) && validDraft(uid) && request.resource.data.revision == 1;
-        allow update: if owns(uid) && validDraft(uid)
+        allow create: if owns(uid) && validDraft(uid, draftId) && request.resource.data.revision == 1;
+        allow update: if owns(uid) && validDraft(uid, draftId)
           && request.resource.data.revision == resource.data.revision + 1;
         allow delete: if owns(uid);
+        match /layerGroups/{groupId} {
+          allow read: if owns(uid);
+          allow create, update: if owns(uid) && groupId in ['0','1','2','3','4','5']
+            && request.resource.data.keys().hasOnly(['first', 'second'])
+            && validLayer(request.resource.data.first)
+            && (request.resource.data.second == null || validLayer(request.resource.data.second));
+          allow delete: if owns(uid);
+        }
         match /versions/{versionId} {
           allow read: if owns(uid);
           allow create: if owns(uid)

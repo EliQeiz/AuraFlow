@@ -21,7 +21,8 @@ import { Input, Select, Textarea } from '../../components/ui/Input'
 import { StatePanel } from '../../components/ui/StatePanel'
 import { ChatThread } from '../../components/shared/ChatThread'
 import { PrivateFile } from '../../components/shared/PrivateFile'
-import { SuiteCanvas } from '../../components/shared/SuiteCanvas'
+import { SubmittedDesign } from '../../components/shared/SubmittedDesign'
+import { AdminDirectory } from '../../components/shared/AdminDirectory'
 import type { ProjectRecord, RequestStatus } from '../../types'
 import {
   AdminOperations,
@@ -49,6 +50,17 @@ export default function AdminConsole() {
   const [tab, setTab] = useState('Projects')
   const [params, setParams] = useSearchParams()
   const selectedId = params.get('project') || ''
+  const clientId = params.get('client') || ''
+  const clientProjects = useLiveRows<ProjectRecord>(
+    ['admin-client-projects', user!.uid, clientId],
+    () =>
+      query(
+        collection(getFirebaseDb(), 'projects'),
+        where('userId', '==', clientId),
+        orderBy('updatedAt', 'desc'),
+      ),
+    admin && Boolean(clientId),
+  )
   const setSelectedId = (id: string) =>
     setParams({ project: id }, { replace: true })
   const [conversationId, setConversationId] = useState('')
@@ -66,6 +78,7 @@ export default function AdminConsole() {
   const conversation =
     conversations.data.find((c) => c.id === conversationId) ||
     conversations.data[0]
+  const listing = clientId ? clientProjects : projects
   return (
     <>
       <div className="workspace-page-header">
@@ -76,19 +89,33 @@ export default function AdminConsole() {
           </p>
         </div>
       </div>
-      <div className="tab-bar" role="tablist" aria-label="Admin views">
-        {['Projects', 'Support inbox', 'Saved replies'].map((value) => (
-          <button
-            key={value}
-            role="tab"
-            aria-selected={tab === value}
-            onClick={() => setTab(value)}
-          >
-            {value}
-          </button>
-        ))}
+      <div className="owner-access-strip">
+        <strong>Owner workspace</strong>
+        <span>{user?.email}</span>
+        <span>Access verified by Firebase</span>
+        {clientId && (
+          <Button variant="ghost" onClick={() => setParams({})}>
+            Clear client filter
+          </Button>
+        )}
       </div>
-      {tab === 'Saved replies' ? (
+      <div className="tab-bar" role="tablist" aria-label="Admin views">
+        {['Projects', 'Clients', 'Support inbox', 'Saved replies'].map(
+          (value) => (
+            <button
+              key={value}
+              role="tab"
+              aria-selected={tab === value}
+              onClick={() => setTab(value)}
+            >
+              {value}
+            </button>
+          ),
+        )}
+      </div>
+      {tab === 'Clients' && !clientId ? (
+        <AdminDirectory />
+      ) : tab === 'Saved replies' ? (
         <ReplySnippets manage />
       ) : tab === 'Support inbox' ? (
         conversations.isPending ? (
@@ -131,18 +158,15 @@ export default function AdminConsole() {
         )
       ) : (
         <>
-          {projects.isPending ? (
+          {listing.isPending ? (
             <StatePanel loading />
-          ) : projects.error ? (
+          ) : listing.error ? (
             <StatePanel
-              error={projects.error}
-              retry={() => void projects.refetch()}
+              error={listing.error}
+              retry={() => void listing.refetch()}
             />
           ) : (
-            <AdminOperations
-              projects={projects.data}
-              onSelect={setSelectedId}
-            />
+            <AdminOperations projects={listing.data} onSelect={setSelectedId} />
           )}
           {selected ? (
             <AdminProject key={selected.id} project={selected} />
@@ -264,7 +288,7 @@ function AdminProject({ project }: { project: ProjectRecord }) {
             <p className="detail-body mb-6">{project.description}</p>
             {project.design && (
               <div className="mb-6">
-                <SuiteCanvas draft={project.design} />
+                <SubmittedDesign draft={project.design} />
               </div>
             )}
             <div className="file-list mb-6">

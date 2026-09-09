@@ -99,9 +99,8 @@ function WorkspaceSidebar({ onNavigate }: { onNavigate?: () => void }) {
             <strong>
               {profile?.name ?? user?.displayName ?? 'Your account'}
             </strong>
-            <small>
-              {admin ? 'AuraFlow administrator' : 'Personal workspace'}
-            </small>
+            <small>{admin ? 'Owner account' : 'Client account'}</small>
+            <small title={user?.email || ''}>{user?.email}</small>
           </div>
           <button
             className="icon-button"

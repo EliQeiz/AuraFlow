@@ -1,11 +1,11 @@
 import { Search, ArrowUpRight } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { suiteBlueprints } from '../data/suiteBlueprints'
 import { SEOHead } from '../components/shared/SEOHead'
 import { Input, Select } from '../components/ui/Input'
 import { ButtonLink } from '../components/ui/Button'
 import { StatePanel } from '../components/ui/StatePanel'
+import { SuiteCover } from '../components/shared/TemplateCover'
 
 export default function Solutions() {
   const [search, setSearch] = useState('')
@@ -56,9 +56,7 @@ export default function Solutions() {
         {suites.map((suite) => (
           <article key={suite.slug} className="library-item">
             <div className="library-image">
-              <Link to={`/solutions/${suite.slug}`}>
-                <img src={suite.image} alt={suite.title} loading="lazy" />
-              </Link>
+              <SuiteCover suite={suite} />
             </div>
             <h2>{suite.title}</h2>
             <p className="line-clamp-2">{suite.summary}</p>

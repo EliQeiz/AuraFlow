@@ -21,6 +21,7 @@ import { StatePanel } from '../../components/ui/StatePanel'
 import { PrivateFile } from '../../components/shared/PrivateFile'
 import { ProjectFileUploader } from '../../components/shared/ProjectFileUploader'
 import { SuiteCanvas } from '../../components/shared/SuiteCanvas'
+import { SubmittedDesign } from '../../components/shared/SubmittedDesign'
 import { requestRevision } from '../../lib/firestore'
 import { asErrorMessage } from '../../lib/utils'
 import { displayDate, httpUrl, requestStatuses } from '../../domain/projects'
@@ -283,12 +284,16 @@ function ProjectDetail({
           ) : tab === 'Design' ? (
             project.design ? (
               <>
-                <SuiteCanvas
-                  draft={project.design}
-                  website
-                  bannerUrl={banner}
-                  logoUrl={logo}
-                />
+                {project.design.layers?.length ? (
+                  <SubmittedDesign draft={project.design} />
+                ) : (
+                  <SuiteCanvas
+                    draft={project.design}
+                    website
+                    bannerUrl={banner}
+                    logoUrl={logo}
+                  />
+                )}
                 <p className="product-caption">
                   Submitted design snapshot · Example content
                 </p>

@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { getSuiteBlueprint } from '../data/suiteBlueprints'
 import { defaultDraft } from '../domain/studio'
 import { SuiteCanvas } from '../components/shared/SuiteCanvas'
+import { SuiteCover } from '../components/shared/TemplateCover'
 import { SEOHead } from '../components/shared/SEOHead'
 import { ButtonLink } from '../components/ui/Button'
 import { StatePanel } from '../components/ui/StatePanel'
@@ -62,6 +63,9 @@ export default function SolutionDetail() {
       </header>
       <div className="detail-grid">
         <section>
+          <div className="mb-6">
+            <SuiteCover suite={suite} />
+          </div>
           <div className="studio-canvas-area rounded-md">
             <div className="studio-canvas-toolbar">
               <div className="studio-choice">
