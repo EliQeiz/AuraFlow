@@ -1,6 +1,10 @@
 .git/
 .vercel/
 node_modules/
+.tools/
+artifacts/
+test-results/
+playwright-report/
 dist/
 dist-ssr/
 Ad/

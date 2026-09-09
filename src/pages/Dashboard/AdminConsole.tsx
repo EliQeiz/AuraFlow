@@ -1,216 +1,369 @@
-import { Layers3, MessageSquareMore, Send, ServerCog, Shield, UploadCloud } from 'lucide-react'
+import {
+  collection,
+  documentId,
+  orderBy,
+  query,
+  where,
+} from 'firebase/firestore'
+import { useSearchParams } from 'react-router-dom'
 import { useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
-import { SuitePreviewPanel } from '../../components/shared/SuitePreviewPanel'
-import { Badge } from '../../components/ui/Badge'
-import { Button, ButtonLink } from '../../components/ui/Button'
-import { Card } from '../../components/ui/Card'
-import { Input, Select, Textarea } from '../../components/ui/Input'
 import { useAuth } from '../../context/AuthContext'
-import { getSuiteBlueprint } from '../../data/suiteBlueprints'
-import { requestAssetAccept, uploadProjectAsset } from '../../lib/auth'
-import { attachProjectPreview, sendProjectMessage, updateAdminProject } from '../../lib/firestore'
-import { useAdminProjects, useProjectMessages } from '../../hooks/useFirebase'
+import { useAdminProjects, useLiveRows } from '../../hooks/useFirebase'
+import { getFirebaseDb } from '../../lib/firebase'
+import { updateAdminProject, attachProjectPreview } from '../../lib/firestore'
+import { uploadPrivateMedia, validateMedia } from '../../lib/media'
 import { asErrorMessage } from '../../lib/utils'
+import { requestStatuses } from '../../domain/projects'
+import { Button } from '../../components/ui/Button'
+import { Field } from '../../components/ui/Field'
+import { Input, Select, Textarea } from '../../components/ui/Input'
+import { StatePanel } from '../../components/ui/StatePanel'
+import { ChatThread } from '../../components/shared/ChatThread'
+import { PrivateFile } from '../../components/shared/PrivateFile'
+import { SuiteCanvas } from '../../components/shared/SuiteCanvas'
 import type { ProjectRecord, RequestStatus } from '../../types'
-
-const statuses: RequestStatus[] = ['Submitted', 'Discovery', 'Designing', 'Building', 'Review', 'Completed', 'On Hold']
+import {
+  AdminOperations,
+  InternalNotes,
+  ReplySnippets,
+} from '../../components/shared/AdminOperations'
+import { ProjectWorkflow } from '../../components/shared/ProjectWorkflow'
 
 export default function AdminConsole() {
   const { admin, user } = useAuth()
   const projects = useAdminProjects(admin)
-  const [selectedId, setSelectedId] = useState('')
-  const selected = projects.data.find((project) => project.id === selectedId) ?? projects.data[0]
-
-  if (!admin || !user) {
-    return (
-      <Card className="p-6">
-        <Badge>Admin Only</Badge>
-        <h1 className="mt-4 text-3xl font-extrabold">AuraFlow admin controls are hidden for client accounts.</h1>
-        <p className="mt-3 max-w-2xl text-aura-muted">Grant this creator account the Firebase admin claim from a trusted Admin SDK session, sign out, then sign back in.</p>
-        <p className="mt-3 rounded-md border border-white/10 bg-black/20 p-3 font-mono text-xs text-cyan-100">UID: {user?.uid ?? 'Sign in first'}</p>
-        <ButtonLink to="/dashboard/settings" variant="secondary" className="mt-4 w-fit">Open Settings</ButtonLink>
-      </Card>
-    )
-  }
-
+  const conversations = useLiveRows<{
+    id: string
+    userId: string
+    name: string
+  }>(
+    ['support-inbox', user!.uid],
+    () =>
+      query(
+        collection(getFirebaseDb(), 'conversations'),
+        orderBy('updatedAt', 'desc'),
+      ),
+    admin,
+  )
+  const [tab, setTab] = useState('Projects')
+  const [params, setParams] = useSearchParams()
+  const selectedId = params.get('project') || ''
+  const setSelectedId = (id: string) =>
+    setParams({ project: id }, { replace: true })
+  const [conversationId, setConversationId] = useState('')
+  const selectedProject = useLiveRows<ProjectRecord>(
+    ['admin-selected-project', user!.uid, selectedId],
+    () =>
+      query(
+        collection(getFirebaseDb(), 'projects'),
+        where(documentId(), '==', selectedId),
+      ),
+    admin && Boolean(selectedId),
+  )
+  const selected =
+    selectedProject.data[0] || projects.data.find((p) => p.id === selectedId)
+  const conversation =
+    conversations.data.find((c) => c.id === conversationId) ||
+    conversations.data[0]
   return (
-    <div className="grid gap-4 xl:grid-cols-[340px_1fr]">
-      <Card className="p-4">
-        <h1 className="inline-flex items-center gap-2 text-3xl font-extrabold"><Shield className="h-6 w-6 text-cyan-100" /> Admin</h1>
-        <p className="mt-2 text-aura-muted">Requests visible only to admin claims.</p>
-        <div className="mt-5 grid gap-2">
-          {projects.data.map((project) => <button key={project.id} onClick={() => setSelectedId(project.id)} className={`rounded-lg border p-3 text-left ${project.id === selected?.id ? 'border-cyan-200 bg-cyan-300/12' : 'border-white/10 bg-black/20'}`}><strong className="block truncate text-white">{project.title}</strong><span className="mt-2 flex justify-between gap-2 text-sm text-aura-muted">{project.clientName}<Badge>{project.status}</Badge></span></button>)}
+    <>
+      <div className="workspace-page-header">
+        <div>
+          <h1>Administration</h1>
+          <p>
+            Manage client work, review briefs, and keep conversations moving.
+          </p>
         </div>
-      </Card>
-      {selected ? <AdminProject project={selected} userId={user.uid} onRefresh={() => void projects.refetch()} /> : <Card className="p-6 text-aura-muted">Client requests will arrive here.</Card>}
-    </div>
+      </div>
+      <div className="tab-bar" role="tablist" aria-label="Admin views">
+        {['Projects', 'Support inbox', 'Saved replies'].map((value) => (
+          <button
+            key={value}
+            role="tab"
+            aria-selected={tab === value}
+            onClick={() => setTab(value)}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+      {tab === 'Saved replies' ? (
+        <ReplySnippets manage />
+      ) : tab === 'Support inbox' ? (
+        conversations.isPending ? (
+          <StatePanel loading />
+        ) : conversations.error ? (
+          <StatePanel
+            error={conversations.error}
+            retry={() => void conversations.refetch()}
+          />
+        ) : (
+          <div className="messages-layout">
+            <aside className="thread-list">
+              {conversations.data.map((c) => (
+                <button
+                  key={c.id}
+                  className="thread-item"
+                  aria-pressed={conversation?.id === c.id}
+                  onClick={() => setConversationId(c.id)}
+                >
+                  <strong>{c.name}</strong>
+                  <small>Customer support</small>
+                </button>
+              ))}
+            </aside>
+            {conversation ? (
+              <ChatThread
+                key={conversation.id}
+                support
+                asAdmin
+                id={conversation.id}
+                title={conversation.name}
+              />
+            ) : (
+              <StatePanel
+                title="No support conversations yet"
+                description="Client messages will appear here."
+              />
+            )}
+          </div>
+        )
+      ) : (
+        <>
+          {projects.isPending ? (
+            <StatePanel loading />
+          ) : projects.error ? (
+            <StatePanel
+              error={projects.error}
+              retry={() => void projects.refetch()}
+            />
+          ) : (
+            <AdminOperations
+              projects={projects.data}
+              onSelect={setSelectedId}
+            />
+          )}
+          {selected ? (
+            <AdminProject key={selected.id} project={selected} />
+          ) : selectedId ? (
+            selectedProject.isPending ? (
+              <StatePanel loading />
+            ) : (
+              <StatePanel
+                error={
+                  selectedProject.error ||
+                  new Error('This project is no longer available.')
+                }
+                retry={() => void selectedProject.refetch()}
+              />
+            )
+          ) : (
+            <StatePanel
+              title="Select a project to manage"
+              description="Client briefs, files, design snapshots, and delivery controls appear here."
+            />
+          )}
+        </>
+      )}
+    </>
   )
 }
-
-function AdminProject({ onRefresh, project, userId }: { onRefresh: () => void; project: ProjectRecord; userId: string }) {
-  const [loading, setLoading] = useState(false)
-  const suite = getSuiteBlueprint(project.prototypeSpec?.suiteSlug ?? project.solutionSlug)
-  const save = async (event: FormEvent<HTMLFormElement>) => {
+function AdminProject({ project }: { project: ProjectRecord }) {
+  const { user } = useAuth()
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState('')
+  const [progress, setProgress] = useState('')
+  const [params] = useSearchParams()
+  const [view, setView] = useState(
+    params.get('view') === 'workflow' ? 'Workflow' : 'Delivery',
+  )
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const data = new FormData(event.currentTarget)
-    setLoading(true)
+    setPending(true)
+    setError('')
     try {
       await updateAdminProject(project.id, {
         status: String(data.get('status')) as RequestStatus,
-        deadline: String(data.get('deadline')),
         adminSummary: String(data.get('summary')),
-        tenantSlug: String(data.get('tenantSlug')),
+        deadline: String(data.get('deadline')),
         stagingUrl: String(data.get('stagingUrl')),
         productionUrl: String(data.get('productionUrl')),
+        tenantSlug: String(data.get('tenantSlug')),
       })
-      const preview = (data.get('preview') as File | null)
-      if (preview?.size) {
-        const uploaded = await uploadProjectAsset(project.userId, project.id, preview, 'previews')
-        await attachProjectPreview(project.id, { id: crypto.randomUUID(), ...uploaded, kind: 'preview', uploadedBy: userId })
-      }
-      toast.success('Client workspace updated.')
-      onRefresh()
-    } catch (error) {
-      toast.error(asErrorMessage(error))
+      toast.success('Project updated.')
+    } catch (err) {
+      setError(asErrorMessage(err))
     } finally {
-      setLoading(false)
+      setPending(false)
     }
   }
-
-  return (
-    <Card className="p-5">
-      <Badge>{project.clientEmail}</Badge>
-      <h2 className="mt-4 text-3xl font-extrabold">{project.title}</h2>
-      <p className="mt-3 max-w-3xl text-aura-muted">{project.description}</p>
-      {project.solutionSlug || project.prototypeSpec ? (
-        <div className="mt-5 grid gap-3 rounded-lg border border-cyan-200/20 bg-cyan-300/10 p-4 text-sm text-aura-muted lg:grid-cols-3">
-          <div>
-            <span className="inline-flex items-center gap-2 font-bold text-white"><ServerCog className="h-4 w-4 text-cyan-100" /> Platform</span>
-            <p className="mt-2">{project.platformMode ?? project.prototypeSpec?.platformMode ?? 'Custom build'}</p>
-            <p className="mt-1 font-mono text-xs text-cyan-100">{project.subdomainPreference ?? project.prototypeSpec?.subdomainPreference}</p>
-          </div>
-          <div className="lg:col-span-2">
-            <span className="inline-flex items-center gap-2 font-bold text-white"><Layers3 className="h-4 w-4 text-cyan-100" /> Selected modules</span>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {(project.prototypeSpec?.selectedModules ?? []).map((module) => (
-                <Badge key={module} className="bg-white/[0.07] text-white">{module}</Badge>
-              ))}
-              {!project.prototypeSpec?.selectedModules?.length ? <span>{project.solutionSlug}</span> : null}
-            </div>
-          </div>
-          {project.prototypeSpec?.selectedRoles?.length ? (
-            <div className="lg:col-span-3">
-              <strong className="text-white">Requested portals</strong>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {project.prototypeSpec.selectedRoles.map((role) => (
-                  <Badge key={role} className="bg-white/[0.07] text-white">{role}</Badge>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {project.prototypeSpec?.selectedWorkflows?.length ? (
-            <div className="lg:col-span-3">
-              <strong className="text-white">Priority workflows</strong>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {project.prototypeSpec.selectedWorkflows.map((workflow) => (
-                  <Badge key={workflow} className="bg-white/[0.07] text-white">{workflow}</Badge>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {project.prototypeSpec?.selectedBuilderFeatures?.length ? (
-            <div className="lg:col-span-3">
-              <strong className="text-white">Builder features</strong>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {project.prototypeSpec.selectedBuilderFeatures.map((feature) => (
-                  <Badge key={feature} className="bg-white/[0.07] text-white">{feature}</Badge>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {project.prototypeSpec ? (
-            <div className="lg:col-span-3">
-              <strong className="text-white">Prototype brief</strong>
-              <div className="mt-2 grid gap-2 md:grid-cols-3">
-                <span className="rounded-md border border-white/10 bg-black/20 p-2">Theme: {project.prototypeSpec.themePreset ?? 'Default'}</span>
-                <span className="rounded-md border border-white/10 bg-black/20 p-2">Primary: {project.prototypeSpec.primaryColor ?? 'Not set'}</span>
-                <span className="rounded-md border border-white/10 bg-black/20 p-2">Accent: {project.prototypeSpec.accentColor ?? 'Not set'}</span>
-              </div>
-              <p className="mt-2 whitespace-pre-line leading-7">{project.prototypeSpec.coreWorkflows}</p>
-              <p className="mt-3 whitespace-pre-line leading-7">{project.prototypeSpec.contentNotes}</p>
-              {project.prototypeSpec.logoDirection ? <p className="mt-3 whitespace-pre-line leading-7">Logo direction: {project.prototypeSpec.logoDirection}</p> : null}
-              {project.prototypeSpec.bannerDirection ? <p className="mt-3 whitespace-pre-line leading-7">Banner direction: {project.prototypeSpec.bannerDirection}</p> : null}
-              {project.prototypeSpec.mediaPlan ? <p className="mt-3 whitespace-pre-line leading-7">Media plan: {project.prototypeSpec.mediaPlan}</p> : null}
-              {project.prototypeSpec.dataSources ? <p className="mt-3 whitespace-pre-line leading-7">Data sources: {project.prototypeSpec.dataSources}</p> : null}
-              {project.prototypeSpec.automationNeeds?.length ? <p className="mt-3 whitespace-pre-line leading-7">Automations: {project.prototypeSpec.automationNeeds.join('; ')}</p> : null}
-              {project.prototypeSpec.paymentPlan ? <p className="mt-3 whitespace-pre-line leading-7">Payments/bookings: {project.prototypeSpec.paymentPlan}</p> : null}
-              {project.prototypeSpec.tenantAdminNotes ? <p className="mt-3 whitespace-pre-line leading-7">Owner/admin controls: {project.prototypeSpec.tenantAdminNotes}</p> : null}
-              {project.prototypeSpec.complianceNotes ? <p className="mt-3 whitespace-pre-line leading-7">Security notes: {project.prototypeSpec.complianceNotes}</p> : null}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-      {suite ? (
-        <SuitePreviewPanel
-          suite={suite}
-          compact
-          selectedModules={project.prototypeSpec?.selectedModules}
-          selectedRoles={project.prototypeSpec?.selectedRoles}
-          selectedWorkflows={project.prototypeSpec?.selectedWorkflows}
-          selectedBuilderFeatures={project.prototypeSpec?.selectedBuilderFeatures}
-          className="mt-5"
-        />
-      ) : null}
-      <form onSubmit={save} className="mt-6 grid gap-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="grid gap-2 text-sm text-aura-muted">Status<Select name="status" defaultValue={project.status}>{statuses.map((status) => <option key={status}>{status}</option>)}</Select></label>
-          <label className="grid gap-2 text-sm text-aura-muted">Deadline<Input name="deadline" defaultValue={project.deadline} placeholder="July 18, 2026" /></label>
-          <label className="grid gap-2 text-sm text-aura-muted">Tenant or hosted slug<Input name="tenantSlug" defaultValue={project.tenantSlug ?? project.subdomainPreference ?? ''} placeholder="crestview-academy" /></label>
-          <label className="grid gap-2 text-sm text-aura-muted">Staging preview URL<Input name="stagingUrl" defaultValue={project.stagingUrl ?? ''} placeholder="https://preview.auraflow.app/..." /></label>
-          <label className="grid gap-2 text-sm text-aura-muted md:col-span-2">Production URL<Input name="productionUrl" defaultValue={project.productionUrl ?? ''} placeholder="https://client.auraflow.app or custom domain" /></label>
-        </div>
-        <label className="grid gap-2 text-sm text-aura-muted">Client-visible progress summary<Textarea name="summary" defaultValue={project.adminSummary} placeholder="What has moved forward, what preview means, and the next step." /></label>
-        <label className="grid gap-2 rounded-lg border border-dashed border-white/15 p-4 text-sm text-aura-muted"><span className="inline-flex items-center gap-2 font-bold text-white"><UploadCloud className="h-4 w-4" /> Upload preview or delivery file</span><Input name="preview" accept={requestAssetAccept} type="file" /></label>
-        <Button type="submit" loading={loading} className="w-fit">Save Client Workspace</Button>
-      </form>
-      <AdminChat project={project} userId={userId} />
-    </Card>
-  )
-}
-
-function AdminChat({ project, userId }: { project: ProjectRecord; userId: string }) {
-  const messages = useProjectMessages(project.id)
-  const [loading, setLoading] = useState(false)
-
-  const send = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const form = event.currentTarget
-    const text = String(new FormData(form).get('message') ?? '').trim()
-    setLoading(true)
+  async function upload(file: File | undefined) {
+    if (!file) return
+    setPending(true)
+    setError('')
     try {
-      await sendProjectMessage(project.id, { authorId: userId, authorName: 'AuraFlow Admin', role: 'admin', text })
-      form.reset()
-      void messages.refetch()
-      toast.success('Client message sent.')
-    } catch (error) {
-      toast.error(asErrorMessage(error))
+      validateMedia(file)
+      const id = crypto.randomUUID()
+      const path = `projects/${project.userId}/${project.id}/previews/${id}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_').slice(-100)}`
+      await uploadPrivateMedia(path, file, (p) =>
+        setProgress(`Uploading: ${p}%`),
+      )
+      await attachProjectPreview(project.id, {
+        id,
+        name: file.name,
+        path,
+        url: '',
+        contentType: file.type,
+        kind: 'preview',
+        uploadedBy: user!.uid,
+      })
+      toast.success('Preview shared with client.')
+    } catch (err) {
+      setError(asErrorMessage(err))
     } finally {
-      setLoading(false)
+      setPending(false)
+      setProgress('')
     }
   }
-
   return (
-    <section className="mt-7 border-t border-white/10 pt-6">
-      <h3 className="inline-flex items-center gap-2 text-2xl font-bold"><MessageSquareMore className="h-5 w-5 text-cyan-100" /> Client chat</h3>
-      <div className="mt-4 grid max-h-80 gap-2 overflow-auto rounded-lg border border-white/10 bg-black/20 p-3">
-        {messages.data.map((message) => <div key={message.id} className={`rounded-lg p-3 text-sm ${message.role === 'admin' ? 'bg-cyan-300/12 text-cyan-50' : 'bg-white/[0.07] text-aura-muted'}`}><strong className="block text-white">{message.authorName}</strong>{message.text}</div>)}
-        {!messages.data.length ? <p className="p-3 text-aura-muted">Client messages for this request will appear here.</p> : null}
+    <div className="admin-project-detail mt-8">
+      <div className="section-heading">
+        <div>
+          <span className="workspace-label">Selected project</span>
+          <h2>{project.title}</h2>
+          <p className="field-hint">
+            {project.clientName} · {project.clientEmail}
+          </p>
+        </div>
+        <span className="status" data-status={project.status}>
+          {project.status}
+        </span>
       </div>
-      <form onSubmit={send} className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-        <Textarea name="message" minLength={2} required className="min-h-12" placeholder="Reply to this client request" />
-        <Button type="submit" loading={loading} className="h-fit"><Send className="h-4 w-4" /> Send</Button>
-      </form>
-    </section>
+      <div className="tab-bar" role="tablist" aria-label="Admin project views">
+        {['Delivery', 'Workflow', 'Private notes'].map((value) => (
+          <button
+            role="tab"
+            key={value}
+            aria-selected={view === value}
+            onClick={() => setView(value)}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+      {view === 'Private notes' ? (
+        <InternalNotes projectId={project.id} />
+      ) : view === 'Workflow' ? (
+        <ProjectWorkflow project={project} asAdmin />
+      ) : (
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,.8fr)]">
+          <section>
+            <h2 className="mb-4">{project.title}</h2>
+            <p className="detail-body mb-6">{project.description}</p>
+            {project.design && (
+              <div className="mb-6">
+                <SuiteCanvas draft={project.design} />
+              </div>
+            )}
+            <div className="file-list mb-6">
+              {project.assets?.map((asset) => (
+                <PrivateFile asset={asset} key={asset.id} />
+              ))}
+            </div>
+            <form
+              className="request-form border-t border-[var(--line)] pt-6"
+              onSubmit={save}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Project status">
+                  <Select name="status" defaultValue={project.status}>
+                    {requestStatuses.map((status) => (
+                      <option key={status}>{status}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Agreed deadline">
+                  <Input
+                    name="deadline"
+                    type="date"
+                    defaultValue={
+                      /^\d{4}-\d{2}-\d{2}$/.test(project.deadline || '')
+                        ? project.deadline
+                        : ''
+                    }
+                  />
+                </Field>
+              </div>
+              <Field label="Progress update for client">
+                <Textarea
+                  name="summary"
+                  defaultValue={project.adminSummary}
+                  maxLength={6000}
+                />
+              </Field>
+              <Field label="Staging preview URL">
+                <Input
+                  name="stagingUrl"
+                  type="url"
+                  defaultValue={project.stagingUrl}
+                  placeholder="https://"
+                />
+              </Field>
+              <Field label="Live platform URL">
+                <Input
+                  name="productionUrl"
+                  type="url"
+                  defaultValue={project.productionUrl}
+                  placeholder="https://"
+                />
+              </Field>
+              <Field label="Hosted system identifier">
+                <Input
+                  name="tenantSlug"
+                  defaultValue={project.tenantSlug}
+                  maxLength={120}
+                />
+              </Field>
+              {error && (
+                <p className="inline-alert error" role="alert">
+                  {error}
+                </p>
+              )}
+              <Button
+                type="submit"
+                loading={pending}
+                className="justify-self-start"
+              >
+                Save changes
+              </Button>
+            </form>
+            <div className="mt-8 border-t border-[var(--line)] pt-6">
+              <Field label="Share a preview file">
+                <Input
+                  type="file"
+                  disabled={pending}
+                  onChange={(e) => void upload(e.target.files?.[0])}
+                />
+              </Field>
+              {progress && (
+                <p role="status" className="field-hint mt-3">
+                  {progress}
+                </p>
+              )}
+              <div className="file-list mt-4">
+                {project.previews?.map((asset) => (
+                  <PrivateFile key={asset.id} asset={asset} />
+                ))}
+              </div>
+            </div>
+          </section>
+          <div className="border border-[var(--line)] rounded-md overflow-hidden self-start min-h-[520px]">
+            <ChatThread id={project.id} title={project.clientName} asAdmin />
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

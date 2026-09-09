@@ -1,101 +1,56 @@
-import { Mail, MapPin, Phone } from 'lucide-react'
-import { FaGithub, FaInstagram, FaLinkedin, FaWhatsapp, FaXTwitter } from 'react-icons/fa6'
 import { Link } from 'react-router-dom'
-import { services } from '../../data/services'
-import { NewsletterForm } from '../forms/NewsletterForm'
-
-const quickLinks = [
-  ['Services', '/services'],
-  ['Solutions', '/solutions'],
-  ['Templates', '/templates'],
-  ['Portfolio', '/portfolio'],
-  ['Pricing', '/pricing'],
-  ['Blog', '/blog'],
-  ['About', '/about'],
-  ['Contact', '/contact'],
-]
-
-const socialLinks = [
-  { Icon: FaXTwitter, label: 'X', href: 'https://x.com' },
-  { Icon: FaLinkedin, label: 'LinkedIn', href: 'https://www.linkedin.com' },
-  { Icon: FaGithub, label: 'GitHub', href: 'https://github.com' },
-  { Icon: FaInstagram, label: 'Instagram', href: 'https://www.instagram.com' },
-  { Icon: FaWhatsapp, label: 'WhatsApp', href: 'https://wa.me/233506624529' },
-]
+import { Brand } from '../shared/Brand'
 
 export function Footer() {
   return (
-    <footer className="grid-texture border-t border-white/10 bg-aura-surface py-14">
-      <div className="section-shell grid gap-10 lg:grid-cols-[1.1fr_1fr_0.9fr]">
-        <div>
-          <Link to="/" className="font-orbitron text-2xl font-extrabold text-white">
-            AuraFlow
-          </Link>
-          <p className="mt-3 max-w-md text-aura-muted">Let's build something exceptional together. Web and mobile development solutions from Ghana.</p>
-          <div className="mt-4 flex gap-2">
-            {socialLinks.map(({ Icon, href, label }) => (
-              <a key={label} aria-label={label} className="grid h-10 w-10 place-items-center rounded-md border border-white/10 text-aura-muted transition hover:scale-105 hover:border-cyan-200/50 hover:text-cyan-100" href={href} target="_blank" rel="noreferrer">
-                <Icon className="h-4 w-4" />
-              </a>
-            ))}
-          </div>
-          <div className="mt-5">
-            <NewsletterForm compact />
-          </div>
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-2">
+    <footer className="public-footer">
+      <div className="section-shell">
+        <div className="footer-top">
           <div>
-            <h2 className="text-sm font-bold uppercase text-white">Quick Links</h2>
-            <div className="mt-3 grid gap-2 text-sm text-aura-muted">
-              {quickLinks.map(([label, to]) => (
-                <Link key={to} to={to} className="transition hover:text-white">
-                  {label}
-                </Link>
-              ))}
-            </div>
+            <Brand />
+            <p>
+              Websites and business software.
+              <br />
+              Built with you. Built in Ghana.
+            </p>
           </div>
           <div>
-            <h2 className="text-sm font-bold uppercase text-white">Services</h2>
-            <div className="mt-3 grid gap-2 text-sm text-aura-muted">
-              {services.map((service) => (
-                <Link key={service.id} to="/services" className="transition hover:text-white">
-                  {service.shortTitle}
-                </Link>
-              ))}
-            </div>
+            <h3>Platform</h3>
+            <Link to="/solutions">Business suites</Link>
+            <Link to="/templates">Templates</Link>
+            <Link to="/services">Custom development</Link>
+            <Link to="/pricing">Pricing</Link>
+          </div>
+          <div>
+            <h3>AuraFlow</h3>
+            <Link to="/about">Our story</Link>
+            <Link to="/portfolio">Concepts & work</Link>
+            <Link to="/blog">Journal</Link>
+            <Link to="/contact">Contact</Link>
+          </div>
+          <div>
+            <h3>Let's talk</h3>
+            <a href="mailto:elishaafari0@gmail.com">elishaafari0@gmail.com</a>
+            <a href="tel:+233506624529">+233 50 662 4529</a>
+            <a href="tel:+233547395699">+233 54 739 5699</a>
+            <a
+              href="https://wa.me/233506624529"
+              target="_blank"
+              rel="noreferrer"
+            >
+              WhatsApp
+            </a>
           </div>
         </div>
-
-        <div>
-          <h2 className="text-sm font-bold uppercase text-white">Contact</h2>
-          <div className="mt-3 grid gap-3 text-sm text-aura-muted">
-            <a className="flex items-center gap-2 hover:text-white" href="mailto:elishaafari0@gmail.com">
-              <Mail className="h-4 w-4 text-cyan-100" />
-              elishaafari0@gmail.com
-            </a>
-            <a className="flex items-center gap-2 hover:text-white" href="tel:+233506624529">
-              <Phone className="h-4 w-4 text-cyan-100" />
-              0506624529
-            </a>
-            <a className="flex items-center gap-2 hover:text-white" href="tel:+233547395699">
-              <Phone className="h-4 w-4 text-cyan-100" />
-              0547395699
-            </a>
-            <span className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-cyan-100" />
-              Ghana
-            </span>
-            <span>Business hours: Mon-Sat, 8:00-19:00</span>
+        <div className="footer-bottom">
+          <span>
+            © {new Date().getFullYear()} AuraFlow. All rights reserved.
+          </span>
+          <div className="flex gap-5">
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+            <span>Ghana, West Africa</span>
           </div>
-        </div>
-      </div>
-
-      <div className="section-shell mt-10 flex flex-col gap-3 border-t border-white/10 pt-5 text-sm text-aura-muted sm:flex-row sm:items-center sm:justify-between">
-        <span>Copyright {new Date().getFullYear()} AuraFlow. All rights reserved.</span>
-        <div className="flex gap-4">
-          <Link to="/privacy">Privacy Policy</Link>
-          <Link to="/terms">Terms</Link>
         </div>
       </div>
     </footer>

@@ -1,102 +1,178 @@
-import { CalendarClock, FolderKanban, LayoutTemplate, MessageSquareMore, ServerCog, Shield, Sparkles } from 'lucide-react'
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
+import { ArrowRight, Plus } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { ButtonLink } from '../../components/ui/Button'
-import { Card } from '../../components/ui/Card'
+import { StatePanel } from '../../components/ui/StatePanel'
 import { useAuth } from '../../context/AuthContext'
 import { suiteBlueprints } from '../../data/suiteBlueprints'
 import { useProjects } from '../../hooks/useFirebase'
-
-const activity = [
-  'Quote brief shared with AuraFlow',
-  'Template shortlist updated',
-  'Dashboard milestone prepared for review',
-]
-
-const sparkData = [
-  { week: 'W1', velocity: 2 },
-  { week: 'W2', velocity: 4 },
-  { week: 'W3', velocity: 5 },
-  { week: 'W4', velocity: 8 },
-  { week: 'W5', velocity: 7 },
-]
+import { displayDate } from '../../domain/projects'
+import { SuiteCover } from '../../components/shared/TemplateCover'
 
 export default function DashboardHome() {
-  const { admin, profile, user } = useAuth()
-  const { data: projects } = useProjects(user?.uid)
-  const activeProjects = projects.filter((project) => !['Completed', 'On Hold'].includes(project.status))
-
-  return (
-    <div className="grid gap-4">
-      <Card className="grid min-w-0 gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0">
-          <p className="text-aura-muted">Welcome back</p>
-          <h1 className="mt-2 text-3xl font-extrabold">{profile?.name ?? user?.displayName ?? 'AuraFlow Client'}</h1>
-          <p className="mt-3 max-w-xl text-aura-muted">Projects, templates, and next actions stay in one calm place.</p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <ButtonLink to="/dashboard/requests/new">New Request</ButtonLink>
-            <ButtonLink to="/dashboard/studio" variant="secondary">
-              <ServerCog className="h-4 w-4" />
-              Suite Builder
-            </ButtonLink>
-            <ButtonLink to="/dashboard/templates" variant="ghost">Browse Templates</ButtonLink>
-            <ButtonLink to="/dashboard/requests" variant="ghost">Track Requests</ButtonLink>
-            <ButtonLink to="/dashboard/messages" variant="ghost">
-              <MessageSquareMore className="h-4 w-4" />
-              Messages
-            </ButtonLink>
-            {admin ? (
-              <ButtonLink to="/dashboard/admin" variant="secondary">
-                <Shield className="h-4 w-4" />
-                Admin Console
-              </ButtonLink>
-            ) : null}
-          </div>
-        </div>
-        <div className="h-56 min-w-0 rounded-lg border border-white/10 bg-black/20 p-3">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={sparkData}>
-              <defs>
-                <linearGradient id="velocity" x1="0" x2="0" y1="0" y2="1">
-                  <stop stopColor="#00D4FF" stopOpacity={0.7} />
-                  <stop offset="1" stopColor="#6C63FF" stopOpacity={0.08} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="week" stroke="#A0A8C0" tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ background: '#12122A', border: '1px solid rgba(255,255,255,.12)' }} />
-              <Area dataKey="velocity" stroke="#00D4FF" fill="url(#velocity)" type="monotone" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Stat icon={FolderKanban} label="Active Projects" value={`${activeProjects.length || profile?.projectCount || 0}`} />
-        <Stat icon={ServerCog} label="Suites Available" value={`${suiteBlueprints.length}`} />
-        <Stat icon={LayoutTemplate} label="Templates Saved" value={`${profile?.savedTemplates.length ?? 0}`} />
-        <Stat icon={CalendarClock} label="Next Deadline" value={projects[0]?.deadline ?? 'Discovery'} />
-      </div>
-
-      <Card className="p-5">
-        <h2 className="text-2xl font-bold">Recent activity</h2>
-        <div className="mt-4 grid gap-3">
-          {activity.map((item) => (
-            <div key={item} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.05] p-3 text-aura-muted">
-              <Sparkles className="h-4 w-4 text-cyan-100" />
-              {item}
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
+  const { profile, user } = useAuth()
+  const projects = useProjects(user?.uid)
+  const name = (profile?.name || user?.displayName || '').split(' ')[0]
+  const active = projects.data.filter(
+    (project) => !['Completed', 'On Hold'].includes(project.status),
   )
-}
-
-function Stat({ icon: Icon, label, value }: { icon: typeof FolderKanban; label: string; value: string }) {
+  const suites = suiteBlueprints.filter((suite) =>
+    [
+      'school-management-system',
+      'ecommerce-storefront',
+      'restaurant-ordering-booking',
+      'hotel-lodge-guesthouse-booking',
+    ].includes(suite.slug),
+  )
   return (
-    <Card className="p-5">
-      <Icon className="h-5 w-5 text-cyan-100" />
-      <p className="mt-4 text-sm text-aura-muted">{label}</p>
-      <strong className="mt-2 block font-orbitron text-2xl text-white">{value}</strong>
-    </Card>
+    <>
+      <div className="workspace-page-header">
+        <div>
+          <p className="eyebrow mb-3">Your workspace</p>
+          <h1>{name ? `Good to see you, ${name}.` : 'Welcome to AuraFlow.'}</h1>
+          <p>Make space for your next project.</p>
+        </div>
+        <ButtonLink to="/dashboard/requests/new">
+          <Plus />
+          New project
+        </ButtonLink>
+      </div>
+      <div className="summary-strip">
+        <div>
+          <small>Active projects</small>
+          <strong>{active.length}</strong>
+        </div>
+        <div>
+          <small>Projects in review</small>
+          <strong>
+            {projects.data.filter((p) => p.status === 'Review').length}
+          </strong>
+        </div>
+        <div>
+          <small>Completed</small>
+          <strong>
+            {projects.data.filter((p) => p.status === 'Completed').length}
+          </strong>
+        </div>
+        <div>
+          <small>Saved templates</small>
+          <strong>{profile?.savedTemplates?.length ?? 0}</strong>
+        </div>
+      </div>
+      <div className="section-title-row">
+        <h2>Your projects</h2>
+        <Link to="/dashboard/requests">
+          View all <ArrowRight size={13} className="inline ml-1" />
+        </Link>
+      </div>
+      {projects.isPending ? (
+        <StatePanel loading />
+      ) : projects.error ? (
+        <StatePanel
+          error={projects.error}
+          retry={() => void projects.refetch()}
+        />
+      ) : projects.data.length ? (
+        <div className="data-table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Status</th>
+                <th>Type</th>
+                <th>Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              {projects.data.slice(0, 5).map((project) => (
+                <tr key={project.id}>
+                  <td>
+                    <Link
+                      className="row-link"
+                      to={`/dashboard/requests/${project.id}`}
+                    >
+                      {project.title}
+                    </Link>
+                  </td>
+                  <td>
+                    <span className="status" data-status={project.status}>
+                      {project.status}
+                    </span>
+                  </td>
+                  <td>{project.projectType}</td>
+                  <td>{displayDate(project.updatedAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="border border-dashed border-[var(--line)] rounded-md">
+          <StatePanel
+            title="Your next idea starts here"
+            description="Create a project brief or explore a template to make it your own."
+            action={
+              <ButtonLink to="/dashboard/studio" variant="secondary">
+                Open design studio
+                <ArrowRight />
+              </ButtonLink>
+            }
+          />
+        </div>
+      )}
+      <div className="section-title-row mt-10">
+        <h2>Start with a business suite</h2>
+        <Link to="/dashboard/templates">
+          Explore library <ArrowRight size={13} className="inline ml-1" />
+        </Link>
+      </div>
+      <div className="workspace-suites">
+        {suites.map((suite) => (
+          <Link
+            to={`/dashboard/studio?suite=${suite.slug}`}
+            className="workspace-suite"
+            key={suite.slug}
+          >
+            <div className="suite-thumbnail">
+              <SuiteCover suite={suite} />
+            </div>
+            <div className="workspace-suite-body">
+              <h3>
+                {suite.category === 'School Management'
+                  ? 'School management'
+                  : suite.title}
+              </h3>
+              <p>{suite.modules.length} modules · Configurable prototype</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+      {projects.data.length > 0 && (
+        <>
+          <div className="section-title-row">
+            <h2>Recent updates</h2>
+            <Link to="/dashboard/activity">
+              Activity inbox <ArrowRight size={13} className="inline ml-1" />
+            </Link>
+          </div>
+          <div className="divide-y divide-[var(--line)]">
+            {projects.data.slice(0, 4).map((project) => (
+              <Link
+                key={project.id}
+                to={`/dashboard/requests/${project.id}`}
+                className="flex justify-between gap-4 py-4 text-xs"
+              >
+                <span>
+                  {project.adminSummary ||
+                    `${project.title} is ${project.status.toLowerCase()}.`}
+                </span>
+                <span className="text-aura-muted shrink-0">
+                  {displayDate(project.updatedAt)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+    </>
   )
 }

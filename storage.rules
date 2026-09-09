@@ -7,18 +7,18 @@ service firebase.storage {
     }
 
     function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+      return request.auth != null && request.auth.token.get('admin', false) == true;
     }
 
     function validAvatar() {
-      return request.resource.size <= 2 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+      return request.resource.size > 0 && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp|avif|gif)');
     }
 
     function validRequestAsset() {
-      return request.resource.size <= 50 * 1024 * 1024
-        && (request.resource.contentType.matches('image/.*')
-          || request.resource.contentType.matches('video/.*')
+      return request.resource.size > 0 && request.resource.size <= 50 * 1024 * 1024
+        && (request.resource.contentType.matches('image/(jpeg|png|webp|avif|gif)')
+          || request.resource.contentType.matches('video/(mp4|webm)')
           || request.resource.contentType == 'application/pdf'
           || request.resource.contentType == 'application/json'
           || request.resource.contentType == 'application/msword'
@@ -33,6 +33,16 @@ service firebase.storage {
           || request.resource.contentType == 'text/plain');
     }
 
+    function projectBelongsTo(uid, projectId) {
+      return firestore.get(/databases/(default)/documents/projects/$(projectId)).data.userId == uid;
+    }
+
+    match /drafts/{uid}/{draftId}/{fileName} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, update: if owns(uid) && validRequestAsset();
+      allow delete: if owns(uid);
+    }
+
     match /avatars/{uid}/{fileName} {
       allow read: if owns(uid);
       allow create, update: if owns(uid) && validAvatar();
@@ -40,14 +50,15 @@ service firebase.storage {
     }
 
     match /projects/{uid}/{projectId}/references/{fileName} {
-      allow read: if owns(uid) || isAdmin();
-      allow create, update: if owns(uid) && validRequestAsset();
+      allow read: if (owns(uid) || isAdmin()) && projectBelongsTo(uid, projectId);
+      allow create, update: if owns(uid) && projectBelongsTo(uid, projectId) && validRequestAsset();
       allow delete: if owns(uid);
     }
 
     match /projects/{uid}/{projectId}/previews/{fileName} {
-      allow read: if owns(uid) || isAdmin();
-      allow create, update, delete: if isAdmin() && validRequestAsset();
+      allow read: if (owns(uid) || isAdmin()) && projectBelongsTo(uid, projectId);
+      allow create, update: if isAdmin() && projectBelongsTo(uid, projectId) && validRequestAsset();
+      allow delete: if isAdmin();
     }
 
     match /{allPaths=**} {

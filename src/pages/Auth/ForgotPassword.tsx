@@ -1,44 +1,72 @@
 import { useState, type FormEvent } from 'react'
-import toast from 'react-hot-toast'
 import { Link } from 'react-router-dom'
+import { AuthShell } from '../../components/auth/AuthShell'
 import { Button } from '../../components/ui/Button'
+import { Field } from '../../components/ui/Field'
 import { Input } from '../../components/ui/Input'
-import { PageWrapper } from '../../components/shared/PageWrapper'
-import { SEOHead } from '../../components/shared/SEOHead'
 import { requestPasswordReset } from '../../lib/auth'
 import { asErrorMessage } from '../../lib/utils'
+import { firebaseConfigured } from '../../lib/firebase'
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const [sent, setSent] = useState(false)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState('')
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setLoading(true)
+    const email = String(new FormData(event.currentTarget).get('email')).trim()
+    setPending(true)
+    setError('')
     try {
       await requestPasswordReset(email)
-      toast.success('Reset email sent.')
-    } catch (error) {
-      toast.error(asErrorMessage(error))
+      setSent(true)
+    } catch (err) {
+      if ((err as { code?: string }).code === 'auth/user-not-found')
+        setSent(true)
+      else setError(asErrorMessage(err))
     } finally {
-      setLoading(false)
+      setPending(false)
     }
   }
-
   return (
-    <PageWrapper>
-      <SEOHead title="Forgot Password" description="Request an AuraFlow password reset email." />
-      <section className="section-shell grid min-h-[calc(100svh-5rem)] place-items-center py-16">
-        <form onSubmit={submit} className="glass grid w-full max-w-md gap-4 rounded-lg p-6">
-          <h1 className="text-3xl font-extrabold">Reset password</h1>
-          <label className="grid gap-2 text-sm text-aura-muted">
-            Email
-            <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-          </label>
-          <Button type="submit" loading={loading}>Send Reset Email</Button>
-          <Link to="/login" className="text-sm font-bold text-cyan-100">Back to login</Link>
+    <AuthShell
+      title={sent ? 'Check your email' : 'Reset your password'}
+      footer={
+        sent
+          ? 'If that address has an account, a reset link is on its way. Check your spam folder too.'
+          : 'Enter your account email and we will send a reset link.'
+      }
+    >
+      {error && (
+        <p role="alert" className="inline-alert error mb-5">
+          {error}
+        </p>
+      )}
+      {!sent && (
+        <form className="auth-form" onSubmit={submit}>
+          <Field label="Email address">
+            <Input
+              type="email"
+              autoComplete="email"
+              name="email"
+              required
+              maxLength={254}
+            />
+          </Field>
+          <Button
+            type="submit"
+            loading={pending}
+            disabled={!firebaseConfigured}
+          >
+            Send reset link
+          </Button>
         </form>
-      </section>
-    </PageWrapper>
+      )}
+      <p className="auth-switch">
+        <Link className="auth-text-link" to="/login">
+          Back to sign in
+        </Link>
+      </p>
+    </AuthShell>
   )
 }

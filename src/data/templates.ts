@@ -1,7 +1,12 @@
 import { IMAGES } from '../lib/images'
 import type { PriceTier, Template } from '../types'
 
-type TemplateSeed = [category: string, subcategory: string, style: string, price: number]
+type TemplateSeed = [
+  category: string,
+  subcategory: string,
+  style: string,
+  price: number,
+]
 
 export const marketplaceCategories = [
   'Restaurant',
@@ -144,8 +149,10 @@ function colorSchemeFor(style: string) {
   return 'Light'
 }
 
-const pexelsPhoto = (id: number) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1600`
-const unsplashPhoto = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1600&q=85`
+const pexelsPhoto = (id: number) =>
+  `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1600`
+const unsplashPhoto = (id: string) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1600&q=85`
 
 const templateGalleries: Record<string, string[]> = {
   'fine-dining-restaurant': [
@@ -162,7 +169,6 @@ const templateGalleries: Record<string, string[]> = {
   ],
   'cafe-restaurant': [
     IMAGES.templates.cafe,
-    pexelsPhoto(36580003),
     unsplashPhoto('photo-1498804103079-a6351b050096'),
     unsplashPhoto('photo-1501339847302-ac426a4a7cbb'),
   ],
@@ -330,7 +336,6 @@ const templateGalleries: Record<string, string[]> = {
   ],
   'retail-pharmacy-pharmacy': [
     unsplashPhoto('photo-1587854692152-cbe660dbde88'),
-    unsplashPhoto('photo-1580281657527-47f249e8f320'),
     IMAGES.templates.clinic,
     unsplashPhoto('photo-1471864190281-a93a3070b6de'),
   ],
@@ -440,7 +445,6 @@ const templateGalleries: Record<string, string[]> = {
     IMAGES.templates.art,
     unsplashPhoto('photo-1547826039-bfc35e0f1ea8'),
     unsplashPhoto('photo-1531058020387-3be344556be6'),
-    unsplashPhoto('photo-1526315525836-187a6bd5a5d4'),
   ],
   'supermarket-mart-supermarket': [
     unsplashPhoto('photo-1542838132-92c53300491e'),
@@ -484,27 +488,41 @@ function imageFor(category: string, subcategory: string) {
   const key = `${category} ${subcategory}`.toLowerCase()
   if (key.includes('cafe')) return IMAGES.templates.cafe
   if (key.includes('restaurant')) return IMAGES.templates.restaurant
-  if (key.includes('clinic') || key.includes('hospital') || key.includes('dent')) return IMAGES.templates.clinic
+  if (
+    key.includes('clinic') ||
+    key.includes('hospital') ||
+    key.includes('dent')
+  )
+    return IMAGES.templates.clinic
   if (key.includes('pharmacy')) return IMAGES.templates.clinic
-  if (key.includes('commerce') || key.includes('fashion') || key.includes('jewelry')) return IMAGES.templates.ecommerce
+  if (
+    key.includes('commerce') ||
+    key.includes('fashion') ||
+    key.includes('jewelry')
+  )
+    return IMAGES.templates.ecommerce
   if (key.includes('hotel')) return IMAGES.templates.hotel
   if (key.includes('gym')) return IMAGES.templates.gym
   if (key.includes('law')) return IMAGES.templates.law
   if (key.includes('estate')) return IMAGES.templates.realestate
-  if (key.includes('salon') || key.includes('barber')) return IMAGES.templates.salon
-  if (key.includes('school') || key.includes('daycare')) return IMAGES.templates.school
+  if (key.includes('salon') || key.includes('barber'))
+    return IMAGES.templates.salon
+  if (key.includes('school') || key.includes('daycare'))
+    return IMAGES.templates.school
   if (key.includes('spa')) return IMAGES.templates.spa
   if (key.includes('bakery')) return IMAGES.templates.bakery
   if (key.includes('logistics')) return IMAGES.templates.logistics
   if (key.includes('supermarket')) return IMAGES.templates.retail
   if (key.includes('art gallery')) return IMAGES.templates.art
-  if (key.includes('portfolio') || key.includes('photography')) return IMAGES.templates.portfolio
+  if (key.includes('portfolio') || key.includes('photography'))
+    return IMAGES.templates.portfolio
   if (key.includes('tech')) return IMAGES.templates.tech
   if (key.includes('ngo')) return IMAGES.templates.ngo
   if (key.includes('church')) return IMAGES.templates.church
   if (key.includes('event')) return IMAGES.templates.event
   if (key.includes('auto')) return IMAGES.templates.automotive
-  if (key.includes('travel') || key.includes('car rental')) return IMAGES.templates.travel
+  if (key.includes('travel') || key.includes('car rental'))
+    return IMAGES.templates.travel
   if (key.includes('architecture')) return IMAGES.templates.architecture
   if (key.includes('pet')) return IMAGES.templates.pet
   if (key.includes('music')) return IMAGES.templates.music
@@ -519,11 +537,40 @@ function imageFor(category: string, subcategory: string) {
 function fallbackGallery(category: string, subcategory: string) {
   const preview = imageFor(category, subcategory)
   const key = `${category} ${subcategory}`.toLowerCase()
-  if (key.includes('tech')) return [preview, IMAGES.services.webApps, IMAGES.services.mobileApps, IMAGES.services.dataAnalytics]
-  if (key.includes('portfolio') || key.includes('photography')) return [preview, IMAGES.templates.art, IMAGES.templates.architecture, IMAGES.templates.interior]
-  if (key.includes('event')) return [preview, IMAGES.templates.event, IMAGES.templates.hotel, IMAGES.templates.restaurant]
-  if (key.includes('dent') || key.includes('pharmacy')) return [preview, IMAGES.templates.clinic, unsplashPhoto('photo-1576091160399-112ba8d25d1d'), unsplashPhoto('photo-1538108149393-fbbd81895907')]
-  return [preview, imageFor(category, ''), IMAGES.services.websites, IMAGES.about.office]
+  if (key.includes('tech'))
+    return [
+      preview,
+      IMAGES.services.webApps,
+      IMAGES.services.mobileApps,
+      IMAGES.services.dataAnalytics,
+    ]
+  if (key.includes('portfolio') || key.includes('photography'))
+    return [
+      preview,
+      IMAGES.templates.art,
+      IMAGES.templates.architecture,
+      IMAGES.templates.interior,
+    ]
+  if (key.includes('event'))
+    return [
+      preview,
+      IMAGES.templates.event,
+      IMAGES.templates.hotel,
+      IMAGES.templates.restaurant,
+    ]
+  if (key.includes('dent') || key.includes('pharmacy'))
+    return [
+      preview,
+      IMAGES.templates.clinic,
+      unsplashPhoto('photo-1576091160399-112ba8d25d1d'),
+      unsplashPhoto('photo-1538108149393-fbbd81895907'),
+    ]
+  return [
+    preview,
+    imageFor(category, ''),
+    IMAGES.services.websites,
+    IMAGES.about.office,
+  ]
 }
 
 function uniqueGallery(images: string[]) {
@@ -538,32 +585,135 @@ function pagesFor(price: number) {
   return [...base, 'Departments', 'Team', 'Careers', 'Portal', 'Policies']
 }
 
-export const templates: Template[] = seeds.map(([category, subcategory, style, price], index) => {
-  const slug = slugify(`${subcategory}-${category}`)
-  const imageSet = uniqueGallery(templateGalleries[slug] ?? fallbackGallery(category, subcategory))
-  const previewImage = imageSet[0]
-  const pages = pagesFor(price)
+export const templates: Template[] = seeds.map(
+  ([category, subcategory, style, price], index) => {
+    const slug = slugify(`${subcategory}-${category}`)
+    const imageSet = uniqueGallery(
+      templateGalleries[slug] ?? fallbackGallery(category, subcategory),
+    )
+    const previewImage = imageSet[0]
+    const pages = pagesFor(price)
 
-  return {
-    id: `template-${index + 1}`,
-    slug,
-    name: `${subcategory} Flow`,
-    category,
-    subcategory,
-    style,
-    colorScheme: colorSchemeFor(style),
-    description: `${style} ${category.toLowerCase()} template for launches that need proof, clarity, and a locally adaptable content path.`,
-    longDescription: `A ${subcategory.toLowerCase()} experience shaped for ${category.toLowerCase()} teams. It includes image-led sections, flexible calls to action, responsive pages, and Firebase-ready surfaces AuraFlow can localize for Ghanaian, African, and international launches.`,
-    previewImage,
-    screenshots: imageSet.slice(1),
-    pages,
-    features: [...genericFeatures, `${subcategory} conversion sections`, `${category} content blocks`],
-    techStack: ['React', 'TypeScript', 'TailwindCSS', 'Firebase', 'Vercel'],
-    price,
-    tier: tierFor(price),
-    popular: index % 9 === 0 || price === 79,
-    tags: [category, subcategory, style, colorSchemeFor(style), pages.length > 7 ? 'multi-page' : 'fast-launch'],
+    return {
+      id: `template-${index + 1}`,
+      slug,
+      name: `${subcategory} Flow`,
+      category,
+      subcategory,
+      style,
+      colorScheme: colorSchemeFor(style),
+      description: templateDescription(category, subcategory),
+      longDescription: `${templateDescription(category, subcategory)} Start with this ${style.toLowerCase()} layout, then share your branding, content, and requirements in your private workspace. Our team will confirm the scope and connect the services needed for your business before launch.`,
+      previewImage,
+      screenshots: imageSet.slice(1),
+      pages,
+      features: [
+        ...genericFeatures,
+        `${subcategory} page layouts`,
+        'Custom branding and content',
+      ],
+      techStack: ['React', 'TypeScript', 'TailwindCSS', 'Firebase', 'Vercel'],
+      price,
+      tier: tierFor(price),
+      popular: index % 9 === 0 || price === 79,
+      tags: [
+        category,
+        subcategory,
+        style,
+        colorSchemeFor(style),
+        pages.length > 7 ? 'multi-page' : 'fast-launch',
+      ],
+    }
+  },
+)
+
+function templateDescription(category: string, subcategory: string) {
+  const specific: Record<string, string> = {
+    Cafe: 'Coffee, seasonal menus, opening hours, and a place for your regulars.',
+    'Fine Dining':
+      'An evening worth booking, with menus, a venue gallery, and table enquiries.',
+    'Fast Food':
+      'Put your signature dishes, meal deals, and collection details first.',
+    'Food Delivery':
+      'A menu-led storefront for dishes, delivery areas, and order enquiries.',
+    'Boutique Hotel':
+      'Room collections, property photography, and a welcoming guest experience.',
+    Resort:
+      'Showcase your rooms, dining, activities, and surroundings in one place.',
+    Hostel:
+      'Affordable stays, shared spaces, and the essentials for your next guest.',
+    Dental:
+      'Treatments, dental team profiles, patient information, and appointments.',
+    Pediatric:
+      'A welcoming practice website for families, care teams, and appointments.',
+    Fashion:
+      'Collection-led pages with product photography, sizing, and brand stories.',
+    Electronics:
+      'Product collections with space for specifications and comparisons.',
+    Grocery:
+      'Fresh produce, everyday essentials, and local delivery information.',
+    Jewelry:
+      'A considered showcase for your pieces, materials, and craftsmanship.',
+    'SaaS Product':
+      'Show the product, explain its plans, and invite customers to try it.',
+    'App Landing': 'App screens, key workflows, and a clear path to sign up.',
   }
-})
+  const categories: Record<string, string> = {
+    Clinic:
+      'Care services, practitioner profiles, opening hours, and patient enquiries.',
+    Hospital:
+      'Departments, care teams, visitor information, and patient services.',
+    Gym: 'Classes, coaches, memberships, and a place to start your training.',
+    School:
+      'Admissions, school life, academic information, and parent enquiries.',
+    'Law Firm':
+      'Practice areas, lawyer profiles, and confidential consultation enquiries.',
+    'Real Estate':
+      'Property listings, photo galleries, neighbourhoods, and viewing enquiries.',
+    Salon: 'Treatments, your team, a style gallery, and appointment enquiries.',
+    Spa: 'Treatments, packages, facilities, and a calm introduction to your practice.',
+    Pharmacy:
+      'Health services, store locations, opening hours, and customer enquiries.',
+    Bakery:
+      'Fresh bakes, seasonal specials, celebration cakes, and collection details.',
+    Logistics:
+      'Freight services, coverage areas, fleet details, and quote enquiries.',
+    Portfolio:
+      'Selected projects, your background, and a direct way to get in touch.',
+    NGO: 'Your mission, current programmes, impact reports, and ways to help.',
+    Church:
+      'Service times, community events, ministries, and member information.',
+    Event: 'The programme, venue, hosts, and everything guests need to know.',
+    Automotive:
+      'Vehicle listings, specifications, photography, and test-drive enquiries.',
+    Travel:
+      'Destinations, itineraries, travel photography, and tailored trip enquiries.',
+    Photography:
+      'Give your photographs room, with collections and session enquiries.',
+    Architecture:
+      'Project studies, drawings, spaces, and the practice behind them.',
+    Dentist:
+      'Treatments, your dental team, patient guidance, and appointment enquiries.',
+    Pet: 'Products, care services, opening hours, and advice for pet owners.',
+    Music: 'Studios, equipment, recording packages, and session enquiries.',
+    Art: 'Exhibitions, artist profiles, selected works, and visitor information.',
+    Supermarket:
+      'Departments, store offers, locations, and shopping essentials.',
+    Construction:
+      'Completed projects, specialist services, and quote enquiries.',
+    Finance:
+      'Accounting services, your team, business resources, and consultations.',
+    Marketing:
+      'Case studies, capabilities, your team, and new project enquiries.',
+    'Interior Design':
+      'Completed spaces, materials, your approach, and design enquiries.',
+    Gaming: 'Your roster, upcoming matches, highlights, and community links.',
+  }
+  return (
+    specific[subcategory] ||
+    categories[category] ||
+    `A ${subcategory.toLowerCase()} website with space for your services, work, and enquiries.`
+  )
+}
 
 export const featuredTemplates = templates.slice(0, 8)

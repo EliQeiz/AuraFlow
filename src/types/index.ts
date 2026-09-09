@@ -1,3 +1,5 @@
+import type { StudioDraft } from '../domain/studio'
+
 export type PriceTier = 'free' | 'starter' | 'pro' | 'enterprise'
 export type PlatformMode = 'managed-hosted' | 'custom-build' | 'prototype-only'
 
@@ -198,7 +200,14 @@ export interface UserProfile {
 }
 
 export type ThemePreference = 'dark' | 'light' | 'system'
-export type RequestStatus = 'Submitted' | 'Discovery' | 'Designing' | 'Building' | 'Review' | 'Completed' | 'On Hold'
+export type RequestStatus =
+  | 'Submitted'
+  | 'Discovery'
+  | 'Designing'
+  | 'Building'
+  | 'Review'
+  | 'Completed'
+  | 'On Hold'
 export type RequestAssetKind = 'reference' | 'content' | 'preview'
 
 export interface RequestAsset {
@@ -241,6 +250,8 @@ export interface ProjectRequestRecord {
   stagingUrl?: string
   productionUrl?: string
   prototypeSpec?: PrototypeSpec
+  design?: StudioDraft
+  designDraftId?: string
   status: RequestStatus
   adminSummary?: string
   assets: RequestAsset[]

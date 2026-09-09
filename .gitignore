@@ -8,6 +8,10 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.tools/
+test-results/
+playwright-report/
+artifacts/
 dist
 dist-ssr
 .vercel/

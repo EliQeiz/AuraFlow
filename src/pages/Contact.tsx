@@ -1,58 +1,77 @@
-import { Mail, MapPin, Phone } from 'lucide-react'
-import { Badge } from '../components/ui/Badge'
+import { ArrowRight, Mail, MapPin, Phone } from 'lucide-react'
 import { ButtonLink } from '../components/ui/Button'
-import { Card } from '../components/ui/Card'
-import { PageWrapper } from '../components/shared/PageWrapper'
 import { SEOHead } from '../components/shared/SEOHead'
-import { useAuth } from '../context/AuthContext'
 
 export default function Contact() {
-  const { user } = useAuth()
-
   return (
-    <PageWrapper>
-      <SEOHead title="Contact" description="Contact AuraFlow in Ghana for websites, mobile apps, Firebase work, dashboards, AI integrations, and templates." />
-      <section className="section-shell grid gap-6 py-16 lg:grid-cols-[0.8fr_1fr]">
-        <aside className="glass rounded-lg p-6">
-          <Badge>Contact</Badge>
-          <h1 className="mt-5 text-4xl font-extrabold">Let's build something exceptional together.</h1>
-          <div className="mt-7 grid gap-3 text-aura-muted">
-            <a href="mailto:elishaafari0@gmail.com" className="flex items-center gap-3 hover:text-white">
-              <Mail className="h-5 w-5 text-cyan-100" />
-              elishaafari0@gmail.com
-            </a>
-            <a href="tel:+233506624529" className="flex items-center gap-3 hover:text-white">
-              <Phone className="h-5 w-5 text-cyan-100" />
-              0506624529
-            </a>
-            <a href="tel:+233547395699" className="flex items-center gap-3 hover:text-white">
-              <Phone className="h-5 w-5 text-cyan-100" />
-              0547395699
-            </a>
-            <span className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-cyan-100" />
-              Ghana
-            </span>
+    <main className="section-shell pb-20">
+      <SEOHead
+        title="Contact"
+        description="Talk to AuraFlow in Ghana about your next website or business platform."
+      />
+      <header className="public-page-heading">
+        <span className="eyebrow">Let's talk</span>
+        <h1>
+          Your next project starts
+          <br />
+          with a conversation.
+        </h1>
+        <p>
+          Tell us what you have in mind. We will help you find the right next
+          step.
+        </p>
+      </header>
+      <div className="contact-layout">
+        <section>
+          <div className="contact-method">
+            <Mail />
+            <div>
+              <h2>Email</h2>
+              <a href="mailto:elishaafari0@gmail.com">elishaafari0@gmail.com</a>
+            </div>
           </div>
-          <div className="mt-7 overflow-hidden rounded-lg border border-white/10">
-            <iframe
-              title="Ghana map"
-              src="https://www.google.com/maps?q=Ghana&output=embed"
-              loading="lazy"
-              className="h-72 w-full grayscale-[0.25]"
-            />
+          <div className="contact-method">
+            <Phone />
+            <div>
+              <h2>Call us</h2>
+              <a href="tel:+233506624529">+233 50 662 4529</a>
+              <a href="tel:+233547395699">+233 54 739 5699</a>
+            </div>
           </div>
-        </aside>
-        <Card className="grid content-center gap-4 p-6">
-          <Badge className="w-fit">Private Requests</Badge>
-          <h2 className="text-3xl font-extrabold">Project briefs live inside the AuraFlow client app.</h2>
-          <p className="max-w-xl leading-7 text-aura-muted">Create an account to describe the build, choose or upload template references, attach photos and documents, track previews, send revision notes, and chat on the request that belongs to your account.</p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <ButtonLink to={user ? '/dashboard/requests/new' : '/register'}>{user ? 'Start Private Request' : 'Create Client Account'}</ButtonLink>
-            <ButtonLink to={user ? '/dashboard/messages' : '/login'} variant="secondary">{user ? 'Open Messages' : 'Login'}</ButtonLink>
+          <div className="contact-method">
+            <MapPin />
+            <div>
+              <h2>Based in Ghana</h2>
+              <p>Working with businesses across Africa.</p>
+            </div>
           </div>
-        </Card>
-      </section>
-    </PageWrapper>
+          <a
+            className="af-button af-button--secondary mt-4"
+            href="https://wa.me/233506624529"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Talk on WhatsApp
+            <ArrowRight size={15} />
+          </a>
+        </section>
+        <section>
+          <h2 className="text-2xl mb-4">Bring your idea into the workspace.</h2>
+          <p className="text-sm text-aura-muted leading-8 max-w-lg">
+            Share your brief and files, explore design options, and keep the
+            whole conversation attached to your project.
+          </p>
+          <div className="page-actions mt-7">
+            <ButtonLink to="/dashboard/requests/new">
+              Start a project
+              <ArrowRight />
+            </ButtonLink>
+            <ButtonLink variant="secondary" to="/dashboard/messages">
+              Message our team
+            </ButtonLink>
+          </div>
+        </section>
+      </div>
+    </main>
   )
 }

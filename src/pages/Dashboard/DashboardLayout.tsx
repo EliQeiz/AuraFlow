@@ -1,57 +1,223 @@
-import { ExternalLink, MessageSquareMore, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
-import { useState } from 'react'
+import {
+  ChevronRight,
+  Bell,
+  ExternalLink,
+  FolderKanban,
+  Home,
+  LayoutTemplate,
+  LogOut,
+  Menu,
+  MessageSquare,
+  PanelsTopLeft,
+  Settings2,
+  ShieldCheck,
+  X,
+} from 'lucide-react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Link, Outlet } from 'react-router-dom'
-import { Button } from '../../components/ui/Button'
-import { MobileDashboardNav, Sidebar } from '../../components/layout/Sidebar'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { asErrorMessage } from '../../lib/utils'
+import { useTheme } from '../../context/ThemeContext'
+import { Brand } from '../../components/shared/Brand'
 import { UserAvatar } from '../../components/shared/UserAvatar'
+import { asErrorMessage } from '../../lib/utils'
 
-export default function DashboardLayout() {
-  const [collapsed, setCollapsed] = useState(false)
-  const { admin, logout, profile, user } = useAuth()
-
-  const signOut = async () => {
+const navigation = [
+  { to: '/dashboard', label: 'Overview', Icon: Home, end: true },
+  { to: '/dashboard/requests', label: 'Projects', Icon: FolderKanban },
+  { to: '/dashboard/studio', label: 'Design studio', Icon: PanelsTopLeft },
+  {
+    to: '/dashboard/templates',
+    label: 'Template library',
+    Icon: LayoutTemplate,
+  },
+  { to: '/dashboard/messages', label: 'Messages', Icon: MessageSquare },
+  { to: '/dashboard/activity', label: 'Activity inbox', Icon: Bell },
+]
+function WorkspaceSidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const { user, profile, admin, logout } = useAuth()
+  const [pending, setPending] = useState(false)
+  async function signOut() {
+    setPending(true)
     try {
       await logout()
-    } catch (error) {
-      toast.error(asErrorMessage(error))
+    } catch (err) {
+      toast.error(asErrorMessage(err))
+    } finally {
+      setPending(false)
     }
   }
-
   return (
-    <section className="section-shell flex min-h-screen gap-4 py-4 sm:py-6">
-      <Sidebar admin={admin} collapsed={collapsed} onLogout={signOut} />
-      <div className="min-w-0 flex-1">
-        <MobileDashboardNav admin={admin} onLogout={signOut} />
-        <header className="glass mb-5 flex items-center justify-between gap-3 rounded-lg p-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button variant="secondary" className="hidden min-h-0 p-2 md:inline-flex" onClick={() => setCollapsed((current) => !current)} aria-label="Collapse dashboard sidebar">
-              {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            </Button>
-            <div className="min-w-0">
-              <p className="text-sm text-aura-muted">Client dashboard</p>
-              <strong className="block truncate font-syne text-white">{profile?.name ?? user?.displayName ?? 'AuraFlow Client'}</strong>
-            </div>
+    <aside className="workspace-sidebar">
+      <Brand to="/dashboard" />
+      <Link
+        className="af-button af-button--primary mx-1 mb-2"
+        to="/dashboard/requests/new"
+        onClick={onNavigate}
+      >
+        Create a project
+      </Link>
+      <p className="workspace-label">Workspace</p>
+      <nav className="workspace-nav" aria-label="Workspace navigation">
+        {navigation.map(({ to, label, Icon, end }) => (
+          <NavLink onClick={onNavigate} end={end} to={to} key={to}>
+            <Icon />
+            {label}
+          </NavLink>
+        ))}
+      </nav>
+      {admin && (
+        <>
+          <p className="workspace-label">Manage</p>
+          <nav className="workspace-nav">
+            <NavLink to="/dashboard/admin" onClick={onNavigate}>
+              <ShieldCheck />
+              Admin console
+            </NavLink>
+          </nav>
+        </>
+      )}
+      <div className="workspace-sidebar-bottom">
+        <nav className="workspace-nav">
+          <NavLink to="/dashboard/settings" onClick={onNavigate}>
+            <Settings2 />
+            Settings
+          </NavLink>
+          <Link to="/" onClick={onNavigate}>
+            <ExternalLink />
+            Visit website
+          </Link>
+        </nav>
+        <div className="account-row">
+          <UserAvatar
+            className="h-8 w-8 rounded-full"
+            name={profile?.name ?? user?.displayName}
+            src={profile?.avatarUrl ?? user?.photoURL}
+          />
+          <div>
+            <strong>
+              {profile?.name ?? user?.displayName ?? 'Your account'}
+            </strong>
+            <small>
+              {admin ? 'AuraFlow administrator' : 'Personal workspace'}
+            </small>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/" className="hidden rounded-md border border-white/10 px-3 py-2 text-sm font-bold text-cyan-100 transition hover:border-cyan-100 hover:bg-cyan-300/10 sm:inline-flex sm:items-center sm:gap-2">
-              <ExternalLink className="h-4 w-4" />
-              Website
+          <button
+            className="icon-button"
+            title="Sign out"
+            aria-label="Sign out"
+            disabled={pending}
+            onClick={signOut}
+          >
+            <LogOut />
+          </button>
+        </div>
+      </div>
+    </aside>
+  )
+}
+export default function DashboardLayout() {
+  const location = useLocation()
+  const [open, setOpen] = useState(false)
+  const title = location.pathname.includes('/admin')
+    ? 'Administration'
+    : location.pathname.includes('/settings')
+      ? 'Settings'
+      : ([...navigation]
+          .reverse()
+          .find((item) => location.pathname.startsWith(item.to))?.label ??
+        'Workspace')
+  const { profileError, refreshProfile, profile } = useAuth()
+  const { setTheme } = useTheme()
+  useEffect(() => {
+    if (profile?.theme) setTheme(profile.theme)
+  }, [profile?.theme, setTheme])
+  return (
+    <div className="workspace">
+      <WorkspaceSidebar />
+      <div className="workspace-main">
+        <header className="workspace-topbar">
+          <div className="breadcrumb">
+            <Dialog.Root open={open} onOpenChange={setOpen}>
+              <Dialog.Trigger asChild>
+                <button
+                  className="icon-button mobile-workspace-toggle"
+                  aria-label="Open workspace menu"
+                >
+                  <Menu />
+                </button>
+              </Dialog.Trigger>
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60" />
+                <Dialog.Content className="fixed left-0 top-0 z-50 w-[280px] outline-none">
+                  <Dialog.Title className="sr-only">
+                    Workspace navigation
+                  </Dialog.Title>
+                  <Dialog.Description className="sr-only">
+                    Projects, studio, messages and account settings.
+                  </Dialog.Description>
+                  <WorkspaceSidebar onNavigate={() => setOpen(false)} />
+                  <Dialog.Close
+                    className="icon-button absolute right-2 top-5"
+                    aria-label="Close workspace menu"
+                  >
+                    <X />
+                  </Dialog.Close>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+            <span>Workspace</span>
+            <ChevronRight size={13} />
+            <strong>{title}</strong>
+          </div>
+          <div className="workspace-topbar-actions">
+            <Link
+              className="icon-button"
+              to="/dashboard/activity"
+              title="Activity inbox"
+              aria-label="Activity inbox"
+            >
+              <Bell />
             </Link>
-            <Link to="/dashboard/messages" className="rounded-md border border-white/10 p-3 text-white transition hover:border-cyan-100 hover:bg-cyan-300/10" aria-label="Open project messages">
-              <MessageSquareMore className="h-4 w-4" />
+            <Link
+              className="topbar-support text-aura-muted"
+              to="/dashboard/messages"
+            >
+              Contact AuraFlow
             </Link>
-            <UserAvatar
-              className="h-11 w-11 rounded-lg"
-              name={profile?.name ?? user?.displayName}
-              src={profile?.avatarUrl ?? user?.photoURL}
-            />
+            <Link
+              className="icon-button"
+              to="/dashboard/messages"
+              title="Messages"
+              aria-label="Messages"
+            >
+              <MessageSquare />
+            </Link>
           </div>
         </header>
-        <Outlet />
+        {profileError && (
+          <div
+            className="inline-alert m-4 flex flex-wrap justify-between gap-3"
+            role="alert"
+          >
+            <span>{profileError}</span>
+            <button
+              className="auth-text-link"
+              onClick={() =>
+                void refreshProfile().catch((err) =>
+                  toast.error(asErrorMessage(err)),
+                )
+              }
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        <main id="workspace-content" className="workspace-content">
+          <Outlet />
+        </main>
       </div>
-    </section>
+    </div>
   )
 }

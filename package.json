@@ -5,10 +5,25 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev:demo": "vite --host 127.0.0.1 --mode e2e",
+    "demo:seed": "node scripts/seed-demo.mjs",
+    "build": "node scripts/check-config.mjs && tsc -b && vite build",
+    "check:config": "node scripts/check-config.mjs",
     "lint": "eslint .",
+    "test": "node --import tsx --test tests/domain.test.ts tests/config.test.ts tests/workflow.test.ts",
+    "test:security": "node --import tsx --test tests/security.test.ts",
+    "test:e2e": "playwright test",
+    "test:production": "node tests/production-smoke.mjs",
     "preview": "vite preview",
     "grant-admin": "node scripts/grant-admin.mjs"
+  },
+  "overrides": {
+    "teeny-request": {
+      "uuid": "^11.1.1"
+    },
+    "gaxios": {
+      "uuid": "^11.1.1"
+    }
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
@@ -50,6 +65,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@playwright/test": "^1.63.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
@@ -61,6 +78,8 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "firebase-admin": "^14.3.0",
     "globals": "^17.6.0",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"

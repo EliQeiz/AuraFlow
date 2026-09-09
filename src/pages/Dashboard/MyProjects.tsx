@@ -1,235 +1,431 @@
-import { ExternalLink, FolderKanban, Layers3, MessageSquareMore, Send, ServerCog, Wand2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  MessageSquare,
+  Plus,
+  Search,
+} from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { ProjectWorkflow } from '../../components/shared/ProjectWorkflow'
+import { useQuery } from '@tanstack/react-query'
+import { doc, getDoc } from 'firebase/firestore'
 import toast from 'react-hot-toast'
-import { SuitePreviewPanel } from '../../components/shared/SuitePreviewPanel'
-import { Badge } from '../../components/ui/Badge'
-import { Button, ButtonLink } from '../../components/ui/Button'
-import { Card } from '../../components/ui/Card'
-import { Textarea } from '../../components/ui/Input'
 import { useAuth } from '../../context/AuthContext'
-import { getSuiteBlueprint } from '../../data/suiteBlueprints'
-import { useProjectMessages, useProjects } from '../../hooks/useFirebase'
-import { requestRevision, sendProjectMessage } from '../../lib/firestore'
+import { useProjects } from '../../hooks/useFirebase'
+import { usePrivateMedia } from '../../hooks/usePrivateMedia'
+import { getFirebaseDb } from '../../lib/firebase'
+import { Button, ButtonLink } from '../../components/ui/Button'
+import { Input, Select, Textarea } from '../../components/ui/Input'
+import { StatePanel } from '../../components/ui/StatePanel'
+import { PrivateFile } from '../../components/shared/PrivateFile'
+import { ProjectFileUploader } from '../../components/shared/ProjectFileUploader'
+import { SuiteCanvas } from '../../components/shared/SuiteCanvas'
+import { requestRevision } from '../../lib/firestore'
 import { asErrorMessage } from '../../lib/utils'
-import type { ProjectRecord } from '../../types'
+import { displayDate, httpUrl, requestStatuses } from '../../domain/projects'
+import type { ProjectRecord, RequestAsset } from '../../types'
 
 export default function MyProjects() {
   const { user } = useAuth()
-  const { data: projects, refetch } = useProjects(user?.uid)
-  const [selectedId, setSelectedId] = useState('')
-  const selected = projects.find((project) => project.id === selectedId) ?? projects[0]
-
+  const { id } = useParams()
+  const projects = useProjects(user?.uid)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
+  const detail = useQuery({
+    queryKey: ['project', user?.uid, id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const snapshot = await getDoc(doc(getFirebaseDb(), 'projects', id!))
+      if (!snapshot.exists()) throw new Error('Project not found.')
+      return { ...snapshot.data(), id: snapshot.id } as ProjectRecord
+    },
+  })
+  const selected =
+    projects.data.find((project) => project.id === id) || detail.data
+  if (id) {
+    if (!selected && (detail.isPending || projects.isPending))
+      return <StatePanel loading />
+    if (!selected)
+      return (
+        <StatePanel
+          error={detail.error || new Error('Project not found')}
+          retry={() => void detail.refetch()}
+        />
+      )
+    return (
+      <ProjectDetail
+        key={selected.id}
+        project={selected}
+        refresh={() => void detail.refetch()}
+      />
+    )
+  }
+  const filtered = projects.data.filter(
+    (project) =>
+      (!status || project.status === status) &&
+      [project.title, project.projectType]
+        .join(' ')
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+  )
   return (
-    <div className="grid gap-4 xl:grid-cols-[340px_1fr]">
-      <Card className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-extrabold">Requests</h1>
-            <p className="mt-2 text-aura-muted">Private briefs, previews, and follow-up notes.</p>
-          </div>
-          <ButtonLink to="/dashboard/requests/new" className="px-3">New</ButtonLink>
+    <>
+      <div className="workspace-page-header">
+        <div>
+          <h1>Projects</h1>
+          <p>Your briefs, deliveries, and everything in between.</p>
         </div>
-        <div className="mt-5 grid gap-2">
-          {projects.map((project) => (
-            <button key={project.id} onClick={() => setSelectedId(project.id)} className={`rounded-lg border p-3 text-left transition ${selected?.id === project.id ? 'border-cyan-200 bg-cyan-300/12' : 'border-white/10 bg-black/20 hover:border-white/25'}`}>
-              <strong className="block truncate text-white">{project.title}</strong>
-              <span className="mt-2 flex items-center justify-between gap-2 text-sm text-aura-muted"><span>{project.projectType}</span><Badge>{project.status}</Badge></span>
-            </button>
+        <ButtonLink to="/dashboard/requests/new">
+          <Plus />
+          New project
+        </ButtonLink>
+      </div>
+      <div className="library-toolbar">
+        <div className="search-field">
+          <Search />
+          <Input
+            aria-label="Search projects"
+            placeholder="Search projects..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Select
+          aria-label="Filter project status"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
+          <option value="">All statuses</option>
+          {requestStatuses.map((value) => (
+            <option key={value}>{value}</option>
           ))}
+        </Select>
+      </div>
+      {projects.isPending ? (
+        <StatePanel loading />
+      ) : projects.error ? (
+        <StatePanel
+          error={projects.error}
+          retry={() => void projects.refetch()}
+        />
+      ) : filtered.length ? (
+        <div className="data-table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Status</th>
+                <th>Type</th>
+                <th>Updated</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((project) => (
+                <tr key={project.id}>
+                  <td>
+                    <Link
+                      className="row-link"
+                      to={`/dashboard/requests/${project.id}`}
+                    >
+                      {project.title}
+                    </Link>
+                  </td>
+                  <td>
+                    <span className="status" data-status={project.status}>
+                      {project.status}
+                    </span>
+                  </td>
+                  <td>{project.projectType}</td>
+                  <td>{displayDate(project.updatedAt)}</td>
+                  <td>
+                    <Link
+                      className="icon-button"
+                      aria-label={`Open ${project.title}`}
+                      to={`/dashboard/requests/${project.id}`}
+                    >
+                      <ArrowUpRight />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        {!projects.length ? (
-          <div className="mt-6 rounded-lg border border-dashed border-white/15 p-6 text-center">
-            <FolderKanban className="mx-auto h-8 w-8 text-cyan-100" />
-            <h2 className="mt-3 text-lg font-bold">No private requests yet</h2>
-            <p className="mt-2 text-sm text-aura-muted">Create one for a site, app, dashboard, template adaptation, or custom software build.</p>
-          </div>
-        ) : null}
-      </Card>
-      {selected && user ? <RequestDetail project={selected} onRefresh={() => void refetch()} userId={user.uid} userName={user.displayName ?? 'AuraFlow Client'} /> : <RequestEmpty />}
-    </div>
+      ) : (
+        <StatePanel
+          title={
+            search || status
+              ? 'No matching projects'
+              : 'Your projects will live here'
+          }
+          description="Create a brief to start working with our team."
+          action={
+            <ButtonLink to="/dashboard/requests/new" variant="secondary">
+              Create project
+            </ButtonLink>
+          }
+        />
+      )}
+    </>
   )
 }
-
-function RequestDetail({ onRefresh, project, userId, userName }: { onRefresh: () => void; project: ProjectRecord; userId: string; userName: string }) {
-  const messages = useProjectMessages(project.id)
-  const [loading, setLoading] = useState(false)
-  const suite = getSuiteBlueprint(project.prototypeSpec?.suiteSlug ?? project.solutionSlug)
-
-  const revise = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const note = String(new FormData(event.currentTarget).get('note') ?? '')
-    setLoading(true)
-    try {
-      await requestRevision(project.id, note)
-      await sendProjectMessage(project.id, { authorId: userId, authorName: userName, role: 'client', text: `Revision note: ${note}` })
-      toast.success('Revision note sent.')
-      event.currentTarget.reset()
-      onRefresh()
-      void messages.refetch()
-    } catch (error) {
-      toast.error(asErrorMessage(error))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const chat = async (event: FormEvent<HTMLFormElement>) => {
+function ProjectDetail({
+  project,
+  refresh,
+}: {
+  project: ProjectRecord
+  refresh: () => void
+}) {
+  const [params] = useSearchParams()
+  const [tab, setTab] = useState(
+    params.get('view') === 'workflow' ? 'Workflow' : 'Overview',
+  )
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState('')
+  const logo = usePrivateMedia(project.design?.logoPath)
+  const banner = usePrivateMedia(project.design?.bannerPath)
+  async function revise(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = event.currentTarget
-    const text = String(new FormData(form).get('message') ?? '')
-    setLoading(true)
+    const note = String(new FormData(form).get('revision'))
+    setPending(true)
+    setError('')
     try {
-      await sendProjectMessage(project.id, { authorId: userId, authorName: userName, role: 'client', text })
-      toast.success('Message sent to AuraFlow.')
+      await requestRevision(project.id, note)
       form.reset()
-      void messages.refetch()
-    } catch (error) {
-      toast.error(asErrorMessage(error))
+      refresh()
+      toast.success('Your revision request has been sent.')
+    } catch (err) {
+      setError(asErrorMessage(err))
     } finally {
-      setLoading(false)
+      setPending(false)
     }
   }
-
   return (
-    <div className="grid gap-4">
-      <Card className="p-5">
-        <div className="flex flex-col justify-between gap-4 lg:flex-row">
-          <div>
-            <Badge>{project.status}</Badge>
-            <h2 className="mt-4 text-3xl font-extrabold">{project.title}</h2>
-            <p className="mt-3 max-w-3xl leading-7 text-aura-muted">{project.description}</p>
-          </div>
-          <dl className="grid min-w-64 gap-2 rounded-lg border border-white/10 bg-black/20 p-4 text-sm">
-            <Info label="Type" value={project.projectType} />
-            <Info label="Timeline" value={project.timeline} />
-            <Info label="Deadline" value={project.deadline ?? 'Awaiting AuraFlow update'} />
-            <Info label="Budget" value={`$${project.budget.toLocaleString()}`} />
-            <Info label="Hosted slug" value={project.tenantSlug ?? project.subdomainPreference ?? 'To be confirmed'} />
-          </dl>
+    <>
+      <Link
+        className="inline-flex gap-2 items-center text-xs text-aura-muted mb-6"
+        to="/dashboard/requests"
+      >
+        <ArrowLeft size={14} />
+        All projects
+      </Link>
+      <div className="workspace-page-header">
+        <div>
+          <span className="status mb-3" data-status={project.status}>
+            {project.status}
+          </span>
+          <h1>{project.title}</h1>
+          <p>Submitted {displayDate(project.createdAt)}</p>
         </div>
-        {project.adminSummary ? <p className="mt-5 rounded-lg border border-cyan-200/20 bg-cyan-300/10 p-4 text-cyan-50">{project.adminSummary}</p> : null}
-        {project.stagingUrl || project.productionUrl ? (
-          <div className="mt-5 flex flex-wrap gap-3">
-            {project.stagingUrl ? <RequestLink href={project.stagingUrl} label="Open Staging Preview" /> : null}
-            {project.productionUrl ? <RequestLink href={project.productionUrl} label="Open Live Platform" /> : null}
-          </div>
-        ) : null}
-        {project.solutionSlug || project.prototypeSpec ? (
-          <div className="mt-5 rounded-lg border border-white/10 bg-black/20 p-4">
-            <h3 className="inline-flex items-center gap-2 text-xl font-bold"><ServerCog className="h-5 w-5 text-cyan-100" /> Platform blueprint</h3>
-            <div className="mt-4 grid gap-3 text-sm text-aura-muted md:grid-cols-3">
-              <Info label="Mode" value={project.platformMode ?? project.prototypeSpec?.platformMode ?? 'Custom build'} />
-              <Info label="Preferred link" value={project.subdomainPreference ?? project.prototypeSpec?.subdomainPreference ?? 'To be confirmed'} />
-              <Info label="Solution" value={project.solutionSlug ?? project.prototypeSpec?.solutionSlug ?? 'Custom'} />
+        <ButtonLink
+          to={`/dashboard/messages?project=${project.id}`}
+          variant="secondary"
+        >
+          <MessageSquare />
+          Message team
+        </ButtonLink>
+      </div>
+      <div className="tab-bar" role="tablist" aria-label="Project views">
+        {[
+          'Overview',
+          'Workflow',
+          'Design',
+          'Files',
+          'Previews',
+          'Request changes',
+        ].map((value) => (
+          <button
+            role="tab"
+            key={value}
+            aria-selected={tab === value}
+            onClick={() => setTab(value)}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+      <div className="detail-grid">
+        <section>
+          {tab === 'Workflow' ? (
+            <ProjectWorkflow project={project} />
+          ) : tab === 'Overview' ? (
+            <>
+              {project.adminSummary && (
+                <div className="inline-alert mb-6">
+                  <strong className="block mb-2">Latest from AuraFlow</strong>
+                  {project.adminSummary}
+                </div>
+              )}
+              <h2 className="mb-4">Project brief</h2>
+              <p className="detail-body">{project.description}</p>
+              {project.referenceLinks?.length > 0 && (
+                <div className="mt-8">
+                  <h2 className="mb-4">References</h2>
+                  {project.referenceLinks
+                    .filter((url) => httpUrl.safeParse(url).success)
+                    .map((url) => (
+                      <a
+                        key={url}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block text-xs text-[var(--primary)] break-all mb-3"
+                      >
+                        {url}
+                      </a>
+                    ))}
+                </div>
+              )}
+            </>
+          ) : tab === 'Design' ? (
+            project.design ? (
+              <>
+                <SuiteCanvas
+                  draft={project.design}
+                  website
+                  bannerUrl={banner}
+                  logoUrl={logo}
+                />
+                <p className="product-caption">
+                  Submitted design snapshot · Example content
+                </p>
+              </>
+            ) : (
+              <StatePanel
+                title="No studio design attached"
+                description="This project began with a written brief. Design previews will appear in Previews."
+              />
+            )
+          ) : tab === 'Files' ? (
+            <div className="file-list">
+              <ProjectFileUploader
+                projectId={project.id}
+                count={project.assets?.length || 0}
+                onUploaded={refresh}
+              />
+              {project.assets?.length ? (
+                project.assets.map((asset) => (
+                  <PrivateFile asset={asset} key={asset.id} />
+                ))
+              ) : (
+                <StatePanel
+                  title="No source files yet"
+                  description="Add your photos, brand assets, or documents above."
+                />
+              )}
             </div>
-            {project.prototypeSpec?.selectedModules?.length ? (
-              <div className="mt-4">
-                <span className="inline-flex items-center gap-2 text-sm font-bold text-white"><Layers3 className="h-4 w-4 text-cyan-100" /> Selected modules</span>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {project.prototypeSpec.selectedModules.map((module) => <Badge key={module} className="bg-white/[0.07] text-white">{module}</Badge>)}
-                </div>
-              </div>
-            ) : null}
-            {project.prototypeSpec?.selectedRoles?.length ? (
-              <div className="mt-4">
-                <span className="text-sm font-bold text-white">Requested portals</span>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {project.prototypeSpec.selectedRoles.map((role) => <Badge key={role} className="bg-white/[0.07] text-white">{role}</Badge>)}
-                </div>
-              </div>
-            ) : null}
-            {project.prototypeSpec?.selectedBuilderFeatures?.length ? (
-              <div className="mt-4">
-                <span className="text-sm font-bold text-white">Builder features</span>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {project.prototypeSpec.selectedBuilderFeatures.map((feature) => <Badge key={feature} className="bg-white/[0.07] text-white">{feature}</Badge>)}
-                </div>
-              </div>
-            ) : null}
-            {project.prototypeSpec ? (
-              <div className="mt-4 grid gap-2 text-sm text-aura-muted md:grid-cols-3">
-                <Info label="Theme" value={project.prototypeSpec.themePreset ?? 'Default'} />
-                <Info label="Primary" value={project.prototypeSpec.primaryColor ?? 'Not set'} />
-                <Info label="Accent" value={project.prototypeSpec.accentColor ?? 'Not set'} />
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </Card>
-      {suite ? (
-        <SuitePreviewPanel
-          suite={suite}
-          compact
-          selectedModules={project.prototypeSpec?.selectedModules}
-          selectedRoles={project.prototypeSpec?.selectedRoles}
-          selectedWorkflows={project.prototypeSpec?.selectedWorkflows}
-          selectedBuilderFeatures={project.prototypeSpec?.selectedBuilderFeatures}
-        />
-      ) : null}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <h3 className="text-2xl font-bold">AuraFlow previews</h3>
-          <p className="mt-2 text-aura-muted">Preview files uploaded directly for this request.</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {project.previews.map((preview) => (
-              <a key={preview.id} href={preview.url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-lg border border-white/10 bg-black/20">
-                {preview.contentType?.startsWith('image/') ? (
-                  <img src={preview.url} alt={preview.name} className="aspect-video w-full object-cover" />
+          ) : tab === 'Previews' ? (
+            <>
+              {[project.stagingUrl, project.productionUrl]
+                .filter(
+                  (url): url is string =>
+                    Boolean(url) && httpUrl.safeParse(url).success,
+                )
+                .map((url) => (
+                  <a
+                    href={url}
+                    key={url}
+                    className="af-button af-button--secondary mb-5 mr-3"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open preview
+                    <ArrowUpRight size={15} />
+                  </a>
+                ))}
+              <div className="grid gap-5">
+                {project.previews?.length ? (
+                  project.previews.map((asset) => (
+                    <PreviewFile asset={asset} key={asset.id} />
+                  ))
                 ) : (
-                  <span className="grid aspect-video place-items-center border-b border-white/10 px-4 text-center font-bold text-cyan-100">Open preview file</span>
+                  <StatePanel
+                    title="Your preview is on its way"
+                    description="The team will share preview files and progress here when they are ready for review."
+                  />
                 )}
-                <span className="block truncate p-3 text-sm text-cyan-100">{preview.name}</span>
-              </a>
-            ))}
-            {!project.previews.length ? <p className="rounded-lg border border-dashed border-white/15 p-4 text-aura-muted">Preview uploads will appear here.</p> : null}
-          </div>
-        </Card>
-        <Card className="p-5">
-          <h3 className="text-2xl font-bold">Your source files</h3>
-          <p className="mt-2 text-aura-muted">References, content images, PDFs, and template files attached to this brief.</p>
-          <div className="mt-4 grid gap-2">
-            {project.assets.map((asset) => <a key={asset.id} className="truncate rounded-md border border-white/10 px-3 py-2 text-cyan-100" href={asset.url} target="_blank" rel="noreferrer">{asset.name}</a>)}
-            {!project.assets.length ? <p className="rounded-lg border border-dashed border-white/15 p-4 text-aura-muted">No source files uploaded yet.</p> : null}
-          </div>
-        </Card>
+              </div>
+            </>
+          ) : (
+            <form className="request-form" onSubmit={revise}>
+              <h2>What would you like to change?</h2>
+              <p className="field-hint">
+                Mention the page or feature, and describe what should be added,
+                removed, or adjusted.
+              </p>
+              <Textarea
+                name="revision"
+                aria-label="Requested changes"
+                minLength={20}
+                maxLength={4000}
+                required
+                className="min-h-40"
+              />
+              {error && (
+                <p role="alert" className="inline-alert error">
+                  {error}
+                </p>
+              )}
+              <Button
+                type="submit"
+                loading={pending}
+                className="justify-self-start"
+              >
+                Send revision request
+              </Button>
+            </form>
+          )}
+        </section>
+        <aside className="detail-meta">
+          <dl>
+            <div>
+              <dt>Service</dt>
+              <dd>{project.projectType}</dd>
+            </div>
+            <div>
+              <dt>Target audience</dt>
+              <dd>{project.audience}</dd>
+            </div>
+            <div>
+              <dt>Budget</dt>
+              <dd>USD {project.budget?.toLocaleString()}</dd>
+            </div>
+            <div>
+              <dt>Timeline</dt>
+              <dd>{project.timeline}</dd>
+            </div>
+            <div>
+              <dt>Agreed deadline</dt>
+              <dd>{project.deadline || 'Not yet agreed'}</dd>
+            </div>
+            <div>
+              <dt>Last updated</dt>
+              <dd>{displayDate(project.updatedAt)}</dd>
+            </div>
+          </dl>
+        </aside>
       </div>
-      <div className="grid gap-4 lg:grid-cols-[0.8fr_1fr]">
-        <Card className="p-5">
-          <h3 className="inline-flex items-center gap-2 text-2xl font-bold"><Wand2 className="h-5 w-5 text-cyan-100" /> Revision note</h3>
-          <form onSubmit={revise} className="mt-4 grid gap-3">
-            <Textarea name="note" minLength={20} required placeholder="Say what needs to change, be added, removed, or refined in the next preview." />
-            <Button type="submit" loading={loading}>Send Follow-up Request</Button>
-          </form>
-        </Card>
-        <Card className="p-5">
-          <h3 className="inline-flex items-center gap-2 text-2xl font-bold"><MessageSquareMore className="h-5 w-5 text-cyan-100" /> Project chat</h3>
-          <div className="mt-4 grid max-h-80 gap-2 overflow-auto rounded-lg border border-white/10 bg-black/20 p-3">
-            {messages.data.map((message) => <div key={message.id} className={`rounded-lg p-3 text-sm ${message.role === 'admin' ? 'bg-cyan-300/12 text-cyan-50' : 'bg-white/[0.07] text-aura-muted'}`}><strong className="block text-white">{message.authorName}</strong>{message.text}</div>)}
-            {!messages.data.length ? <p className="p-3 text-aura-muted">Start the project conversation here.</p> : null}
-          </div>
-          <form onSubmit={chat} className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <Textarea name="message" minLength={2} required className="min-h-11" placeholder="Message AuraFlow about this request" />
-            <Button type="submit" loading={loading} className="shrink-0"><Send className="h-4 w-4" /> Send</Button>
-          </form>
-        </Card>
-      </div>
-    </div>
+    </>
   )
 }
-
-function RequestEmpty() {
-  return <Card className="grid min-h-72 place-items-center p-8 text-center text-aura-muted">Select a request to inspect its status, previews, revisions, and chat.</Card>
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return <div><dt className="text-aura-muted">{label}</dt><dd className="mt-0.5 text-white">{value}</dd></div>
-}
-
-function RequestLink({ href, label }: { href: string; label: string }) {
+function PreviewFile({ asset }: { asset: RequestAsset }) {
+  const source = usePrivateMedia(asset.path)
   return (
-    <a href={href} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-cyan-200/35 px-4 py-2 text-sm font-bold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10">
-      <ExternalLink className="h-4 w-4" />
-      {label}
-    </a>
+    <div>
+      {source && asset.contentType?.startsWith('image/') && (
+        <img
+          src={source}
+          alt={asset.name}
+          className="rounded-md border border-[var(--line)] mb-3 w-full"
+        />
+      )}
+      {source && asset.contentType?.startsWith('video/') && (
+        <video src={source} controls className="w-full mb-3" />
+      )}
+      <PrivateFile asset={asset} />
+    </div>
   )
 }

@@ -1,429 +1,713 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { Check, DatabaseZap, FileImage, Layers3, MonitorSmartphone, Palette, Send, ServerCog, Sparkles, UploadCloud, UsersRound, Waypoints } from 'lucide-react'
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  Copy,
+  File,
+  FolderOpen,
+  ImagePlus,
+  Monitor,
+  Plus,
+  Redo2,
+  Save,
+  Smartphone,
+  Tablet,
+  Trash2,
+  Undo2,
+} from 'lucide-react'
+import { collection, doc, getDoc, orderBy, query } from 'firebase/firestore'
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Link, useSearchParams } from 'react-router-dom'
-import { SuitePreviewPanel } from '../../components/shared/SuitePreviewPanel'
-import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
-import { Card } from '../../components/ui/Card'
+import { Field } from '../../components/ui/Field'
 import { Input, Select, Textarea } from '../../components/ui/Input'
+import { Modal } from '../../components/ui/Modal'
+import { StatePanel } from '../../components/ui/StatePanel'
+import { SuiteCanvas } from '../../components/shared/SuiteCanvas'
+import { StudioHistory } from '../../components/shared/StudioHistory'
 import { useAuth } from '../../context/AuthContext'
-import { platformModes } from '../../data/solutions'
 import { getSuiteBlueprint, suiteBlueprints } from '../../data/suiteBlueprints'
-import { requestAssetAccept, uploadProjectAsset } from '../../lib/auth'
-import { attachProjectAsset, createProjectRequest } from '../../lib/firestore'
+import {
+  defaultDraft,
+  draftSchema,
+  type SavedDraft,
+  type StudioDraft,
+} from '../../domain/studio'
+import { displayDate } from '../../domain/projects'
+import { getFirebaseDb } from '../../lib/firebase'
 import { asErrorMessage } from '../../lib/utils'
-import type { PlatformMode, PrototypeSpec } from '../../types'
-
-const initialModulesFor = (slug: string) => (getSuiteBlueprint(slug) ?? suiteBlueprints[0]).modules.slice(0, 6).map((module) => module.title)
-const initialRolesFor = (slug: string) => (getSuiteBlueprint(slug) ?? suiteBlueprints[0]).roles.slice(0, 5).map((role) => role.title)
-const initialWorkflowsFor = (slug: string) => (getSuiteBlueprint(slug) ?? suiteBlueprints[0]).workflows.slice(0, 3).map((workflow) => workflow.title)
-const initialBuilderFeaturesFor = (slug: string) => (getSuiteBlueprint(slug) ?? suiteBlueprints[0]).builderFeatures.slice(0, 5).map((feature) => feature.title)
+import { saveDraft } from '../../lib/studio'
+import { rasterTypes, uploadPrivateMedia, validateMedia } from '../../lib/media'
+import { useLiveRows } from '../../hooks/useFirebase'
+import { usePrivateMedia } from '../../hooks/usePrivateMedia'
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
 
 export default function PrototypeStudio() {
-  const { profile, user } = useAuth()
-  const [searchParams] = useSearchParams()
-  const requested = searchParams.get('solution') ?? searchParams.get('suite')
-  const initial = getSuiteBlueprint(requested) ?? suiteBlueprints[0]
-  const [activeSlug, setActiveSlug] = useState(initial.slug)
-  const [selectedModules, setSelectedModules] = useState<string[]>(initialModulesFor(initial.slug))
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRolesFor(initial.slug))
-  const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>(initialWorkflowsFor(initial.slug))
-  const [selectedBuilderFeatures, setSelectedBuilderFeatures] = useState<string[]>(initialBuilderFeaturesFor(initial.slug))
-  const [platformMode, setPlatformMode] = useState<PlatformMode>('managed-hosted')
-  const [files, setFiles] = useState<File[]>([])
-  const [loading, setLoading] = useState(false)
-  const [sentId, setSentId] = useState('')
-  const active = useMemo(() => getSuiteBlueprint(activeSlug) ?? suiteBlueprints[0], [activeSlug])
-
-  const chooseSuite = (slug: string) => {
-    const next = getSuiteBlueprint(slug) ?? suiteBlueprints[0]
-    setActiveSlug(next.slug)
-    setSelectedModules(initialModulesFor(next.slug))
-    setSelectedRoles(initialRolesFor(next.slug))
-    setSelectedWorkflows(initialWorkflowsFor(next.slug))
-    setSelectedBuilderFeatures(initialBuilderFeaturesFor(next.slug))
+  const [params] = useSearchParams()
+  const { user } = useAuth()
+  const draftId = params.get('draft')
+  const saved = useQuery({
+    queryKey: ['draft', user?.uid, draftId],
+    enabled: Boolean(user && draftId),
+    queryFn: async () => {
+      const document = await getDoc(
+        doc(getFirebaseDb(), 'users', user!.uid, 'drafts', draftId!),
+      )
+      if (!document.exists())
+        throw new Error('This design is no longer available.')
+      return {
+        ...draftSchema.parse(document.data()),
+        id: document.id,
+        revision: document.data().revision as number,
+      } as SavedDraft
+    },
+  })
+  if (draftId && saved.isPending) return <StatePanel loading />
+  if (draftId && saved.error)
+    return <StatePanel error={saved.error} retry={() => void saved.refetch()} />
+  return (
+    <StudioEditor
+      key={draftId || params.get('suite') || 'new'}
+      saved={saved.data}
+      requestedSuite={params.get('suite') ?? params.get('solution')}
+    />
+  )
+}
+function StudioEditor({
+  saved,
+  requestedSuite,
+}: {
+  saved?: SavedDraft
+  requestedSuite: string | null
+}) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const initialSuite =
+    getSuiteBlueprint(saved?.suiteSlug ?? requestedSuite) ?? suiteBlueprints[0]
+  const [id] = useState(saved?.id || crypto.randomUUID())
+  const [revision, setRevision] = useState(saved?.revision || 0)
+  const [draft, setDraft] = useState<StudioDraft>(() =>
+    saved
+      ? draftSchema.parse(saved)
+      : defaultDraft(
+          initialSuite.slug,
+          'Untitled project',
+          initialSuite.modules.slice(0, 4).map((m) => m.title),
+          initialSuite.roles.slice(0, 2).map((r) => r.title),
+        ),
+  )
+  const [baseline, setBaseline] = useState(JSON.stringify(draft))
+  const [past, setPast] = useState<StudioDraft[]>([])
+  const [future, setFuture] = useState<StudioDraft[]>([])
+  const [pending, setPending] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [open, setOpen] = useState(false)
+  const [page, setPage] = useState('Home')
+  const [newPage, setNewPage] = useState('')
+  const [device, setDevice] = useState('desktop')
+  const [view, setView] = useState<'system' | 'website'>('system')
+  const [panel, setPanel] = useState<'brand' | 'workflows' | 'content'>('brand')
+  const dirty = JSON.stringify(draft) !== baseline
+  useUnsavedChanges(dirty)
+  const suite = getSuiteBlueprint(draft.suiteSlug) ?? initialSuite
+  const drafts = useLiveRows<SavedDraft>(['drafts', user!.uid], () =>
+    query(
+      collection(getFirebaseDb(), 'users', user!.uid, 'drafts'),
+      orderBy('updatedAt', 'desc'),
+    ),
+  )
+  const logoUrl = usePrivateMedia(draft.logoPath)
+  const bannerUrl = usePrivateMedia(draft.bannerPath)
+  function update(change: Partial<StudioDraft>) {
+    setPast((items) => [...items.slice(-39), draft])
+    setFuture([])
+    setDraft((current) => ({ ...current, ...change }))
   }
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!user || !user.email) return
-    if (!selectedModules.length) {
-      toast.error('Choose at least one module for the prototype.')
+  function toggle(field: 'modules' | 'roles' | 'workflows', value: string) {
+    const current = draft[field]
+    if (
+      field === 'modules' &&
+      current.includes(value) &&
+      current.length === 1
+    ) {
+      toast.error('Keep at least one module.')
       return
     }
-    if (!selectedRoles.length) {
-      toast.error('Choose at least one role or portal.')
-      return
+    update({
+      [field]: current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
+    })
+  }
+  function undo() {
+    const previous = past.at(-1)
+    if (previous) {
+      setFuture((items) => [draft, ...items])
+      setDraft(previous)
+      setPast((items) => items.slice(0, -1))
     }
-
-    const data = new FormData(event.currentTarget)
-    if (!data.has('contentOwnershipConfirmed')) {
-      toast.error('Confirm that uploaded content is safe for AuraFlow to use.')
-      return
+  }
+  function redo() {
+    const next = future[0]
+    if (next) {
+      setPast((items) => [...items, draft])
+      setDraft(next)
+      setFuture((items) => items.slice(1))
     }
-    const businessName = String(data.get('businessName') ?? '').trim()
-    const subdomainPreference = String(data.get('subdomainPreference') ?? '').trim()
-    const coreWorkflows = String(data.get('coreWorkflows') ?? '').trim()
-    const contentNotes = String(data.get('contentNotes') ?? '').trim()
-    const dataSources = String(data.get('dataSources') ?? '').trim()
-    const complianceNotes = String(data.get('complianceNotes') ?? '').trim()
-    const launchModel = platformModes.find((mode) => mode.id === platformMode)?.label ?? 'Custom build'
-    const themePreset = String(data.get('themePreset') ?? active.themes[0]?.name ?? 'Aura Dark')
-    const primaryColor = String(data.get('primaryColor') ?? '#6C63FF')
-    const accentColor = String(data.get('accentColor') ?? '#00D4FF')
-    const logoDirection = String(data.get('logoDirection') ?? '').trim()
-    const bannerDirection = String(data.get('bannerDirection') ?? '').trim()
-    const mediaPlan = String(data.get('mediaPlan') ?? '').trim()
-    const paymentPlan = String(data.get('paymentPlan') ?? '').trim()
-    const tenantAdminNotes = String(data.get('tenantAdminNotes') ?? '').trim()
-    const automationNeeds = String(data.get('automationNeeds') ?? '')
-      .split(/\r?\n/)
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .slice(0, 12)
-    const prototypeSpec: PrototypeSpec = {
-      solutionSlug: active.slug,
-      suiteSlug: active.slug,
-      businessName,
-      platformMode,
-      subdomainPreference,
-      selectedModules,
-      selectedWorkflows,
-      selectedRoles,
-      brandTone: String(data.get('brandTone') ?? ''),
-      colorPreference: String(data.get('colorPreference') ?? ''),
-      adminRoles: selectedRoles,
-      coreWorkflows,
-      contentNotes,
-      dataSources,
-      complianceNotes,
-      launchModel,
-      selectedBuilderFeatures,
-      themePreset,
-      primaryColor,
-      accentColor,
-      logoDirection,
-      bannerDirection,
-      mediaPlan,
-      automationNeeds,
-      paymentPlan,
-      tenantAdminNotes,
-      contentOwnershipConfirmed: true,
-    }
-
-    setLoading(true)
+  }
+  async function save(submit = false) {
+    setPending(true)
     try {
-      const request = await createProjectRequest({
-        userId: user.uid,
-        clientName: profile?.name ?? user.displayName ?? businessName,
-        clientEmail: user.email,
-        title: `${businessName || active.title} suite blueprint`,
-        projectType: active.title,
-        description: [
-          `${businessName || 'This business'} wants a ${active.title}.`,
-          `Launch model: ${launchModel}.`,
-          `Selected modules: ${selectedModules.join(', ')}.`,
-          `Selected portals: ${selectedRoles.join(', ')}.`,
-          `Priority workflows: ${selectedWorkflows.join(', ') || 'To be scoped with AuraFlow'}.`,
-          `Builder features: ${selectedBuilderFeatures.join(', ') || 'Core design brief only'}.`,
-          `Theme: ${themePreset} (${primaryColor} / ${accentColor}).`,
-          `Core workflows: ${coreWorkflows}`,
-          `Content/assets: ${contentNotes}`,
-          mediaPlan ? `Media plan: ${mediaPlan}` : '',
-          logoDirection ? `Logo direction: ${logoDirection}` : '',
-          bannerDirection ? `Banner direction: ${bannerDirection}` : '',
-          dataSources ? `Data sources: ${dataSources}` : '',
-          automationNeeds.length ? `Automation needs: ${automationNeeds.join('; ')}` : '',
-          paymentPlan ? `Payment and booking logic: ${paymentPlan}` : '',
-          tenantAdminNotes ? `Owner/admin controls: ${tenantAdminNotes}` : '',
-          complianceNotes ? `Security and compliance notes: ${complianceNotes}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n\n'),
-        audience: active.audience,
-        budget: Number(data.get('budget')),
-        timeline: String(data.get('timeline') ?? ''),
-        referenceLinks: String(data.get('referenceLinks') ?? '')
-          .split(/\r?\n/)
-          .map((item) => item.trim())
-          .filter(Boolean)
-          .slice(0, 8),
-        solutionSlug: active.slug,
-        platformMode,
-        subdomainPreference,
-        prototypeSpec,
-      })
-
-      for (const file of files.slice(0, 12)) {
-        const uploaded = await uploadProjectAsset(user.uid, request.id, file, 'references')
-        await attachProjectAsset(request.id, {
-          id: crypto.randomUUID(),
-          ...uploaded,
-          kind: file.type.startsWith('image/') ? 'content' : 'reference',
-          uploadedBy: user.uid,
-        })
-      }
-
-      setSentId(request.id)
-      setFiles([])
-      toast.success('Suite blueprint sent to AuraFlow.')
-      event.currentTarget.reset()
+      const nextRevision = await saveDraft(id, draft, revision)
+      setRevision(nextRevision)
+      setBaseline(JSON.stringify(draft))
+      toast.success('Design saved.')
+      if (submit) navigate(`/dashboard/requests/new?draft=${id}`)
+      else if (!saved)
+        navigate(`/dashboard/studio?draft=${id}`, { replace: true })
     } catch (error) {
       toast.error(asErrorMessage(error))
     } finally {
-      setLoading(false)
+      setPending(false)
     }
   }
-
-  if (sentId) {
-    return (
-      <Card className="p-6">
-        <Badge>Blueprint Sent</Badge>
-        <h1 className="mt-4 text-3xl font-extrabold">Your suite design is now a private AuraFlow request.</h1>
-        <p className="mt-3 max-w-2xl text-aura-muted">You can track status, preview uploads, revision notes, and chat from the Requests and Messages tabs.</p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Link to="/dashboard/requests" className="text-sm font-bold text-cyan-100">Open Requests</Link>
-          <Link to="/dashboard/messages" className="text-sm font-bold text-cyan-100">Open Messages</Link>
-          <Link to="/dashboard/studio" className="text-sm font-bold text-cyan-100">Create Another Blueprint</Link>
-        </div>
-      </Card>
-    )
+  function chooseSuite(slug: string) {
+    if (dirty && !window.confirm('Switch suites and discard unsaved changes?'))
+      return
+    navigate(`/dashboard/studio?suite=${slug}`)
   }
-
+  function movePage(index: number, direction: number) {
+    const pages = [...draft.pages]
+    const other = index + direction
+    if (other < 0 || other >= pages.length) return
+    ;[pages[index], pages[other]] = [pages[other], pages[index]]
+    update({ pages })
+  }
+  function addPage() {
+    const name = newPage.trim()
+    if (!name) return
+    if (draft.pages.includes(name) || draft.pages.length >= 15) {
+      toast.error(
+        'Choose a unique page name. A design supports up to 15 pages.',
+      )
+      return
+    }
+    update({ pages: [...draft.pages, name] })
+    setPage(name)
+    setNewPage('')
+  }
+  async function upload(
+    file: File | undefined,
+    kind: 'logoPath' | 'bannerPath' | 'mediaPaths',
+  ) {
+    if (!file || !user) return
+    if (kind === 'mediaPaths' && draft.mediaPaths.length >= 20) {
+      toast.error('A design supports up to 20 reference files.')
+      return
+    }
+    setUploading(true)
+    setProgress(0)
+    try {
+      validateMedia(file, kind !== 'mediaPaths')
+      const path = `drafts/${user.uid}/${id}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_').slice(-100)}`
+      await uploadPrivateMedia(path, file, setProgress)
+      update(
+        kind === 'mediaPaths'
+          ? { mediaPaths: [...draft.mediaPaths, path] }
+          : { [kind]: path },
+      )
+      toast.success('File uploaded. Save your design to keep this reference.')
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    } finally {
+      setUploading(false)
+    }
+  }
+  async function duplicate() {
+    setPending(true)
+    try {
+      const newId = crypto.randomUUID()
+      await saveDraft(
+        newId,
+        { ...draft, name: `${draft.name.slice(0, 110)} copy` },
+        0,
+      )
+      navigate(`/dashboard/studio?draft=${newId}`)
+      toast.success('Design duplicated.')
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    } finally {
+      setPending(false)
+    }
+  }
   return (
-    <div className="grid gap-4 xl:grid-cols-[360px_1fr]">
-      <Card className="h-fit p-4 xl:sticky xl:top-24">
-        <Badge>Suite Builder</Badge>
-        <h1 className="mt-4 text-3xl font-extrabold">Choose the platform.</h1>
-        <p className="mt-2 text-aura-muted">Start from a full business system, then shape modules, portals, data, files, and launch model.</p>
-        <div className="mt-5 grid max-h-[36rem] gap-2 overflow-auto pr-1">
-          {suiteBlueprints.map((suite) => (
-            <button
-              key={suite.id}
-              onClick={() => chooseSuite(suite.slug)}
-              className={`rounded-lg border p-3 text-left transition ${active.slug === suite.slug ? 'border-cyan-200 bg-cyan-300/12' : 'border-white/10 bg-black/20 hover:border-white/25'}`}
-            >
-              <strong className="block truncate text-white">{suite.title}</strong>
-              <span className="mt-1 block text-xs text-aura-muted">{suite.category} - {suite.startingPrice}</span>
-            </button>
-          ))}
+    <>
+      <div className="workspace-page-header">
+        <div>
+          <h1>Design studio</h1>
+          <p>
+            Shape your business platform. Share it with our team when you're
+            ready.
+          </p>
         </div>
-      </Card>
-
-      <div className="grid gap-4">
-        <Card className="grid gap-5 overflow-hidden p-0 lg:grid-cols-[0.85fr_1fr]">
-          <img src={active.image} alt={active.title} className="h-full min-h-72 w-full object-cover" />
-          <div className="p-5">
-            <Badge>{active.category}</Badge>
-            <h2 className="mt-4 text-3xl font-extrabold">{active.title}</h2>
-            <p className="mt-3 leading-7 text-aura-muted">{active.longDescription}</p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <Metric icon={ServerCog} label="Hosted link" value={active.platformLabel} />
-              <Metric icon={UsersRound} label="Role portals" value={`${active.roles.length} roles`} />
-              <Metric icon={DatabaseZap} label="Data model" value={`${active.dataEntities.length}+ entities`} />
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          <FolderOpen />
+          Saved designs
+        </Button>
+      </div>
+      <div className="studio-toolbar">
+        <div className="page-actions">
+          <button
+            className="icon-button"
+            aria-label="Undo"
+            title="Undo"
+            disabled={!past.length || pending}
+            onClick={undo}
+          >
+            <Undo2 />
+          </button>
+          <button
+            className="icon-button"
+            aria-label="Redo"
+            title="Redo"
+            disabled={!future.length || pending}
+            onClick={redo}
+          >
+            <Redo2 />
+          </button>
+          <span className="studio-save-state">
+            {dirty ? (
+              'Unsaved changes'
+            ) : revision ? (
+              <>
+                <Check size={13} />
+                Saved · Version {revision}
+              </>
+            ) : (
+              'New design'
+            )}
+          </span>
+        </div>
+        <div className="page-actions">
+          <Button
+            variant="ghost"
+            onClick={duplicate}
+            disabled={pending || uploading}
+          >
+            <Copy />
+            Duplicate
+          </Button>
+          <StudioHistory
+            id={id}
+            disabled={!revision || pending || uploading}
+            onRestore={(snapshot) => {
+              update(snapshot)
+              setPage(snapshot.pages[0])
+              toast.success(
+                'Checkpoint restored. Save to create a new version.',
+              )
+            }}
+          />
+          <Button
+            variant="secondary"
+            onClick={() => void save()}
+            loading={pending}
+            disabled={uploading}
+          >
+            <Save />
+            Save design
+          </Button>
+          <Button
+            onClick={() => void save(true)}
+            disabled={pending || uploading}
+          >
+            Create project brief
+          </Button>
+        </div>
+      </div>
+      <div className="studio-workspace">
+        <aside className="studio-explorer">
+          <Field label="Business suite">
+            <Select
+              value={draft.suiteSlug}
+              onChange={(e) => chooseSuite(e.target.value)}
+            >
+              {suiteBlueprints.map((item) => (
+                <option key={item.slug} value={item.slug}>
+                  {item.title}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="studio-panel-heading mt-7">
+            Pages <span>{draft.pages.length}/15</span>
+          </div>
+          {draft.pages.map((item, index) => (
+            <div className="studio-page" data-active={page === item} key={item}>
+              <button
+                onClick={() => {
+                  setPage(item)
+                  setView('website')
+                }}
+              >
+                <File size={13} />
+                <span>{item}</span>
+              </button>
+              <button
+                className="icon-button"
+                title={`Move ${item} up`}
+                aria-label={`Move ${item} up`}
+                disabled={index === 0}
+                onClick={() => movePage(index, -1)}
+              >
+                <ArrowUp />
+              </button>
+              <button
+                className="icon-button"
+                title={`Move ${item} down`}
+                aria-label={`Move ${item} down`}
+                disabled={index === draft.pages.length - 1}
+                onClick={() => movePage(index, 1)}
+              >
+                <ArrowDown />
+              </button>
+              <button
+                className="icon-button"
+                aria-label={`Remove ${item}`}
+                title={`Remove ${item}`}
+                disabled={draft.pages.length === 1}
+                onClick={() => {
+                  const pages = draft.pages.filter((p) => p !== item)
+                  update({ pages })
+                  if (page === item) setPage(pages[0])
+                }}
+              >
+                <Trash2 />
+              </button>
+            </div>
+          ))}
+          <div className="studio-add-page mt-3">
+            <Input
+              aria-label="New page name"
+              value={newPage}
+              maxLength={80}
+              onChange={(e) => setNewPage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addPage()
+                }
+              }}
+              placeholder="New page"
+            />
+            <button
+              className="icon-button"
+              title="Add page"
+              aria-label="Add page"
+              onClick={addPage}
+            >
+              <Plus />
+            </button>
+          </div>
+          <p className="studio-panel-heading mt-7">System modules</p>
+          {suite.modules.map((module) => (
+            <label className="studio-module" key={module.id}>
+              <input
+                type="checkbox"
+                checked={draft.modules.includes(module.title)}
+                onChange={() => toggle('modules', module.title)}
+              />
+              {module.title}
+            </label>
+          ))}
+        </aside>
+        <div className="studio-canvas-area">
+          <div className="studio-canvas-toolbar">
+            <div className="studio-choice">
+              <button
+                aria-pressed={view === 'system'}
+                onClick={() => setView('system')}
+              >
+                System
+              </button>
+              <button
+                aria-pressed={view === 'website'}
+                onClick={() => setView('website')}
+              >
+                Website
+              </button>
+            </div>
+            <div className="device-controls">
+              {[
+                { name: 'desktop', Icon: Monitor },
+                { name: 'tablet', Icon: Tablet },
+                { name: 'mobile', Icon: Smartphone },
+              ].map(({ name, Icon }) => (
+                <button
+                  className="icon-button"
+                  key={name}
+                  aria-label={`${name} preview`}
+                  title={`${name} preview`}
+                  aria-pressed={device === name}
+                  onClick={() => setDevice(name)}
+                >
+                  <Icon />
+                </button>
+              ))}
             </div>
           </div>
-        </Card>
-
-        <SuitePreviewPanel suite={active} selectedModules={selectedModules} selectedRoles={selectedRoles} selectedWorkflows={selectedWorkflows} selectedBuilderFeatures={selectedBuilderFeatures} />
-
-        <form onSubmit={submit} className="grid gap-4">
-          <Card className="p-5">
-            <h2 className="inline-flex items-center gap-2 text-2xl font-bold"><Sparkles className="h-5 w-5 text-cyan-100" /> Launch model</h2>
-            <div className="mt-4 grid gap-3 lg:grid-cols-3">
-              {platformModes.map((mode) => (
-                <button
-                  key={mode.id}
-                  type="button"
-                  onClick={() => setPlatformMode(mode.id)}
-                  className={`rounded-lg border p-4 text-left transition ${platformMode === mode.id ? 'border-cyan-200 bg-cyan-300/12' : 'border-white/10 bg-black/20 hover:border-white/25'}`}
+          <div
+            className="studio-preview-frame"
+            style={{
+              maxWidth:
+                device === 'mobile' ? 320 : device === 'tablet' ? 540 : '100%',
+            }}
+          >
+            <SuiteCanvas
+              key={draft.suiteSlug}
+              draft={draft}
+              website={view === 'website'}
+              page={view === 'website' ? page : 'Overview'}
+              bannerUrl={bannerUrl}
+              logoUrl={logoUrl}
+              onPageChange={setPage}
+            />
+          </div>
+          <p className="product-caption">
+            Interactive design preview · Sample content
+          </p>
+        </div>
+        <aside className="studio-inspector">
+          <div
+            className="tab-bar col-span-full"
+            role="tablist"
+            aria-label="Design properties"
+          >
+            {(['brand', 'workflows', 'content'] as const).map((item) => (
+              <button
+                key={item}
+                role="tab"
+                aria-selected={panel === item}
+                onClick={() => setPanel(item)}
+              >
+                {item[0].toUpperCase() + item.slice(1)}
+              </button>
+            ))}
+          </div>
+          {panel === 'brand' ? (
+            <>
+              <Field label="Business name">
+                <Input
+                  value={draft.name}
+                  maxLength={120}
+                  onChange={(e) => update({ name: e.target.value })}
+                />
+              </Field>
+              <Field label="Website headline">
+                <Input
+                  value={draft.headline}
+                  maxLength={160}
+                  onChange={(e) => update({ headline: e.target.value })}
+                />
+              </Field>
+              <div>
+                <label className="studio-swatch">
+                  Primary color
+                  <input
+                    type="color"
+                    value={draft.primaryColor}
+                    onChange={(e) => update({ primaryColor: e.target.value })}
+                  />
+                </label>
+                <label className="studio-swatch">
+                  Accent color
+                  <input
+                    type="color"
+                    value={draft.accentColor}
+                    onChange={(e) => update({ accentColor: e.target.value })}
+                  />
+                </label>
+              </div>
+              <Field label="Typography">
+                <Select
+                  value={draft.font}
+                  onChange={(e) =>
+                    update({ font: e.target.value as StudioDraft['font'] })
+                  }
                 >
-                  <strong className="block text-white">{mode.label}</strong>
-                  <span className="mt-2 block text-sm leading-6 text-aura-muted">{mode.description}</span>
-                </button>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-5">
-            <h2 className="inline-flex items-center gap-2 text-2xl font-bold"><Palette className="h-5 w-5 text-cyan-100" /> Design and automation studio</h2>
-            <p className="mt-2 max-w-3xl text-aura-muted">Pick the exact tools AuraFlow should include in the prototype brief. These selections are saved with the request for admin review.</p>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {active.builderFeatures.map((feature) => (
-                <button
-                  key={feature.id}
-                  type="button"
-                  onClick={() => toggleValue(feature.title, selectedBuilderFeatures, setSelectedBuilderFeatures)}
-                  className={`rounded-lg border p-4 text-left transition ${selectedBuilderFeatures.includes(feature.title) ? 'border-cyan-200 bg-cyan-300/12' : 'border-white/10 bg-black/20 hover:border-white/25'}`}
-                >
-                  <strong className="block text-white">{feature.title}</strong>
-                  <span className="mt-2 block text-sm leading-6 text-aura-muted">{feature.summary}</span>
-                  <span className="mt-3 inline-flex text-xs font-bold text-cyan-100">{feature.output}</span>
-                </button>
-              ))}
-            </div>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <Field label="Theme preset">
-                <Select name="themePreset" defaultValue={active.themes[0]?.name}>
-                  {active.themes.map((theme) => <option key={theme.name}>{theme.name}</option>)}
+                  <option value="modern">Modern sans serif</option>
+                  <option value="classic">Classic serif</option>
                 </Select>
               </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Primary color"><Input name="primaryColor" type="color" defaultValue="#6C63FF" className="h-12 p-1" /></Field>
-                <Field label="Accent color"><Input name="accentColor" type="color" defaultValue="#00D4FF" className="h-12 p-1" /></Field>
-              </div>
-              <Field label="Logo and brand direction">
-                <Textarea name="logoDirection" className="min-h-24" placeholder="Logo, crest, symbol, uniforms, menu identity, packaging, signage, or brand references." />
-              </Field>
-              <Field label="Hero banners and campaign visuals">
-                <Textarea name="bannerDirection" className="min-h-24" placeholder="Homepage banner, admissions banner, hotel room hero, food campaign, sale banner, dashboard welcome screen..." />
-              </Field>
-              <Field label="Media plan">
-                <Textarea name="mediaPlan" className="min-h-24" placeholder="Photos/videos needed: rooms, foods, products, classrooms, team, customers, gallery, behind-the-scenes, location..." />
-              </Field>
-              <Field label="Payment, booking, fees, or checkout logic">
-                <Textarea name="paymentPlan" className="min-h-24" placeholder="Deposits, school fees, delivery fees, room booking payments, order confirmation, invoice flow, mobile money notes..." />
-              </Field>
-              <Field label="Automation needs">
-                <Textarea name="automationNeeds" className="min-h-24" placeholder="One per line: fee reminder, booking confirmation, low stock alert, admission follow-up, order status message..." />
-              </Field>
-              <Field label="Owner/admin controls after launch">
-                <Textarea name="tenantAdminNotes" className="min-h-24" placeholder="What should the owner be able to change without coding? Menu prices, rooms, products, students, staff, gallery, banners..." />
-              </Field>
-            </div>
-          </Card>
-
-          <Card className="p-5">
-            <h2 className="inline-flex items-center gap-2 text-2xl font-bold"><Layers3 className="h-5 w-5 text-cyan-100" /> Modules</h2>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {active.modules.map((module) => (
-                <PillToggle key={module.id} active={selectedModules.includes(module.title)} label={module.title} onClick={() => toggleValue(module.title, selectedModules, setSelectedModules)} />
-              ))}
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.div key={active.slug} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="mt-5 grid gap-3 sm:grid-cols-2">
-                {active.modules
-                  .filter((module) => selectedModules.includes(module.title))
-                  .slice(0, 6)
-                  .map((module) => (
-                    <div key={module.id} className="rounded-lg border border-white/10 bg-white/[0.06] p-3 text-sm text-aura-muted">
-                      <strong className="block text-white">{module.category}</strong>
-                      <span className="mt-1 block leading-6">{module.summary}</span>
-                    </div>
+              <div>
+                <p className="studio-panel-heading">Appearance</p>
+                <div className="studio-choice">
+                  {(['light', 'dark'] as const).map((theme) => (
+                    <button
+                      key={theme}
+                      aria-pressed={draft.theme === theme}
+                      onClick={() => update({ theme })}
+                    >
+                      {theme === 'light' ? 'Light' : 'Dark'}
+                    </button>
                   ))}
-              </motion.div>
-            </AnimatePresence>
-          </Card>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="p-5">
-              <h2 className="inline-flex items-center gap-2 text-2xl font-bold"><UsersRound className="h-5 w-5 text-cyan-100" /> Roles and portals</h2>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {active.roles.map((role) => (
-                  <PillToggle key={role.id} active={selectedRoles.includes(role.title)} label={role.title} onClick={() => toggleValue(role.title, selectedRoles, setSelectedRoles)} />
+                </div>
+              </div>
+              <Field label="Business description">
+                <Textarea
+                  value={draft.description}
+                  maxLength={6000}
+                  onChange={(e) => update({ description: e.target.value })}
+                  placeholder="What makes your business different?"
+                />
+              </Field>
+            </>
+          ) : panel === 'workflows' ? (
+            <>
+              <div>
+                <p className="studio-panel-heading">Portals & roles</p>
+                {suite.roles.map((role) => (
+                  <label key={role.id} className="studio-module">
+                    <input
+                      type="checkbox"
+                      checked={draft.roles.includes(role.title)}
+                      onChange={() => toggle('roles', role.title)}
+                    />
+                    {role.title}
+                  </label>
                 ))}
               </div>
-            </Card>
-            <Card className="p-5">
-              <h2 className="inline-flex items-center gap-2 text-2xl font-bold"><Waypoints className="h-5 w-5 text-cyan-100" /> Priority workflows</h2>
-              <div className="mt-4 grid gap-2">
-                {active.workflows.map((item) => (
+              <div>
+                <p className="studio-panel-heading">Requested automations</p>
+                {suite.workflows.map((workflow) => (
+                  <label className="studio-module" key={workflow.id}>
+                    <input
+                      type="checkbox"
+                      checked={draft.workflows.includes(workflow.title)}
+                      onChange={() => toggle('workflows', workflow.title)}
+                    />
+                    {workflow.title}
+                  </label>
+                ))}
+              </div>
+              <Field label="Workflow details">
+                <Textarea
+                  value={draft.notes}
+                  maxLength={6000}
+                  onChange={(e) => update({ notes: e.target.value })}
+                  placeholder="Approval steps, data imports, payments, roles, and any custom requirements."
+                />
+              </Field>
+            </>
+          ) : (
+            <>
+              <p className="field-hint col-span-full">
+                Use content you own or have permission to share.
+              </p>
+              {(['logoPath', 'bannerPath', 'mediaPaths'] as const).map(
+                (kind) => (
+                  <label className="af-field" key={kind}>
+                    <span className="studio-panel-heading">
+                      <ImagePlus size={14} />
+                      {kind === 'logoPath'
+                        ? 'Logo'
+                        : kind === 'bannerPath'
+                          ? 'Website banner'
+                          : 'Photos, video & documents'}
+                    </span>
+                    <Input
+                      type="file"
+                      accept={
+                        kind === 'mediaPaths'
+                          ? '.jpg,.jpeg,.png,.webp,.avif,.gif,.mp4,.webm,.pdf,.docx,.xlsx,.pptx,.csv,.txt,.zip'
+                          : rasterTypes.join(',')
+                      }
+                      disabled={
+                        uploading ||
+                        (kind === 'mediaPaths' && draft.mediaPaths.length >= 20)
+                      }
+                      onChange={(event) =>
+                        void upload(event.target.files?.[0], kind)
+                      }
+                    />
+                  </label>
+                ),
+              )}
+              {uploading && (
+                <p className="field-hint" role="status">
+                  Uploading {progress}%
+                </p>
+              )}
+              {draft.mediaPaths.map((path) => (
+                <div className="file-row" key={path}>
+                  <File size={14} />
+                  <span>{path.split('/').at(-1)?.slice(37)}</span>
                   <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => toggleValue(item.title, selectedWorkflows, setSelectedWorkflows)}
-                    className={`rounded-lg border p-3 text-left transition ${selectedWorkflows.includes(item.title) ? 'border-cyan-200 bg-cyan-300/12' : 'border-white/10 bg-black/20 hover:border-white/25'}`}
+                    className="icon-button"
+                    title="Remove file from design"
+                    aria-label="Remove file from design"
+                    onClick={() =>
+                      update({
+                        mediaPaths: draft.mediaPaths.filter((p) => p !== path),
+                      })
+                    }
                   >
-                    <strong className="block text-white">{item.title}</strong>
-                    <span className="mt-1 block text-xs leading-5 text-aura-muted">{item.output}</span>
+                    <Trash2 />
                   </button>
-                ))}
-              </div>
-            </Card>
-          </div>
-
-          <Card className="grid gap-4 p-5">
-            <h2 className="text-2xl font-bold">Business and design brief</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Business, school, or project name"><Input name="businessName" required placeholder="Crestview Academy, Kente Mart, Afari Foods..." /></Field>
-              <Field label="Preferred hosted link"><Input name="subdomainPreference" placeholder={active.platformLabel} /></Field>
-              <Field label="Brand tone"><Select name="brandTone" defaultValue="Professional and modern"><option>Professional and modern</option><option>Luxury and editorial</option><option>Warm and local</option><option>Bold and energetic</option><option>Minimal and calm</option></Select></Field>
-              <Field label="Color direction"><Input name="colorPreference" placeholder="Navy, gold, emerald, white..." /></Field>
-              <Field label="Working budget in USD"><Input name="budget" type="number" min={39} max={100000} defaultValue={active.startingPrice.includes('$39') ? 199 : 499} required /></Field>
-              <Field label="Timeline"><Select name="timeline" defaultValue="Standard"><option>Flexible</option><option>Standard</option><option>Launch this month</option><option>Urgent</option></Select></Field>
-            </div>
-            <Field label="Core workflows">
-              <Textarea name="coreWorkflows" minLength={30} required placeholder="Describe what users, staff, admins, parents, customers, guests, or managers should be able to do." />
-            </Field>
-            <Field label="Content, images, and brand assets needed">
-              <Textarea name="contentNotes" minLength={20} required placeholder="Food photos, rooms, products, school logo, staff photos, dashboards, forms, existing spreadsheet data, or sample references." />
-            </Field>
-            <Field label="Existing data sources">
-              <Textarea name="dataSources" className="min-h-24" placeholder="Spreadsheets, paper forms, existing app exports, product lists, student/staff data, fee sheets, room lists, menus, or inventory files." />
-            </Field>
-            <Field label="Security, privacy, and approval notes">
-              <Textarea name="complianceNotes" className="min-h-24" placeholder="Who should see what, payment handling, student data privacy, staff roles, admin approvals, medical records, or audit requirements." />
-            </Field>
-            <Field label="Reference links">
-              <Textarea name="referenceLinks" className="min-h-24" placeholder="One URL per line. Use links you are allowed to share." />
-            </Field>
-            <label className="grid gap-2 rounded-lg border border-dashed border-cyan-200/35 bg-cyan-300/10 p-4 text-sm text-aura-muted">
-              <span className="inline-flex items-center gap-2 font-bold text-white"><UploadCloud className="h-4 w-4" /> Upload templates, content, data, and references</span>
-              <span>Images, videos, PDFs, Office files, CSV/JSON/text, or ZIP packs up to 12 files and 50MB each. Do not upload secrets, passwords, or private data you are not allowed to share.</span>
-              <Input multiple accept={requestAssetAccept} type="file" onChange={(event) => setFiles(Array.from(event.target.files ?? []))} />
-            </label>
-            <label className="flex items-start gap-3 rounded-lg border border-white/10 bg-black/20 p-3 text-sm leading-6 text-aura-muted">
-              <input name="contentOwnershipConfirmed" required type="checkbox" className="mt-1 accent-cyan-300" />
-              <span>I confirm I have permission to share these files and references with AuraFlow for this request.</span>
-            </label>
-            <Button type="submit" loading={loading} className="w-full sm:w-fit">
-              <Send className="h-4 w-4" />
-              Send Suite Blueprint
-            </Button>
-          </Card>
-
-          <Card className="p-5">
-            <FileImage className="h-5 w-5 text-cyan-100" />
-            <h2 className="mt-4 text-xl font-bold">What AuraFlow receives</h2>
-            <p className="mt-2 leading-7 text-aura-muted">
-              The selected suite, modules, role portals, priority workflows, launch model, preferred link, data sources, compliance notes, files, and references are stored on your private request. Only your account and AuraFlow admins can see it.
-            </p>
-          </Card>
-        </form>
+                </div>
+              ))}
+            </>
+          )}
+        </aside>
       </div>
-    </div>
+      <Modal
+        open={open}
+        onOpenChange={setOpen}
+        title="Your saved designs"
+        description="Continue a design or make a copy for your next project."
+        className="max-w-2xl"
+      >
+        {drafts.isPending ? (
+          <StatePanel loading />
+        ) : drafts.error ? (
+          <StatePanel
+            error={drafts.error}
+            retry={() => void drafts.refetch()}
+          />
+        ) : drafts.data.length ? (
+          <div className="studio-drafts">
+            {drafts.data.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (
+                    dirty &&
+                    !window.confirm(
+                      'Open this design and discard unsaved changes?',
+                    )
+                  )
+                    return
+                  setOpen(false)
+                  navigate(`/dashboard/studio?draft=${item.id}`)
+                }}
+              >
+                <span>{item.name}</span>
+                <span className="text-aura-muted text-xs">
+                  v{item.revision} · {displayDate(item.updatedAt)}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <StatePanel
+            title="No saved designs yet"
+            description="Your saved designs will appear here."
+          />
+        )}
+      </Modal>
+    </>
   )
-}
-
-function PillToggle({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex min-h-10 items-center gap-2 rounded-md border px-3 py-2 text-sm transition ${active ? 'border-cyan-200 bg-cyan-300/15 text-white' : 'border-white/10 bg-black/20 text-aura-muted'}`}
-    >
-      {active ? <Check className="h-4 w-4 text-cyan-100" /> : null}
-      {label}
-    </button>
-  )
-}
-
-function toggleValue(value: string, selected: string[], setSelected: (value: string[]) => void) {
-  setSelected(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
-}
-
-function Metric({ icon: Icon, label, value }: { icon: typeof MonitorSmartphone; label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-      <Icon className="h-4 w-4 text-cyan-100" />
-      <span className="mt-2 block text-xs text-aura-muted">{label}</span>
-      <strong className="mt-1 block break-words text-sm text-white">{value}</strong>
-    </div>
-  )
-}
-
-function Field({ children, label }: { children: ReactNode; label: string }) {
-  return <label className="grid gap-2 text-sm text-aura-muted">{label}{children}</label>
 }

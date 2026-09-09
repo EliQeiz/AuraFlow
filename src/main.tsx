@@ -5,10 +5,19 @@ import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { ErrorBoundary } from './components/shared/ErrorBoundary'
 import './index.css'
+import './styles/studio.css'
+import './styles/workflows.css'
+import './styles/public.css'
+import './styles/experience.css'
 import App from './App.tsx'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false },
+  },
+})
 
 createRoot(document.getElementById('root')!).render(
   <HelmetProvider>
@@ -16,14 +25,16 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>
-            <App />
+            <ErrorBoundary>
+              <App />
+            </ErrorBoundary>
             <Toaster
               position="top-right"
               toastOptions={{
                 style: {
-                  background: '#12122A',
-                  border: '1px solid rgba(0, 212, 255, 0.2)',
-                  color: '#fff',
+                  background: 'rgb(var(--aura-surface))',
+                  border: '1px solid var(--line)',
+                  color: 'rgb(var(--aura-ink))',
                 },
               }}
             />

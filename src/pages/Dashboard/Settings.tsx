@@ -1,207 +1,407 @@
-import { Camera, LogOut, MonitorCog, MoonStar, ShieldCheck, Sun, Trash2 } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import {
+  Camera,
+  Download,
+  LogOut,
+  Monitor,
+  Moon,
+  ShieldCheck,
+  Sun,
+} from 'lucide-react'
+import { reload, sendEmailVerification } from 'firebase/auth'
+import { useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { Button, ButtonLink } from '../../components/ui/Button'
-import { Card } from '../../components/ui/Card'
+import { Field } from '../../components/ui/Field'
 import { Input } from '../../components/ui/Input'
+import { PasswordInput } from '../../components/ui/PasswordInput'
 import { Modal } from '../../components/ui/Modal'
+import { UserAvatar } from '../../components/shared/UserAvatar'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
-import { changePassword, removeAccount, uploadAvatar } from '../../lib/auth'
+import { useProjects } from '../../hooks/useFirebase'
+import { changePassword, uploadAvatar } from '../../lib/auth'
 import { patchUserProfile } from '../../lib/firestore'
+import {
+  startSupportConversation,
+  sendSupportMessage,
+} from '../../lib/conversations'
 import { asErrorMessage } from '../../lib/utils'
+import { rasterTypes, validateMedia } from '../../lib/media'
+import { passwordSchema } from '../../domain/auth'
 import type { ThemePreference } from '../../types'
 
 export default function Settings() {
-  const { admin, logout, profile, refreshProfile, user } = useAuth()
-  const { resolvedTheme, setTheme, theme } = useTheme()
+  const { user, profile, admin, logout, refreshProfile } = useAuth()
+  const { theme, setTheme } = useTheme()
+  const projects = useProjects(user?.uid)
   const navigate = useNavigate()
-  const [password, setPassword] = useState('')
+  const [pending, setPending] = useState('')
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const creatorHint = admin || user?.email?.toLowerCase() === 'elishaafari0@gmail.com'
-
-  useEffect(() => {
-    if (profile?.theme && profile.theme !== theme) setTheme(profile.theme)
-  }, [profile?.theme, setTheme, theme])
-
-  const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!user) return
-    const values = new FormData(event.currentTarget)
-    setLoading(true)
+  const [confirmation, setConfirmation] = useState('')
+  const [error, setError] = useState('')
+  const [verificationSent, setVerificationSent] = useState(false)
+  const passwordAccount = user?.providerData.some(
+    (provider) => provider.providerId === 'password',
+  )
+  async function act(name: string, action: () => Promise<void>) {
+    setPending(name)
+    setError('')
     try {
-      await patchUserProfile(user.uid, {
-        name: String(values.get('name') ?? ''),
-        phone: String(values.get('phone') ?? ''),
-        notifications: values.has('notifications'),
+      await action()
+    } catch (err) {
+      setError(asErrorMessage(err))
+    } finally {
+      setPending('')
+    }
+  }
+  function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const values = new FormData(event.currentTarget)
+    void act('profile', async () => {
+      await patchUserProfile(user!.uid, {
+        name: String(values.get('name')).trim(),
+        phone: String(values.get('phone')).trim(),
       })
       await refreshProfile()
-      toast.success('Profile updated.')
-    } catch (error) {
-      toast.error(asErrorMessage(error))
-    } finally {
-      setLoading(false)
-    }
+      toast.success('Profile saved.')
+    })
   }
-
-  const addAvatar = async (file?: File) => {
-    if (!file || !user) return
-    setLoading(true)
-    try {
-      const avatarUrl = await uploadAvatar(user, file)
-      await patchUserProfile(user.uid, { avatarUrl })
-      await refreshProfile()
-      toast.success('Avatar uploaded.')
-    } catch (error) {
-      toast.error(asErrorMessage(error))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const updateSecret = async (event: FormEvent<HTMLFormElement>) => {
+  function updatePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!user) return
-    setLoading(true)
-    try {
-      await changePassword(user, password)
-      setPassword('')
-      toast.success('Password changed.')
-    } catch (error) {
-      toast.error(asErrorMessage(error))
-    } finally {
-      setLoading(false)
-    }
+    const form = event.currentTarget
+    const values = new FormData(form)
+    void act('password', async () => {
+      const next = passwordSchema.parse(values.get('password'))
+      if (next !== values.get('confirm'))
+        throw new Error('New passwords do not match.')
+      await changePassword(user!, next, String(values.get('current')))
+      form.reset()
+      toast.success('Password updated.')
+    })
   }
-
-  const deleteNow = async () => {
-    if (!user) return
-    setLoading(true)
-    try {
-      await removeAccount(user)
-      toast.success('Account deleted.')
-      navigate('/')
-    } catch (error) {
-      toast.error(asErrorMessage(error))
-    } finally {
-      setLoading(false)
-    }
+  async function appearance(value: ThemePreference) {
+    const previous = theme
+    setTheme(value)
+    await act('theme', async () => {
+      try {
+        await patchUserProfile(user!.uid, { theme: value })
+        await refreshProfile()
+      } catch (err) {
+        setTheme(previous)
+        throw err
+      }
+    })
   }
-
-  const changeTheme = async (nextTheme: ThemePreference) => {
-    setTheme(nextTheme)
-    if (!user) return
-    try {
-      await patchUserProfile(user.uid, { theme: nextTheme })
-      await refreshProfile()
-    } catch (error) {
-      toast.error(asErrorMessage(error))
-    }
+  function exportData() {
+    const content = JSON.stringify(
+      { profile, projects: projects.data },
+      null,
+      2,
+    )
+    const url = URL.createObjectURL(
+      new Blob([content], { type: 'application/json' }),
+    )
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'auraflow-project-data.json'
+    anchor.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
-
-  const logoutNow = async () => {
-    await logout()
-    navigate('/login')
-  }
-
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card className="p-5">
-        <h1 className="text-3xl font-extrabold">Settings</h1>
-        <form key={`${profile?.name}-${profile?.phone}-${profile?.notifications}`} onSubmit={saveProfile} className="mt-5 grid gap-4">
-          <label className="grid gap-2 text-sm text-aura-muted">
-            Name
-            <Input name="name" defaultValue={profile?.name ?? user?.displayName ?? ''} />
-          </label>
-          <label className="grid gap-2 text-sm text-aura-muted">
-            Phone
-            <Input name="phone" defaultValue={profile?.phone ?? ''} />
-          </label>
-          <label className="flex items-center gap-2 text-sm text-aura-muted">
-            <input name="notifications" type="checkbox" defaultChecked={profile?.notifications ?? true} className="accent-cyan-300" />
-            Project notifications
-          </label>
-          <Button type="submit" loading={loading}>Save Profile</Button>
-        </form>
-        <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/15 px-4 py-3 text-sm font-bold text-cyan-100">
-          <Camera className="h-4 w-4" />
-          Upload Avatar
-          <input type="file" accept="image/*" className="sr-only" onChange={(event) => void addAvatar(event.target.files?.[0])} />
-        </label>
-      </Card>
-
-      <div className="grid gap-4">
-        <Card className="p-5">
-          <h2 className="text-2xl font-bold">Appearance</h2>
-          <p className="mt-2 text-aura-muted">Current theme: {resolvedTheme}.</p>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <ThemeButton active={theme === 'dark'} Icon={MoonStar} label="Dark" onClick={() => void changeTheme('dark')} />
-            <ThemeButton active={theme === 'light'} Icon={Sun} label="Light" onClick={() => void changeTheme('light')} />
-            <ThemeButton active={theme === 'system'} Icon={MonitorCog} label="Adaptive" onClick={() => void changeTheme('system')} />
-          </div>
-          <Button variant="secondary" className="mt-4 w-full" onClick={() => void logoutNow()}>
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
-        </Card>
-        {creatorHint ? (
-          <Card className="p-5">
-            <h2 className="inline-flex items-center gap-2 text-2xl font-bold"><ShieldCheck className="h-5 w-5 text-cyan-100" /> Creator Access</h2>
-            <p className="mt-2 leading-7 text-aura-muted">
-              {admin ? 'This signed-in account already has the admin claim.' : 'This account needs the Firebase admin claim before the admin console appears in navigation.'}
-            </p>
-            <label className="mt-4 grid gap-2 text-sm text-aura-muted">
-              Current Firebase UID
-              <Input readOnly value={user?.uid ?? ''} />
-            </label>
-            <p className="mt-3 rounded-md border border-white/10 bg-black/20 p-3 font-mono text-xs text-cyan-100">npm run grant-admin -- {user?.uid ?? '<uid>'}</p>
-            <ButtonLink to="/dashboard/admin" variant={admin ? 'primary' : 'secondary'} className="mt-4 w-full">Open Admin Console</ButtonLink>
-          </Card>
-        ) : null}
-        <Card className="p-5">
-          <h2 className="text-2xl font-bold">Change Password</h2>
-          <form onSubmit={updateSecret} className="mt-4 grid gap-3">
-            <Input type="password" minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="New password" required />
-            <Button type="submit" loading={loading}>Update Password</Button>
-          </form>
-        </Card>
-        <Card className="border-rose-300/20 p-5">
-          <h2 className="text-2xl font-bold">Delete Account</h2>
-          <p className="mt-2 leading-7 text-aura-muted">Delete the authenticated account after confirming the action.</p>
-          <Button variant="danger" className="mt-4" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="h-4 w-4" />
-            Delete Account
-          </Button>
-        </Card>
+    <div className="settings-layout">
+      <div className="workspace-page-header">
+        <div>
+          <h1>Settings</h1>
+          <p>Make this workspace yours.</p>
+        </div>
       </div>
-
-      <Modal open={deleteOpen} onOpenChange={setDeleteOpen} title="Delete account" description="This action cannot be undone." className="max-w-md">
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-          <Button variant="danger" loading={loading} onClick={deleteNow}>Confirm Delete</Button>
+      {error && (
+        <p role="alert" className="inline-alert error mb-6">
+          {error}
+        </p>
+      )}
+      <section className="settings-section">
+        <div>
+          <h2>Profile</h2>
+          <p>Your name and contact details.</p>
+        </div>
+        <div>
+          <div className="flex items-center gap-4 mb-6">
+            <UserAvatar
+              className="w-14 h-14 rounded-full"
+              src={profile?.avatarUrl || user?.photoURL}
+              name={profile?.name || user?.displayName}
+            />
+            <label className="af-button af-button--secondary cursor-pointer">
+              <Camera size={14} />
+              {pending === 'avatar' ? 'Uploading...' : 'Change photo'}
+              <input
+                className="sr-only"
+                type="file"
+                accept={rasterTypes.join(',')}
+                disabled={Boolean(pending)}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  if (file)
+                    void act('avatar', async () => {
+                      validateMedia(file, true)
+                      const avatarUrl = await uploadAvatar(user!, file)
+                      await patchUserProfile(user!.uid, { avatarUrl })
+                      await refreshProfile()
+                      toast.success('Photo updated.')
+                    })
+                }}
+              />
+            </label>
+          </div>
+          <form
+            key={`${profile?.name}-${profile?.phone}`}
+            className="settings-form"
+            onSubmit={save}
+          >
+            <Field label="Full name">
+              <Input
+                name="name"
+                defaultValue={profile?.name || user?.displayName || ''}
+                minLength={2}
+                maxLength={120}
+                required
+                autoComplete="name"
+              />
+            </Field>
+            <Field label="Email address">
+              <Input value={user?.email || ''} readOnly />
+            </Field>
+            <Field label="Phone number">
+              <Input
+                name="phone"
+                defaultValue={profile?.phone || ''}
+                maxLength={40}
+                autoComplete="tel"
+                type="tel"
+              />
+            </Field>
+            <Button
+              type="submit"
+              className="justify-self-start"
+              loading={pending === 'profile'}
+              disabled={Boolean(pending)}
+            >
+              Save profile
+            </Button>
+          </form>
+        </div>
+      </section>
+      <section className="settings-section">
+        <div>
+          <h2>Appearance</h2>
+          <p>Choose a theme, or follow your device settings.</p>
+        </div>
+        <div className="theme-options">
+          {(
+            [
+              { value: 'light', label: 'Light', Icon: Sun },
+              { value: 'dark', label: 'Dark', Icon: Moon },
+              { value: 'system', label: 'System', Icon: Monitor },
+            ] as const
+          ).map(({ value, label, Icon }) => (
+            <button
+              className="theme-option"
+              key={value}
+              aria-pressed={theme === value}
+              disabled={Boolean(pending)}
+              onClick={() => void appearance(value)}
+            >
+              <Icon />
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="settings-section">
+        <div>
+          <h2>Account security</h2>
+          <p>Manage your sign-in method and email verification.</p>
+        </div>
+        <div className="settings-form">
+          <div className="inline-alert">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={16} />
+              {user?.emailVerified ? 'Email verified' : 'Email not verified'}
+            </div>
+          </div>
+          {!user?.emailVerified && (
+            <div className="page-actions">
+              <Button
+                variant="secondary"
+                disabled={Boolean(pending) || verificationSent}
+                onClick={() =>
+                  void act('verify', async () => {
+                    await sendEmailVerification(user!)
+                    setVerificationSent(true)
+                    toast.success('Verification email sent.')
+                  })
+                }
+              >
+                {verificationSent ? 'Email sent' : 'Send verification email'}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() =>
+                  void act('check', async () => {
+                    await reload(user!)
+                    await refreshProfile()
+                    toast.success(
+                      user!.emailVerified
+                        ? 'Email verified.'
+                        : 'Not verified yet. Check the link in your email.',
+                    )
+                  })
+                }
+              >
+                Check verification
+              </Button>
+            </div>
+          )}
+          {passwordAccount ? (
+            <form className="settings-form" onSubmit={updatePassword}>
+              <Field label="Current password">
+                <PasswordInput
+                  name="current"
+                  required
+                  autoComplete="current-password"
+                />
+              </Field>
+              <Field label="New password" hint="At least 10 characters.">
+                <PasswordInput
+                  name="password"
+                  required
+                  minLength={10}
+                  maxLength={128}
+                  autoComplete="new-password"
+                />
+              </Field>
+              <Field label="Confirm new password">
+                <PasswordInput
+                  name="confirm"
+                  required
+                  maxLength={128}
+                  autoComplete="new-password"
+                />
+              </Field>
+              <Button
+                type="submit"
+                variant="secondary"
+                loading={pending === 'password'}
+                disabled={Boolean(pending)}
+                className="justify-self-start"
+              >
+                Update password
+              </Button>
+            </form>
+          ) : (
+            <p>
+              You sign in with Google. Manage your password in your Google
+              account.
+            </p>
+          )}
+        </div>
+      </section>
+      {admin && (
+        <section className="settings-section">
+          <div>
+            <h2>Administration</h2>
+            <p>Your account has AuraFlow administrator access.</p>
+          </div>
+          <ButtonLink
+            to="/dashboard/admin"
+            variant="secondary"
+            className="justify-self-start self-start"
+          >
+            Open admin console
+          </ButtonLink>
+        </section>
+      )}
+      <section className="settings-section">
+        <div>
+          <h2>Your data</h2>
+          <p>
+            Download your profile and the projects currently loaded in your
+            workspace.
+          </p>
+        </div>
+        <div className="page-actions items-start">
+          <Button
+            variant="secondary"
+            disabled={projects.isPending || Boolean(projects.error)}
+            onClick={exportData}
+          >
+            <Download />
+            Export project data
+          </Button>
+          <Button variant="danger" onClick={() => setDeleteOpen(true)}>
+            Request account deletion
+          </Button>
+        </div>
+      </section>
+      <section className="settings-section">
+        <div>
+          <h2>Sign out</h2>
+          <p>End your session on this device.</p>
+        </div>
+        <Button
+          variant="secondary"
+          disabled={Boolean(pending)}
+          className="justify-self-start self-start"
+          onClick={() =>
+            void act('logout', async () => {
+              await logout()
+              navigate('/login', { replace: true })
+            })
+          }
+        >
+          <LogOut />
+          Sign out
+        </Button>
+      </section>
+      <Modal
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Request account deletion"
+        description="Our team will confirm the request with you and review active projects and retained business records before deleting your account."
+        className="max-w-lg"
+      >
+        <div className="settings-form">
+          <Field label="Type DELETE to confirm">
+            <Input
+              value={confirmation}
+              onChange={(event) => setConfirmation(event.target.value)}
+            />
+          </Field>
+          <Button
+            variant="danger"
+            loading={pending === 'delete'}
+            disabled={confirmation !== 'DELETE' || Boolean(pending)}
+            onClick={() =>
+              void act('delete', async () => {
+                const id = await startSupportConversation()
+                await sendSupportMessage(
+                  id,
+                  'I request deletion of my AuraFlow account and personal data. Please confirm the next steps and any records that must be retained.',
+                  'client',
+                )
+                setDeleteOpen(false)
+                toast.success(
+                  'Deletion request sent. Our team will contact you in Messages.',
+                )
+              })
+            }
+          >
+            Send deletion request
+          </Button>
         </div>
       </Modal>
     </div>
-  )
-}
-
-function ThemeButton({
-  active,
-  Icon,
-  label,
-  onClick,
-}: {
-  active: boolean
-  Icon: typeof MoonStar
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <Button type="button" variant={active ? 'primary' : 'secondary'} className="min-w-0 flex-col gap-1 px-2" onClick={onClick}>
-      <Icon className="h-4 w-4" />
-      {label}
-    </Button>
   )
 }

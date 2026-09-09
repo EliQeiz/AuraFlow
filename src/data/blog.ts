@@ -13,7 +13,8 @@ export const seedPosts: BlogPost[] = [
     id: 'post-1',
     slug: 'firebase-launch-checklist',
     title: 'A Firebase Launch Checklist for Client Apps',
-    excerpt: 'Rules, environments, indexes, storage, and monitoring are easier to fix before launch day.',
+    excerpt:
+      'Rules, environments, indexes, storage, and monitoring are easier to fix before launch day.',
     category: 'Firebase',
     coverImage: IMAGES.blog.firebase,
     author,
@@ -39,7 +40,8 @@ Keep environment variables, deploy notes, index changes, and support contacts in
     id: 'post-2',
     slug: 'designing-mobile-quote-flows',
     title: 'Designing Quote Flows People Finish on Mobile',
-    excerpt: 'A good wizard lowers ambiguity without hiding cost, urgency, or contact details.',
+    excerpt:
+      'A good wizard lowers ambiguity without hiding cost, urgency, or contact details.',
     category: 'Mobile',
     coverImage: IMAGES.blog.mobile,
     author,
@@ -58,7 +60,8 @@ A final review step catches errors and gives the client confidence about what wi
     id: 'post-3',
     slug: 'agency-sites-that-scan',
     title: 'Agency Sites That Scan Before They Dazzle',
-    excerpt: 'Motion matters more when hierarchy, contrast, and proof already make the page easy to read.',
+    excerpt:
+      'Motion matters more when hierarchy, contrast, and proof already make the page easy to read.',
     category: 'Design',
     coverImage: IMAGES.blog.design,
     author,
@@ -77,7 +80,8 @@ Use transitions to connect state changes and hierarchy. Decoration alone gets ol
     id: 'post-4',
     slug: 'ai-features-with-guardrails',
     title: 'AI Features Need Product Guardrails',
-    excerpt: 'The useful question is rarely which model. It is where a prediction or generation earns trust.',
+    excerpt:
+      'The useful question is rarely which model. It is where a prediction or generation earns trust.',
     category: 'AI & ML',
     coverImage: IMAGES.blog.ai,
     author,
@@ -96,7 +100,8 @@ Track usage, correction, latency, and exits so the feature can improve after lau
     id: 'post-5',
     slug: 'template-to-product',
     title: 'From Template to Product Without Starting Over',
-    excerpt: 'A template should buy time on structure while leaving room for real brand and data work.',
+    excerpt:
+      'A template should buy time on structure while leaving room for real brand and data work.',
     category: 'Business',
     coverImage: IMAGES.templates.tech,
     author,
@@ -111,20 +116,21 @@ Voice, offers, forms, data, motion, and business rules create the product shape 
   {
     id: 'post-6',
     slug: 'dashboard-case-study',
-    title: 'Case Study: One Operations Dashboard, Fewer Meetings',
-    excerpt: 'Filters, statuses, and a focused activity feed replaced slow status chasing.',
+    title: 'Design Study: A Clearer Operations Dashboard',
+    excerpt:
+      'An example of how filters, statuses, and a focused activity feed could simplify project reporting.',
     category: 'Case Studies',
     coverImage: IMAGES.services.dataAnalytics,
     author,
     publishedAt: '2025-12-12',
     readTime: '9 min read',
-    content: `## The problem
-Every team member had a different view of delivery status, and weekly reporting arrived late.
+    content: `## An example scenario
+This is a design study, not a report about a delivered client project. Consider a team whose delivery updates are scattered across messages and spreadsheets.
 
-## The build
-AuraFlow shaped a dashboard around status, owner, deadlines, and exception views.
+## A proposed approach
+A shared dashboard could organize the work by status, owner, deadline, and exceptions that need attention.
 
-## The outcome
-Managers could answer priority questions without collecting manual updates first.`,
+## What to test
+Measure whether the team can find overdue work and ownership more quickly. Validate the workflow with real users before claiming an improvement.`,
   },
 ]

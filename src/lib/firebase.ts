@@ -1,8 +1,16 @@
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics'
-import { getAuth, type Auth } from 'firebase/auth'
-import { getFirestore, type Firestore } from 'firebase/firestore'
-import { getStorage, type FirebaseStorage } from 'firebase/storage'
+import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth'
+import {
+  connectFirestoreEmulator,
+  getFirestore,
+  type Firestore,
+} from 'firebase/firestore'
+import {
+  connectStorageEmulator,
+  getStorage,
+  type FirebaseStorage,
+} from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,23 +22,49 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
-const requiredFirebaseKeys = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'] as const
+const requiredFirebaseKeys = [
+  'apiKey',
+  'authDomain',
+  'projectId',
+  'storageBucket',
+  'messagingSenderId',
+  'appId',
+] as const
 
-export const firebaseConfigured = requiredFirebaseKeys.every((key) => Boolean(firebaseConfig[key]))
+export const firebaseConfigured = requiredFirebaseKeys.every((key) =>
+  Boolean(firebaseConfig[key]?.trim()),
+)
 export const requireFirebase = () => {
   if (!firebaseConfigured) {
     throw new Error('Firebase environment variables are not configured yet.')
   }
 }
 
-const app = firebaseConfigured ? (getApps().length ? getApp() : initializeApp(firebaseConfig)) : null
+const app = firebaseConfigured
+  ? getApps().length
+    ? getApp()
+    : initializeApp(firebaseConfig)
+  : null
 
 export const auth = app ? getAuth(app) : null
 export const db = app ? getFirestore(app) : null
 export const storage = app ? getStorage(app) : null
+if (
+  import.meta.env.DEV &&
+  import.meta.env.VITE_USE_EMULATORS === 'true' &&
+  auth &&
+  db &&
+  storage
+) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9799', { disableWarnings: true })
+  connectFirestoreEmulator(db, '127.0.0.1', 8780)
+  connectStorageEmulator(storage, '127.0.0.1', 9798)
+}
 export const analyticsReady: Promise<Analytics | null> =
   app && firebaseConfig.measurementId
-    ? isSupported().then((supported) => (supported ? getAnalytics(app) : null))
+    ? isSupported()
+        .then((supported) => (supported ? getAnalytics(app) : null))
+        .catch(() => null)
     : Promise.resolve(null)
 
 export function getFirebaseAuth(): Auth {
