@@ -3,28 +3,33 @@ import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { chromium } from '@playwright/test'
 
-const server = spawn(
-  process.execPath,
-  [
-    'node_modules/vite/bin/vite.js',
-    'preview',
-    '--host',
-    '127.0.0.1',
-    '--port',
-    '5191',
-    '--strictPort',
-  ],
-  { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true },
-)
+const baseUrl = (
+  process.env.PRODUCTION_BASE_URL || 'http://127.0.0.1:5191'
+).replace(/\/$/, '')
+const server = process.env.PRODUCTION_BASE_URL
+  ? null
+  : spawn(
+      process.execPath,
+      [
+        'node_modules/vite/bin/vite.js',
+        'preview',
+        '--host',
+        '127.0.0.1',
+        '--port',
+        '5191',
+        '--strictPort',
+      ],
+      { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true },
+    )
 let browser
 try {
-  for (let attempt = 0; ; attempt++) {
+  for (let attempt = 0; server; attempt++) {
     if (server.exitCode !== null)
       throw new Error(
         'The production preview server could not start on port 5191.',
       )
     try {
-      await fetch('http://127.0.0.1:5191')
+      await fetch(baseUrl)
       break
     } catch {
       if (attempt >= 100)
@@ -49,7 +54,7 @@ try {
     '/pricing',
     '/about',
   ]) {
-    await page.goto(`http://127.0.0.1:5191${route}`)
+    await page.goto(`${baseUrl}${route}`)
     await page.locator('h1').first().waitFor()
     assert.ok(
       await page.evaluate(
@@ -58,7 +63,7 @@ try {
       `Overflow on ${route}`,
     )
   }
-  await page.goto('http://127.0.0.1:5191/templates')
+  await page.goto(`${baseUrl}/templates`)
   await page
     .getByRole('tab', { name: 'Website templates', exact: true })
     .click()
@@ -75,15 +80,31 @@ try {
       exact: true,
     })
     .click()
-  await page.waitForURL('http://127.0.0.1:5191/login')
+  await page.waitForURL(`${baseUrl}/login`)
   await page.getByLabel('Email address', { exact: true }).waitFor()
+  for (const route of ['/dashboard', '/dashboard/admin', '/dashboard/studio']) {
+    await page.goto(`${baseUrl}${route}`)
+    await page.waitForURL(`${baseUrl}/login`)
+    await page.getByLabel('Email address', { exact: true }).waitFor()
+  }
+  await page.setViewportSize({ width: 390, height: 844 })
+  for (const route of ['/', '/login', '/register', '/templates']) {
+    await page.goto(`${baseUrl}${route}`)
+    await page.locator('h1').first().waitFor()
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+      `Mobile overflow on ${route}`,
+    )
+  }
   assert.deepEqual(errors, [])
   console.log(
     'Production bundle smoke passed: public routes, no runtime errors or horizontal overflow, and template preview handoff to sign-in.',
   )
 } finally {
   await browser?.close()
-  if (server.exitCode === null) {
+  if (server && server.exitCode === null) {
     const stopped = once(server, 'exit')
     server.kill()
     await stopped

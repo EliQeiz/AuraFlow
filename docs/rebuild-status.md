@@ -11,7 +11,7 @@ The template-motion, portal-UI, and connected delivery-workflow upgrade is imple
 - Milestones, version approvals, tracked change requests, an activity inbox, and restorable studio checkpoints connect clients to the administration workspace.
 - Administrators have priority triage, atomic bulk status updates, private notes, saved replies, and filtered CSV reports. Admin links can open projects outside the recent 100-record list.
 - Latest verification: 10 unit/config tests, 9 emulator security groups, and 12 browser scenarios passed. TypeScript/build, lint, production-bundle route/preview smoke, and production dependency audit passed (zero reported production vulnerabilities). Two dead image references were removed; all remaining 173 unique gallery URLs returned successful HTTP responses on 2026-09-09.
-- No Git push or production deployment. The new Firestore rules and activity index must be deployed together with the new application after staging verification. Existing production providers and owner claims were not changed.
+- Released to Vercel on 2026-09-09 at https://aura-flow-red.vercel.app. Rebuild commit: `7e55a6a`. Firestore rules, Storage rules, and indexes deployed to `auraflow-eece6`. See [release-2026-09-09.md](release-2026-09-09.md) for verification and the unresolved Storage billing/CORS gate.
 
 ## Completed implementation
 
@@ -43,7 +43,7 @@ The template-motion, portal-UI, and connected delivery-workflow upgrade is imple
 
 This is a real Firebase-backed client design and delivery workspace. The studio previews contain explicitly labelled sample data. They are not operational school-management, commerce, or hospitality deployments.
 
-Do not describe the following as implemented or verified: native mobile/desktop packages, automatic tenant provisioning, domain provisioning, payment settlement, transactional notifications, production Google OAuth, or full operational industry suites. Each needs its own implementation and release checks. No production data migration, Git push, or deployment has been performed for this rebuild.
+Do not describe the following as implemented or verified: native mobile/desktop packages, automatic tenant provisioning, domain provisioning, payment settlement, transactional notifications, an interactive production Google OAuth session, or full operational industry suites. Each needs its own implementation and release checks. The rebuild has been pushed and deployed; no production data migration was performed.
 
 Existing customer records and unrelated reference systems must remain intact. No global Git or account identity changes are required.
 
@@ -51,7 +51,7 @@ Existing customer records and unrelated reference systems must remain intact. No
 
 The workspace sidebar displays **Admin console** only when the signed-in Firebase account has the server-issued `admin: true` custom claim. Its route is `/dashboard/admin`; hiding the navigation is not the authorization control. Firestore and Storage also enforce this claim.
 
-The production owner is `elishaafari0@gmail.com`. Claim assignment must be done with trusted credentials scoped to `auraflow-eece6`, using `scripts/grant-admin.mjs`, then signing out and back in. Never grant administration from a browser email comparison or place service-account credentials in `VITE_*` variables. Production claim assignment was not performed in this checkpoint.
+The production owner is `elishaafari0@gmail.com`. Its server-side `admin: true` custom claim was assigned and verified on 2026-09-09 using the owner's authenticated Firebase CLI credentials scoped to `auraflow-eece6`, preserving existing claims. Sign out and back in to refresh it. Future assignments can use `scripts/grant-admin.mjs` with trusted application credentials. Never grant administration from a browser email comparison or place service-account credentials in `VITE_*` variables.
 
 ## Next implementation and release gates
 
