@@ -6,6 +6,7 @@ import {
   where,
 } from 'firebase/firestore'
 import { useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
@@ -88,6 +89,7 @@ export default function AdminConsole() {
             Manage client work, review briefs, and keep conversations moving.
           </p>
         </div>
+        <Link className="af-button af-button--secondary" to="/dashboard/businesses">Manage hosted businesses</Link>
       </div>
       <div className="owner-access-strip">
         <strong>Owner workspace</strong>

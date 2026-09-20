@@ -23,6 +23,46 @@ import { getBytes, ref, uploadBytes } from 'firebase/storage'
 import { defaultDraft, draftSchema } from '../src/domain/studio'
 import { defaultVisual, newLayer } from '../src/domain/composition'
 
+test('business runtime records and WhatsApp secrets cannot be accessed through client SDKs', async () => {
+  const alice = env.authenticatedContext('business-alice').firestore()
+  const admin = env
+    .authenticatedContext('business-admin', { admin: true })
+    .firestore()
+  const anonymous = env.unauthenticatedContext().firestore()
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'businesses/test-tenant'), {
+      ownerId: 'business-alice',
+      status: 'active',
+    })
+    await setDoc(
+      doc(
+        context.firestore(),
+        'businesses/test-tenant/students/private-student',
+      ),
+      { name: 'Private record' },
+    )
+  })
+  for (const client of [alice, admin, anonymous]) {
+    await assertFails(getDoc(doc(client, 'businesses/test-tenant')))
+    await assertFails(
+      getDoc(doc(client, 'businesses/test-tenant/students/private-student')),
+    )
+    await assertFails(
+      setDoc(doc(client, 'businesses/test-tenant/orders/forged'), {
+        totalMinor: 1,
+      }),
+    )
+    await assertFails(
+      setDoc(doc(client, 'whatsappReceipts/forged'), {
+        businessId: 'test-tenant',
+      }),
+    )
+    await assertFails(
+      setDoc(doc(client, 'businessQuotas/business-alice'), { count: 0 }),
+    )
+  }
+})
+
 test('full canvas saves are validated and only claimed admins can list clients', async () => {
   const alice = env.authenticatedContext('canvas-client').firestore()
   const bob = env.authenticatedContext('canvas-other').firestore()

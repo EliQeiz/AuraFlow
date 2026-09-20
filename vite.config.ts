@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: { proxy: { '/api/business': 'http://127.0.0.1:5192', '/api/whatsapp': 'http://127.0.0.1:5192' } },
   build: {
     rolldownOptions: {
       output: {

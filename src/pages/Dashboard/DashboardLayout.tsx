@@ -4,6 +4,7 @@ import {
   ExternalLink,
   FolderKanban,
   Home,
+  Store,
   LayoutTemplate,
   LogOut,
   Menu,
@@ -27,6 +28,7 @@ const navigation = [
   { to: '/dashboard', label: 'Overview', Icon: Home, end: true },
   { to: '/dashboard/requests', label: 'Projects', Icon: FolderKanban },
   { to: '/dashboard/studio', label: 'Design studio', Icon: PanelsTopLeft },
+  { to: '/dashboard/businesses', label: 'Business systems', Icon: Store },
   {
     to: '/dashboard/templates',
     label: 'Template library',

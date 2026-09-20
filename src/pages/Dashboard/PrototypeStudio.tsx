@@ -23,6 +23,14 @@ import {
   BarChart3,
   Gauge,
   Grid2X2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignStartHorizontal,
+  AlignCenterHorizontal,
+  AlignEndHorizontal,
+  AlignHorizontalDistributeCenter,
+  AlignVerticalDistributeCenter,
 } from 'lucide-react'
 import { collection, doc, getDoc, orderBy, query } from 'firebase/firestore'
 import { useQuery } from '@tanstack/react-query'
@@ -65,6 +73,11 @@ import { rasterTypes, uploadPrivateMedia, validateMedia } from '../../lib/media'
 import { useLiveRows } from '../../hooks/useFirebase'
 import { usePrivateMedia } from '../../hooks/usePrivateMedia'
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
+import {
+  alignLayers,
+  duplicatePage,
+  type Alignment,
+} from '../../domain/studioEditing'
 
 export default function PrototypeStudio() {
   const [params] = useSearchParams()
@@ -146,10 +159,14 @@ function StudioEditor({
     'brand' | 'workflows' | 'content' | 'layer'
   >('brand')
   const [selectedLayer, setSelectedLayer] = useState('')
+  const [selection, setSelection] = useState<string[]>([])
   const [zoom, setZoom] = useState(1)
   const [grid, setGrid] = useState(true)
   const [preview, setPreview] = useState(false)
   const layer = draft.layers?.find((item) => item.id === selectedLayer)
+  const selectedIds = selection.filter((id) =>
+    draft.layers?.some((l) => l.id === id && l.page === page),
+  )
   const dirty = JSON.stringify(draft) !== baseline
   useUnsavedChanges(dirty)
   const suite = getSuiteBlueprint(draft.suiteSlug) ?? initialSuite
@@ -170,11 +187,22 @@ function StudioEditor({
         color: layer.color === before.ink ? after.ink : layer.color,
         fill: layer.fill === before.surface ? after.surface : layer.fill,
         radius: layer.radius === before.radius ? after.radius : layer.radius,
-        ...(layer.kind === 'image' ? {
-          brightness: layer.brightness === before.brightness ? after.brightness : layer.brightness,
-          saturation: layer.saturation === before.saturation ? after.saturation : layer.saturation,
-          opacity: layer.opacity === before.imageOpacity ? after.imageOpacity : layer.opacity,
-        } : {}),
+        ...(layer.kind === 'image'
+          ? {
+              brightness:
+                layer.brightness === before.brightness
+                  ? after.brightness
+                  : layer.brightness,
+              saturation:
+                layer.saturation === before.saturation
+                  ? after.saturation
+                  : layer.saturation,
+              opacity:
+                layer.opacity === before.imageOpacity
+                  ? after.imageOpacity
+                  : layer.opacity,
+            }
+          : {}),
       }))
     }
     if (
@@ -192,16 +220,34 @@ function StudioEditor({
           : {}),
       }))
     }
+    if (JSON.stringify({ ...draft, ...change }) === JSON.stringify(draft))
+      return
     setPast((items) => [...items.slice(-39), draft])
     setFuture([])
     setDraft((current) => ({ ...current, ...change }))
   }
-  function selectLayer(id: string) {
+  function selectLayer(id: string, additive = false) {
     if (id.startsWith('page:')) {
       setPage(id.slice(5))
       return
     }
     setSelectedLayer(id)
+    setSelection((current) =>
+      additive
+        ? current.includes(id)
+          ? current.filter((value) => value !== id)
+          : [
+              ...current.filter(
+                (value) =>
+                  draft.layers?.find((l) => l.id === value)?.page ===
+                  draft.layers?.find((l) => l.id === id)?.page,
+              ),
+              id,
+            ]
+        : id
+          ? [id]
+          : [],
+    )
     if (id) {
       const target = draft.layers?.find((item) => item.id === id)
       if (target) setPage(target.page)
@@ -220,6 +266,12 @@ function StudioEditor({
     setView('design')
   }
   function preset(kind: 'landing' | 'dashboard' | 'industrial') {
+    const otherPages = draft.layers?.filter((l) => l.page !== page) || []
+    const additions = starterLayers(page, kind, draft.primaryColor)
+    if (otherPages.length + additions.length > 12) {
+      toast.error('This layout exceeds the current 12-layer design limit.')
+      return
+    }
     if (
       draft.layers?.length &&
       !window.confirm(
@@ -227,8 +279,37 @@ function StudioEditor({
       )
     )
       return
-    update({ layers: starterLayers(page, kind, draft.primaryColor) })
-    setSelectedLayer('')
+    update({ layers: [...otherPages, ...additions] })
+    selectLayer('')
+  }
+  function duplicateSelection() {
+    const selected =
+      draft.layers?.filter((l) => selectedIds.includes(l.id)) || []
+    if (!selected.length) return
+    if ((draft.layers?.length || 0) + selected.length > 12) {
+      toast.error('This copy exceeds the current 12-layer design limit.')
+      return
+    }
+    const copies = selected.map((l) => ({
+      ...l,
+      id: crypto.randomUUID(),
+      x: Math.min(1200 - l.width, l.x + 16),
+      y: Math.min(900 - l.height, l.y + 16),
+      locked: false,
+    }))
+    update({ layers: [...(draft.layers || []), ...copies] })
+    setSelection(copies.map((l) => l.id))
+    setSelectedLayer(copies[0].id)
+  }
+  function copyPage() {
+    try {
+      const copy = duplicatePage(draft, page)
+      update(copy.draft)
+      setPage(copy.name)
+      selectLayer('')
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    }
   }
   async function exportDesign(format: 'json' | 'png') {
     setPending(true)
@@ -416,7 +497,55 @@ function StudioEditor({
     }
   }
   return (
-    <>
+    <div
+      onKeyDown={(event) => {
+        const command = event.ctrlKey || event.metaKey
+        if (command && event.key.toLowerCase() === 's') {
+          event.preventDefault()
+          if (!pending) void save()
+          return
+        }
+        if (
+          (event.target as HTMLElement).closest(
+            'input,textarea,select,[contenteditable="true"]',
+          ) ||
+          pending ||
+          preview
+        )
+          return
+        if (command && event.key.toLowerCase() === 'z') {
+          event.preventDefault()
+          if (event.shiftKey) redo()
+          else undo()
+        }
+        if (command && event.key.toLowerCase() === 'y') {
+          event.preventDefault()
+          redo()
+        }
+        if (command && event.key.toLowerCase() === 'd') {
+          event.preventDefault()
+          duplicateSelection()
+        }
+        if (command && event.key.toLowerCase() === 'a') {
+          event.preventDefault()
+          setSelection(
+            draft.layers
+              ?.filter((l) => l.page === page && !l.hidden && !l.locked)
+              .map((l) => l.id) || [],
+          )
+        }
+        if (event.key === 'Escape') selectLayer('')
+        if (['Delete', 'Backspace'].includes(event.key) && selectedIds.length) {
+          event.preventDefault()
+          update({
+            layers: draft.layers?.filter(
+              (l) => !selectedIds.includes(l.id) || l.locked,
+            ),
+          })
+          selectLayer('')
+        }
+      }}
+    >
       <div className="workspace-page-header">
         <div>
           <h1>Design studio</h1>
@@ -625,6 +754,7 @@ function StudioEditor({
           <LayerList
             layers={draft.layers || []}
             selected={selectedLayer}
+            selectedIds={selectedIds}
             onSelect={selectLayer}
             onChange={(layers) => update({ layers })}
           />
@@ -687,6 +817,14 @@ function StudioEditor({
           {view === 'design' ? (
             <>
               <div className="design-tools">
+                <button
+                  className="icon-button"
+                  title="Duplicate current page"
+                  aria-label="Duplicate current page"
+                  onClick={copyPage}
+                >
+                  <Copy />
+                </button>
                 {(
                   [
                     { kind: 'text', Icon: Type },
@@ -762,6 +900,53 @@ function StudioEditor({
                   <Download />
                 </button>
               </div>
+              {selectedIds.length > 0 && (
+                <div className="design-selection-toolbar">
+                  <span>{selectedIds.length} selected</span>
+                  {(
+                    [
+                      ['left', AlignLeft],
+                      ['center', AlignCenter],
+                      ['right', AlignRight],
+                      ['top', AlignStartHorizontal],
+                      ['middle', AlignCenterHorizontal],
+                      ['bottom', AlignEndHorizontal],
+                      ['horizontal', AlignHorizontalDistributeCenter],
+                      ['vertical', AlignVerticalDistributeCenter],
+                    ] as const
+                  ).map(([alignment, Icon]) => (
+                    <button
+                      key={alignment}
+                      className="icon-button"
+                      title={`Align ${alignment}`}
+                      aria-label={`Align ${alignment}`}
+                      disabled={
+                        selectedIds.length <
+                        (['horizontal', 'vertical'].includes(alignment) ? 3 : 2)
+                      }
+                      onClick={() =>
+                        update({
+                          layers: alignLayers(
+                            draft.layers || [],
+                            selectedIds,
+                            alignment as Alignment,
+                          ),
+                        })
+                      }
+                    >
+                      <Icon />
+                    </button>
+                  ))}
+                  <button
+                    className="icon-button"
+                    title="Duplicate selection"
+                    aria-label="Duplicate selection"
+                    onClick={duplicateSelection}
+                  >
+                    <Copy />
+                  </button>
+                </div>
+              )}
               {!draft.layers?.length && (
                 <div className="design-presets">
                   <strong>Start with a layout</strong>
@@ -778,6 +963,7 @@ function StudioEditor({
                 draft={draft}
                 page={page}
                 selected={selectedLayer}
+                selectedIds={selectedIds}
                 onSelect={selectLayer}
                 onChange={(layers) => update({ layers })}
                 zoom={zoom}
@@ -1080,6 +1266,6 @@ function StudioEditor({
           />
         )}
       </Modal>
-    </>
+    </div>
   )
 }

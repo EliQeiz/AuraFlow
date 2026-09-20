@@ -30,12 +30,13 @@ export function StatePanel({
         {loading
           ? 'Loading your workspace'
           : error
-            ? 'Unable to load this data'
+            ? title || 'Unable to load this data'
             : title}
       </h3>
       <p>
         {error
-          ? 'Check your connection and try again. Your saved data has not changed.'
+          ? description ||
+            'Check your connection and try again. Your saved data has not changed.'
           : description}
       </p>
       {error && retry ? (

@@ -33,6 +33,8 @@ const PrototypeStudio = lazy(() => import('./pages/Dashboard/PrototypeStudio'))
 const AdminConsole = lazy(() => import('./pages/Dashboard/AdminConsole'))
 const Settings = lazy(() => import('./pages/Dashboard/Settings'))
 const NotFound = lazy(() => import('./pages/NotFound'))
+const BusinessSystems = lazy(() => import('./pages/Dashboard/BusinessSystems'))
+const BusinessSite = lazy(() => import('./pages/BusinessSite'))
 
 function PublicLayout() {
   return (
@@ -82,6 +84,7 @@ export default function App() {
           <Route path="/terms" element={<Legal kind="Terms" />} />
         </Route>
         <Route path="/login" element={<Login />} />
+        <Route path="/b/:id" element={<BusinessSite />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
@@ -129,6 +132,7 @@ export default function App() {
           <Route path="messages" element={<Messages />} />
           <Route path="activity" element={<Activity />} />
           <Route path="studio" element={<PrototypeStudio />} />
+          <Route path="businesses" element={<BusinessSystems />} />
           <Route path="templates" element={<MyTemplates />} />
           <Route path="admin" element={<AdminOnly />} />
           <Route path="settings" element={<Settings />} />

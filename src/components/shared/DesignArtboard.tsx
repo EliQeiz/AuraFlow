@@ -15,11 +15,13 @@ import {
 import type { StudioDraft } from '../../domain/studio'
 import { getSuiteBlueprint } from '../../data/suiteBlueprints'
 import { IMAGES } from '../../lib/images'
+import { moveLayers } from '../../domain/studioEditing'
 
 export function DesignArtboard({
   draft,
   page,
   selected,
+  selectedIds = [selected],
   onSelect,
   onChange,
   zoom = 1,
@@ -29,7 +31,8 @@ export function DesignArtboard({
   draft: StudioDraft
   page: string
   selected: string
-  onSelect: (id: string) => void
+  selectedIds?: string[]
+  onSelect: (id: string, additive?: boolean) => void
   onChange: (layers: DesignLayer[]) => void
   zoom?: number
   grid?: boolean
@@ -37,12 +40,16 @@ export function DesignArtboard({
 }) {
   const host = useRef<HTMLDivElement>(null)
   const [fit, setFit] = useState(0.5)
-  const [moving, setMoving] = useState<DesignLayer | null>(null)
+  const [moving, setMoving] = useState<DesignLayer[] | null>(null)
+  const [editing, setEditing] = useState<{ id: string; text: string } | null>(
+    null,
+  )
   const drag = useRef<{
     layer: DesignLayer
     x: number
     y: number
     resize: boolean
+    ids: string[]
   } | null>(null)
   useEffect(() => {
     const observer = new ResizeObserver((entries) =>
@@ -59,7 +66,11 @@ export function DesignArtboard({
         onSelect(`page:${layer.targetPage}`)
       return
     }
-    onSelect(layer.id)
+    if (event.shiftKey) {
+      onSelect(layer.id, true)
+      return
+    }
+    if (!selectedIds.includes(layer.id)) onSelect(layer.id)
     if (layer.locked) return
     event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -68,6 +79,7 @@ export function DesignArtboard({
       x: event.clientX,
       y: event.clientY,
       resize: (event.target as HTMLElement).dataset.resize === 'true',
+      ids: selectedIds.includes(layer.id) ? selectedIds : [layer.id],
     }
   }
   function position(event: PointerEvent<HTMLDivElement>) {
@@ -76,7 +88,9 @@ export function DesignArtboard({
     const snap = (v: number) => Math.round(v / (grid ? 8 : 1)) * (grid ? 8 : 1)
     const dx = (event.clientX - active.x) / scale,
       dy = (event.clientY - active.y) / scale
-    return clampLayer(
+    if (!active.resize)
+      return moveLayers(layers, active.ids, snap(dx), snap(dy))
+    const updated = clampLayer(
       active.resize
         ? {
             ...active.layer,
@@ -95,6 +109,7 @@ export function DesignArtboard({
             y: snap(active.layer.y + dy),
           },
     )
+    return layers.map((l) => (l.id === updated.id ? updated : l))
   }
   return (
     <div className="design-artboard-scroll" ref={host}>
@@ -124,7 +139,8 @@ export function DesignArtboard({
           {layers
             .filter((layer) => layer.page === page && !layer.hidden)
             .map((original) => {
-              const layer = moving?.id === original.id ? moving : original
+              const layer =
+                moving?.find((l) => l.id === original.id) || original
               const style: CSSProperties = {
                 position: 'absolute',
                 left: layer.x,
@@ -152,7 +168,7 @@ export function DesignArtboard({
                   key={layer.id}
                   className="design-layer"
                   style={style}
-                  data-selected={!preview && selected === layer.id}
+                  data-selected={!preview && selectedIds.includes(layer.id)}
                   data-locked={layer.locked}
                   role={
                     !preview || layer.kind === 'button' ? 'button' : undefined
@@ -166,6 +182,14 @@ export function DesignArtboard({
                       : `Select ${layer.kind}: ${layer.text || layer.id.slice(0, 4)}`
                   }
                   onPointerDown={(e) => start(e, layer)}
+                  onDoubleClick={() => {
+                    if (
+                      !preview &&
+                      !layer.locked &&
+                      ['text', 'button'].includes(layer.kind)
+                    )
+                      setEditing({ id: layer.id, text: layer.text })
+                  }}
                   onPointerMove={(e) => {
                     const next = position(e)
                     if (next) setMoving(next)
@@ -174,12 +198,8 @@ export function DesignArtboard({
                     const next = position(e)
                     drag.current = null
                     setMoving(null)
-                    if (next)
-                      onChange(
-                        layers.map((item) =>
-                          item.id === next.id ? next : item,
-                        ),
-                      )
+                    if (next && JSON.stringify(next) !== JSON.stringify(layers))
+                      onChange(next)
                   }}
                   onPointerCancel={() => {
                     drag.current = null
@@ -209,27 +229,63 @@ export function DesignArtboard({
                       event.preventDefault()
                       const [dx, dy] = directions[event.key]
                       onChange(
-                        layers.map((item) =>
-                          item.id === layer.id
-                            ? clampLayer({
-                                ...item,
-                                x: item.x + dx,
-                                y: item.y + dy,
-                              })
-                            : item,
+                        moveLayers(
+                          layers,
+                          selectedIds.includes(layer.id)
+                            ? selectedIds
+                            : [layer.id],
+                          dx,
+                          dy,
                         ),
                       )
                     }
                   }}
                 >
-                  <LayerContent layer={layer} draft={draft} />
-                  {!preview && selected === layer.id && !layer.locked && (
-                    <span
-                      className="design-resize"
-                      data-resize="true"
-                      data-export-ignore="true"
+                  {editing?.id === layer.id ? (
+                    <textarea
+                      autoFocus
+                      aria-label="Edit canvas text"
+                      className="design-inline-text"
+                      value={editing.text}
+                      maxLength={500}
+                      onChange={(e) =>
+                        setEditing({ id: layer.id, text: e.target.value })
+                      }
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onDoubleClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        e.stopPropagation()
+                        if (e.key === 'Escape') {
+                          e.preventDefault()
+                          setEditing(null)
+                        }
+                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey))
+                          e.currentTarget.blur()
+                      }}
+                      onBlur={() => {
+                        onChange(
+                          layers.map((l) =>
+                            l.id === layer.id
+                              ? { ...l, text: editing.text }
+                              : l,
+                          ),
+                        )
+                        setEditing(null)
+                      }}
                     />
+                  ) : (
+                    <LayerContent layer={layer} draft={draft} />
                   )}
+                  {!preview &&
+                    selectedIds.length === 1 &&
+                    selected === layer.id &&
+                    !layer.locked && (
+                      <span
+                        className="design-resize"
+                        data-resize="true"
+                        data-export-ignore="true"
+                      />
+                    )}
                 </div>
               )
             })}

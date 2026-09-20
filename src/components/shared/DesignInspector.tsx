@@ -358,12 +358,14 @@ export function LayerInspector({
 export function LayerList({
   layers,
   selected,
+  selectedIds = [selected],
   onSelect,
   onChange,
 }: {
   layers: DesignLayer[]
   selected: string
-  onSelect: (id: string) => void
+  selectedIds?: string[]
+  onSelect: (id: string, additive?: boolean) => void
   onChange: (layers: DesignLayer[]) => void
 }) {
   const patch = (id: string, part: Partial<DesignLayer>) =>
@@ -371,10 +373,10 @@ export function LayerList({
   return (
     <div className="design-layers">
       {layers.map((layer, i) => (
-        <div key={layer.id} data-selected={selected === layer.id}>
+        <div key={layer.id} data-selected={selectedIds.includes(layer.id)}>
           <button
             className="design-layer-select"
-            onClick={() => onSelect(layer.id)}
+            onClick={(e) => onSelect(layer.id, e.shiftKey)}
             title={`${layer.page}: ${layer.text}`}
           >
             {layer.kind}{' '}

@@ -12,6 +12,7 @@ import './styles/workflows.css'
 import './styles/public.css'
 import './styles/experience.css'
 import './styles/design-editor.css'
+import './styles/business.css'
 import App from './App.tsx'
 
 const queryClient = new QueryClient({
