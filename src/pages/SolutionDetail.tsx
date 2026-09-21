@@ -49,7 +49,7 @@ export default function SolutionDetail() {
         <h1>{suite.title}</h1>
         <p>{suite.summary}</p>
         <div className="page-actions mt-6">
-          <ButtonLink to={`/dashboard/studio?suite=${suite.slug}`}>
+          <ButtonLink to={`/studio?suite=${suite.slug}`}>
             Open in design studio
             <ArrowRight />
           </ButtonLink>

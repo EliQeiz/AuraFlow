@@ -351,7 +351,7 @@ function BusinessEditor({
         <div className="page-actions">
           <Link
             className="af-button af-button--secondary"
-            to={`/dashboard/studio?suite=${school ? 'school-management-system' : 'restaurant-ordering-booking'}`}
+            to={`/studio?suite=${school ? 'school-management-system' : 'restaurant-ordering-booking'}`}
           >
             Design studio
             <ArrowUpRight />

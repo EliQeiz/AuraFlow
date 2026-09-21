@@ -174,7 +174,7 @@ export function TemplateLibrary({
                 <ButtonLink
                   to={
                     isSuite
-                      ? `/dashboard/studio?suite=${item.slug}`
+                      ? `/studio?suite=${item.slug}`
                       : `/dashboard/requests/new?template=${item.slug}`
                   }
                 >

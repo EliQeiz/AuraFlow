@@ -38,6 +38,7 @@ import {
 } from '../../components/shared/DesignInspector'
 import { StudioHistory } from '../../components/shared/StudioHistory'
 import { SuiteCanvas } from '../../components/shared/SuiteCanvas'
+import { VoiceNoteRecorder } from '../../components/shared/VoiceNoteRecorder'
 import { useAuth } from '../../context/AuthContext'
 import {
   defaultVisual,
@@ -228,6 +229,50 @@ export default function DesignStudio() {
       setUploadProgress(0)
     }
   }
+  async function attachBriefVoiceNote(payload: {
+    blob: Blob
+    durationMs: number
+    transcript: string
+    language: string
+  }) {
+    if (!user || uploading) return
+    setUploading(true)
+    setUploadProgress(0)
+    try {
+      const extension = payload.blob.type.includes('mp4')
+        ? 'm4a'
+        : payload.blob.type.includes('ogg')
+          ? 'ogg'
+          : 'webm'
+      const name = `brief-voice-note-${Date.now()}.${extension}`
+      const path = `users/${user.uid}/studio/${draftId}/${name}`
+      await uploadPrivateMedia(
+        path,
+        new File([payload.blob], name, { type: payload.blob.type || 'audio/webm' }),
+        setUploadProgress,
+      )
+      const asset: StudioAsset = {
+        name: `Voice brief (${payload.language})`,
+        path,
+        type: payload.blob.type || 'audio/webm',
+        url: URL.createObjectURL(payload.blob),
+      }
+      setAssets((current) => [...current, asset].slice(0, 20))
+      update({
+        mediaPaths: [...draft.mediaPaths, path].slice(0, 20),
+        notes: [draft.notes, payload.transcript ? `Voice brief transcript (${payload.language}): ${payload.transcript}` : 'Voice brief attached for team transcription and translation.']
+          .filter(Boolean)
+          .join('\n\n')
+          .slice(0, 6000),
+      })
+      toast.success('Voice brief attached to this studio draft.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not attach the voice brief.')
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
+  }
   function placeAsset(asset: StudioAsset) {
     const index = draft.mediaPaths.indexOf(asset.path)
     const layer = newLayer('image', page, draft.primaryColor)
@@ -364,7 +409,7 @@ export default function DesignStudio() {
           <div className="studio-lab-inspector">
             {inspectorTab === 'design' && (selected ? <LayerInspector layer={selected} draft={draft} onChange={(next) => updateLayers((draft.layers || []).map((layer) => layer.id === next.id ? next : layer))} /> : <VisualInspector draft={draft} update={update} />)}
             {inspectorTab === 'prototype' && <div className="studio-inspector-content"><h3>Interaction flow</h3><p className="studio-lab-help">Create a clickable flow between your pages and validate it in Preview.</p><Field label="Active page"><Select value={page} onChange={(event) => setPage(event.target.value)}>{pages.map((item) => <option key={item}>{item}</option>)}</Select></Field><div className="studio-flow-list">{(draft.layers || []).filter((layer) => layer.kind === 'button').map((button) => <button key={button.id} aria-pressed={selectedLayer === button.id} onClick={() => { setSelectedLayer(button.id); setInspectorTab('design') }}><span>{button.text || 'Button'}</span><ChevronDown size={14} /><small>{button.targetPage || 'No destination'}</small></button>)}</div></div>}
-            {inspectorTab === 'content' && <div className="studio-inspector-content"><h3>Project brief</h3><p className="studio-lab-help">Keep the intent beside the design so AuraFlow can build from a clear source of truth.</p><Field label="Headline"><Input value={draft.headline} maxLength={160} onChange={(event) => update({ headline: event.target.value })} /></Field><Field label="Description"><Textarea value={draft.description} maxLength={6000} onChange={(event) => update({ description: event.target.value })} /></Field><Field label="Build notes"><Textarea value={draft.notes} maxLength={6000} onChange={(event) => update({ notes: event.target.value })} placeholder="Integrations, roles, data, payments, launch requirements..." /></Field></div>}
+            {inspectorTab === 'content' && <div className="studio-inspector-content"><h3>Project brief</h3><p className="studio-lab-help">Keep the intent beside the design so AuraFlow can build from a clear source of truth.</p><Field label="Headline"><Input value={draft.headline} maxLength={160} onChange={(event) => update({ headline: event.target.value })} /></Field><Field label="Description"><Textarea value={draft.description} maxLength={6000} onChange={(event) => update({ description: event.target.value })} /></Field><Field label="Build notes"><Textarea value={draft.notes} maxLength={6000} onChange={(event) => update({ notes: event.target.value })} placeholder="Integrations, roles, data, payments, launch requirements..." /></Field><div className="studio-brief-voice"><strong>Explain it by voice</strong><p className="studio-lab-help">Record a voice brief when typing is inconvenient. The recording and browser transcript are saved with this private draft for the AuraFlow team.</p><VoiceNoteRecorder disabled={uploading} onRecorded={(payload) => void attachBriefVoiceNote(payload)} />{uploading && <span className="upload-progress" role="status">Saving voice brief {uploadProgress}%</span>}</div></div>}
           </div>
         </aside>
       </div>

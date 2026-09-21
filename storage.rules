@@ -19,6 +19,7 @@ service firebase.storage {
       return request.resource.size > 0 && request.resource.size <= 50 * 1024 * 1024
         && (request.resource.contentType.matches('image/(jpeg|png|webp|avif|gif)')
           || request.resource.contentType.matches('video/(mp4|webm)')
+          || request.resource.contentType.matches('audio/(webm|mp4|ogg|mpeg|wav)')
           || request.resource.contentType == 'application/pdf'
           || request.resource.contentType == 'application/json'
           || request.resource.contentType == 'application/msword'
@@ -41,6 +42,18 @@ service firebase.storage {
       allow read: if owns(uid) || isAdmin();
       allow create, update: if owns(uid) && validRequestAsset();
       allow delete: if owns(uid);
+    }
+
+    match /users/{uid}/studio/{studioId}/{fileName} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, update: if owns(uid) && validRequestAsset();
+      allow delete: if owns(uid);
+    }
+
+    match /conversations/{uid}/media/{fileName} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, update: if (owns(uid) || isAdmin()) && validRequestAsset();
+      allow delete: if owns(uid) || isAdmin();
     }
 
     match /avatars/{uid}/{fileName} {

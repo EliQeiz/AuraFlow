@@ -7,6 +7,12 @@ import {
 } from 'firebase/firestore'
 import { getFirebaseAuth, getFirebaseDb } from './firebase'
 import { messageText } from '../domain/projects'
+import type { RequestMessage } from '../types'
+
+type MessageExtra = Pick<
+  RequestMessage,
+  'kind' | 'mediaPath' | 'mediaType' | 'durationMs' | 'transcript' | 'language'
+>
 
 export async function startSupportConversation() {
   const user = getFirebaseAuth().currentUser
@@ -26,6 +32,7 @@ export async function sendSupportMessage(
   conversationId: string,
   text: string,
   role: 'client' | 'admin',
+  extra: MessageExtra = {},
 ) {
   const user = getFirebaseAuth().currentUser
   if (!user) throw new Error('Sign in to send a message.')
@@ -36,6 +43,7 @@ export async function sendSupportMessage(
       authorName:
         user.displayName || (role === 'admin' ? 'AuraFlow' : 'Client'),
       role,
+      ...extra,
       text: messageText.parse(text),
       createdAt: serverTimestamp(),
     },

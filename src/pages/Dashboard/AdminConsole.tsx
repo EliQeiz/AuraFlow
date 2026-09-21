@@ -149,6 +149,7 @@ export default function AdminConsole() {
                 asAdmin
                 id={conversation.id}
                 title={conversation.name}
+                clientId={conversation.id}
               />
             ) : (
               <StatePanel
@@ -386,7 +387,7 @@ function AdminProject({ project }: { project: ProjectRecord }) {
             </div>
           </section>
           <div className="border border-[var(--line)] rounded-md overflow-hidden self-start min-h-[520px]">
-            <ChatThread id={project.id} title={project.clientName} asAdmin />
+            <ChatThread id={project.id} title={project.clientName} asAdmin clientId={project.userId} />
           </div>
         </div>
       )}

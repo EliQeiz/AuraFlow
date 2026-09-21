@@ -227,6 +227,12 @@ export interface RequestMessage {
   authorName: string
   role: 'client' | 'admin'
   text: string
+  kind?: 'text' | 'audio' | 'file' | 'call'
+  mediaPath?: string
+  mediaType?: string
+  durationMs?: number
+  transcript?: string
+  language?: string
   createdAt?: unknown
 }
 

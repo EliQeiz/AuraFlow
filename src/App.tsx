@@ -29,7 +29,6 @@ const MyTemplates = lazy(() => import('./pages/Dashboard/MyTemplates'))
 const NewRequest = lazy(() => import('./pages/Dashboard/NewRequest'))
 const Messages = lazy(() => import('./pages/Dashboard/Messages'))
 const Activity = lazy(() => import('./pages/Dashboard/Activity'))
-const PrototypeStudio = lazy(() => import('./pages/Dashboard/PrototypeStudio'))
 const DesignStudio = lazy(() => import('./pages/Dashboard/DesignStudio'))
 const AdminConsole = lazy(() => import('./pages/Dashboard/AdminConsole'))
 const Settings = lazy(() => import('./pages/Dashboard/Settings'))
@@ -53,7 +52,7 @@ function AdminOnly() {
 export default function App() {
   const location = useLocation()
   useEffect(() => {
-    if (!location.pathname.startsWith('/dashboard/studio'))
+    if (!location.pathname.startsWith('/studio'))
       window.scrollTo(0, 0)
   }, [location.pathname])
   return (
@@ -140,8 +139,8 @@ export default function App() {
           <Route path="requests/:id" element={<MyProjects />} />
           <Route path="messages" element={<Messages />} />
           <Route path="activity" element={<Activity />} />
-          <Route path="studio" element={<PrototypeStudio />} />
-          <Route path="design-studio" element={<Navigate to="/studio" replace />} />
+          <Route path="studio" element={<Navigate to={`/studio${location.search}`} replace />} />
+          <Route path="design-studio" element={<Navigate to={`/studio${location.search}`} replace />} />
           <Route path="businesses" element={<BusinessSystems />} />
           <Route path="templates" element={<MyTemplates />} />
           <Route path="admin" element={<AdminOnly />} />

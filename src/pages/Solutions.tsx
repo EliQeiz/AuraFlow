@@ -65,7 +65,7 @@ export default function Solutions() {
                 Explore suite
                 <ArrowUpRight />
               </ButtonLink>
-              <ButtonLink to={`/dashboard/studio?suite=${suite.slug}`}>
+              <ButtonLink to={`/studio?suite=${suite.slug}`}>
                 Design yours
               </ButtonLink>
             </div>

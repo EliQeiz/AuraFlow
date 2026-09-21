@@ -50,7 +50,7 @@ export function SolutionsPreview() {
                     <Eye className="h-4 w-4" />
                     View
                   </ButtonLink>
-                  <ButtonLink to={user ? `/dashboard/studio?solution=${solution.slug}` : '/register'} className="px-2">
+                  <ButtonLink to={user ? `/studio?solution=${solution.slug}` : '/register'} className="px-2">
                     <Sparkles className="h-4 w-4" />
                     Design
                   </ButtonLink>

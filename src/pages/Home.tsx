@@ -336,7 +336,7 @@ export default function Home() {
       </section>
       <section className="home-close">
         <h2>What will you build?</h2>
-        <ButtonLink to={user ? '/dashboard/studio' : '/register'}>
+        <ButtonLink to={user ? '/studio' : '/register'}>
           Open your workspace
           <ArrowRight />
         </ButtonLink>

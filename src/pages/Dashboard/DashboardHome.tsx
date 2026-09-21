@@ -111,7 +111,7 @@ export default function DashboardHome() {
             title="Your next idea starts here"
             description="Create a project brief or explore a template to make it your own."
             action={
-              <ButtonLink to="/dashboard/studio" variant="secondary">
+              <ButtonLink to="/studio" variant="secondary">
                 Open design studio
                 <ArrowRight />
               </ButtonLink>
@@ -128,7 +128,7 @@ export default function DashboardHome() {
       <div className="workspace-suites">
         {suites.map((suite) => (
           <Link
-            to={`/dashboard/studio?suite=${suite.slug}`}
+            to={`/studio?suite=${suite.slug}`}
             className="workspace-suite"
             key={suite.slug}
           >

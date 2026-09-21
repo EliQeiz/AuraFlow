@@ -1,0 +1,63 @@
+.chat-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.chat-header > div:first-child { min-width: 0; }
+.chat-header p { margin: .3rem 0 0; }
+.call-actions { display: flex; gap: .35rem; flex-shrink: 0; }
+.incoming-call {
+  align-items: center;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border: 1px solid var(--accent);
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin: .75rem 0;
+  padding: .7rem;
+}
+.incoming-call span { flex: 1 1 12rem; }
+.call-panel {
+  background: #09101c;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 10px;
+  margin: .75rem 0;
+  overflow: hidden;
+  position: relative;
+}
+.call-panel-header {
+  align-items: center;
+  background: rgba(0,0,0,.35);
+  color: #fff;
+  display: flex;
+  font-size: .82rem;
+  justify-content: space-between;
+  padding: .55rem .7rem;
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+}
+.call-live-dot { background: #32d583; border-radius: 50%; display: inline-block; height: .45rem; margin-right: .45rem; width: .45rem; }
+.call-remote { background: #111827; display: block; min-height: 10rem; object-fit: cover; width: 100%; }
+.call-local { border: 2px solid rgba(255,255,255,.7); border-radius: 6px; bottom: 3.3rem; height: 5.5rem; object-fit: cover; position: absolute; right: .65rem; width: 7.8rem; }
+.call-controls { background: rgba(0,0,0,.35); display: flex; gap: .5rem; justify-content: center; padding: .55rem; }
+.call-hangup { background: #bd2430; color: #fff; }
+.call-error { color: var(--danger, #c53e52); font-size: .82rem; margin: .5rem 0; }
+.voice-note-recorder { align-items: center; display: flex; flex-wrap: wrap; gap: .5rem; }
+.voice-note-recorder select { min-height: 2.4rem; max-width: 9.5rem; }
+.voice-note-transcript { color: var(--muted); font-size: .75rem; max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.voice-note-error { color: var(--danger, #c53e52); font-size: .78rem; }
+.voice-message { display: grid; gap: .35rem; max-width: 25rem; }
+.voice-message audio { max-width: 100%; width: 22rem; }
+.voice-message-meta { color: var(--muted); font-size: .72rem; }
+.voice-message details { color: var(--muted); font-size: .78rem; }
+.voice-message details p { margin: .35rem 0 0; white-space: pre-wrap; }
+.upload-progress { color: var(--muted); font-size: .78rem; }
+.studio-brief-voice { border-top: 1px solid var(--line); display: grid; gap: .45rem; margin-top: 1rem; padding-top: 1rem; }
+@media (max-width: 640px) {
+  .chat-header { align-items: stretch; flex-direction: column; }
+  .call-actions { align-self: flex-end; }
+  .voice-message audio { width: min(100%, 18rem); }
+}

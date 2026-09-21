@@ -67,6 +67,7 @@ export default function Messages() {
           id={selected?.id || user!.uid}
           support={!selected}
           title={selected?.title || 'AuraFlow support'}
+          clientId={user!.uid}
         />
       </div>
     </>

@@ -12,6 +12,11 @@ const mediaTypes = [
   ...rasterTypes,
   'video/mp4',
   'video/webm',
+  'audio/webm',
+  'audio/mp4',
+  'audio/ogg',
+  'audio/mpeg',
+  'audio/wav',
   'application/pdf',
   'text/plain',
   'text/csv',
@@ -30,7 +35,7 @@ export function validateMedia(file: File, imageOnly = false) {
     throw new Error(
       imageOnly
         ? 'Choose a JPEG, PNG, WebP, AVIF, or GIF image.'
-        : 'Choose an image, MP4/WebM video, PDF, document, spreadsheet, ZIP, or text file.',
+        : 'Choose an image, MP4/WebM video, voice note, PDF, document, spreadsheet, ZIP, or text file.',
     )
 }
 export async function uploadPrivateMedia(

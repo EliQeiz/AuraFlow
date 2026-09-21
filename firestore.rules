@@ -424,18 +424,32 @@ service cloud.firestore {
     }
 
     function validMessage(role) {
+      let d = request.resource.data;
       return request.resource.data.keys().hasOnly([
           'authorId',
           'authorName',
           'role',
           'text',
+          'kind',
+          'mediaPath',
+          'mediaType',
+          'durationMs',
+          'transcript',
+          'language',
           'createdAt'
         ])
-        && request.resource.data.authorId == request.auth.uid
-        && stringBetween(request.resource.data, 'authorName', 1, 120)
-        && stringBetween(request.resource.data, 'text', 2, 4000)
-        && request.resource.data.role == role
-        && request.resource.data.createdAt == request.time;
+        && d.authorId == request.auth.uid
+        && stringBetween(d, 'authorName', 1, 120)
+        && stringBetween(d, 'text', 2, 4000)
+        && d.role == role
+        && d.createdAt == request.time
+        && (!d.keys().hasAny(['kind']) || d.kind in ['text', 'audio', 'file', 'call'])
+        && optionalString(d, 'mediaPath', 600)
+        && optionalString(d, 'mediaType', 120)
+        && (!d.keys().hasAny(['durationMs']) || (d.durationMs is int && d.durationMs >= 0 && d.durationMs <= 3600000))
+        && optionalString(d, 'transcript', 12000)
+        && optionalString(d, 'language', 32)
+          && (!d.keys().hasAny(['kind']) || d.kind != 'audio' || d.keys().hasAll(['mediaPath', 'mediaType']));
     }
 
     match /contacts/{contactId} {
@@ -615,6 +629,52 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if owns(uid) || isAdmin();
         allow create: if (owns(uid) && validMessage('client')) || (isAdmin() && validMessage('admin'));
+        allow update, delete: if false;
+      }
+    }
+
+    match /calls/{callId} {
+      function canJoin() {
+        return signedIn() && (isAdmin() || resource.data.clientId == request.auth.uid);
+      }
+      function validCall() {
+        let d = request.resource.data;
+        return d.keys().hasOnly([
+            'clientId', 'projectId', 'conversationId', 'createdBy', 'kind',
+            'status', 'offer', 'answer', 'createdAt', 'updatedAt'
+          ])
+          && stringBetween(d, 'clientId', 1, 128)
+          && optionalString(d, 'projectId', 180)
+          && optionalString(d, 'conversationId', 128)
+          && d.createdBy == request.auth.uid
+          && d.kind in ['voice', 'video']
+          && d.status in ['ringing', 'active', 'ended']
+          && d.createdAt == request.time
+          && d.updatedAt == request.time
+          && (isAdmin() || d.clientId == request.auth.uid)
+          && (d.keys().hasAny(['projectId']) || d.keys().hasAny(['conversationId']))
+          && (!d.keys().hasAny(['conversationId']) || d.conversationId == d.clientId)
+          && (!d.keys().hasAny(['projectId'])
+            || (exists(/databases/$(database)/documents/projects/$(d.projectId))
+              && get(/databases/$(database)/documents/projects/$(d.projectId)).data.userId == d.clientId));
+      }
+      allow read: if canJoin();
+      allow create: if signedIn() && validCall();
+      allow update: if canJoin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['offer', 'answer', 'status', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.status in ['ringing', 'active', 'ended'];
+      allow delete: if canJoin();
+
+      match /{candidateCollection}/{candidateId} {
+        allow read: if canJoin();
+        allow create: if canJoin()
+          && candidateCollection in ['offerCandidates', 'answerCandidates']
+          && request.resource.data.keys().hasOnly(['candidate', 'sdpMid', 'sdpMLineIndex', 'createdAt'])
+          && stringBetween(request.resource.data, 'candidate', 1, 4000)
+          && optionalString(request.resource.data, 'sdpMid', 120)
+          && request.resource.data.sdpMLineIndex is int
+          && request.resource.data.createdAt == request.time;
         allow update, delete: if false;
       }
     }

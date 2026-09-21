@@ -9,7 +9,6 @@ import {
   LogOut,
   Menu,
   MessageSquare,
-  PanelsTopLeft,
   PenTool,
   Settings2,
   ShieldCheck,
@@ -28,8 +27,7 @@ import { asErrorMessage } from '../../lib/utils'
 const navigation = [
   { to: '/dashboard', label: 'Overview', Icon: Home, end: true },
   { to: '/dashboard/requests', label: 'Projects', Icon: FolderKanban },
-  { to: '/dashboard/studio', label: 'Design studio', Icon: PanelsTopLeft },
-  { to: '/studio', label: 'Studio lab', Icon: PenTool },
+  { to: '/studio', label: 'Studio Lab', Icon: PenTool },
   { to: '/dashboard/businesses', label: 'Business systems', Icon: Store },
   {
     to: '/dashboard/templates',
