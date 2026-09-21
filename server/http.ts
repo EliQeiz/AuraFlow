@@ -51,7 +51,7 @@ export function getBearerToken(req: ApiRequest) {
   const value = Array.isArray(header) ? header[0] : header;
 
   if (!value?.startsWith("Bearer ")) {
-    throw new ApiError(401, "missing_authorization", "Provide a Supabase user JWT in the Authorization header.");
+    throw new ApiError(401, "missing_authorization", "Provide a Firebase ID token in the Authorization header.");
   }
 
   return value.slice("Bearer ".length);
