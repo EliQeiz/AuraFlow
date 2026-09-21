@@ -47,11 +47,13 @@ import {
 } from '../../domain/composition'
 import { defaultDraft, type StudioDraft } from '../../domain/studio'
 import { getSuiteBlueprint, suiteBlueprints } from '../../data/suiteBlueprints'
+import { uploadPrivateMedia, validateMedia } from '../../lib/media'
 import { saveDraft } from '../../lib/studio'
 
 type StudioView = 'design' | 'prototype' | 'preview'
 type LibraryTab = 'pages' | 'layers' | 'components' | 'assets'
 type InspectorTab = 'design' | 'prototype' | 'content'
+type StudioAsset = { name: string; path: string; type: string; url: string }
 
 const componentPresets: Array<{ kind: DesignLayer['kind']; label: string; icon: typeof Type }> = [
   { kind: 'text', label: 'Text', icon: Type },
@@ -61,6 +63,12 @@ const componentPresets: Array<{ kind: DesignLayer['kind']; label: string; icon: 
   { kind: 'metric', label: 'Metric', icon: Sparkles },
   { kind: 'chart', label: 'Chart', icon: Grid3X3 },
   { kind: 'silo', label: 'Process', icon: PanelRight },
+]
+const designPresets = [
+  { name: 'Aura', primary: '#766dff', accent: '#00b6c9', background: '#f3f5f7', surface: '#ffffff', ink: '#18202b' },
+  { name: 'Coastal', primary: '#0f766e', accent: '#f97316', background: '#f3f8f7', surface: '#ffffff', ink: '#15302e' },
+  { name: 'Heritage', primary: '#8b5e34', accent: '#d1a545', background: '#f8f4ee', surface: '#fffdf8', ink: '#2d241b' },
+  { name: 'Signal', primary: '#2563eb', accent: '#e11d48', background: '#f4f7fb', surface: '#ffffff', ink: '#172033' },
 ]
 
 function download(name: string, content: string, type = 'application/json') {
@@ -102,6 +110,9 @@ export default function DesignStudio() {
   const [zoom, setZoom] = useState(1)
   const [grid, setGrid] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [assets, setAssets] = useState<StudioAsset[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const selected = draft.layers?.find((layer) => layer.id === selectedLayer)
   const suite = getSuiteBlueprint(draft.suiteSlug) ?? suiteBlueprints[0]
   const pages = draft.pages
@@ -170,6 +181,64 @@ export default function DesignStudio() {
     setPage('Home')
     setSelectedLayer('')
   }
+  function applyDesignPreset(preset: (typeof designPresets)[number]) {
+    update({
+      primaryColor: preset.primary,
+      accentColor: preset.accent,
+      visual: {
+        ...(draft.visual || defaultVisual),
+        background: preset.background,
+        surface: preset.surface,
+        ink: preset.ink,
+      },
+    })
+  }
+  async function uploadAssets(files: FileList | null) {
+    if (!files?.length) return
+    if (!user) {
+      toast.error('Sign in before uploading studio assets.')
+      return
+    }
+    setUploading(true)
+    setUploadProgress(0)
+    try {
+      const nextAssets: StudioAsset[] = []
+      for (const file of Array.from(files).slice(0, 8)) {
+        validateMedia(file)
+        const safeName = file.name
+          .replace(/[^a-z0-9.-]+/gi, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 80) || 'asset'
+        const path = `users/${user.uid}/studio/${draftId}/${Date.now()}-${safeName}`
+        await uploadPrivateMedia(path, file, setUploadProgress)
+        nextAssets.push({
+          name: file.name,
+          path,
+          type: file.type,
+          url: URL.createObjectURL(file),
+        })
+      }
+      setAssets((current) => [...current, ...nextAssets].slice(0, 20))
+      update({ mediaPaths: [...draft.mediaPaths, ...nextAssets.map((asset) => asset.path)].slice(0, 20) })
+      toast.success(`${nextAssets.length} asset${nextAssets.length === 1 ? '' : 's'} attached to this draft.`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not upload the selected assets.')
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
+  }
+  function placeAsset(asset: StudioAsset) {
+    const index = draft.mediaPaths.indexOf(asset.path)
+    const layer = newLayer('image', page, draft.primaryColor)
+    updateLayers([
+      ...(draft.layers || []),
+      { ...layer, imageIndex: index, width: 480, height: 300 },
+    ])
+    setSelectedLayer(layer.id)
+    setLibraryTab('layers')
+    toast.success(`${asset.name} placed on ${page}.`)
+  }
   async function save() {
     if (!user || saving) return
     setSaving(true)
@@ -237,7 +306,37 @@ export default function DesignStudio() {
             </>}
             {libraryTab === 'layers' && <><div className="studio-lab-panel-heading"><span>{page} layers</span><span className="studio-lab-count">{pageLayers.length}/12</span></div><LayerList layers={pageLayers} selected={selectedLayer} selectedIds={selectedLayer ? [selectedLayer] : []} onSelect={setSelectedLayer} onChange={(next) => updateLayers([...(draft.layers || []).filter((layer) => layer.page !== page), ...next])} /></>}
             {libraryTab === 'components' && <><div className="studio-lab-panel-heading"><span>Components</span><span className="studio-lab-count">Reusable</span></div><p className="studio-lab-help">Add a component to the active page, then tune it from the inspector.</p><div className="studio-component-grid">{componentPresets.map(({ kind, label, icon: Icon }) => <button key={kind} onClick={() => addComponent(kind)}><Icon /><span>{label}</span></button>)}</div><div className="studio-lab-note"><Sparkles size={15} /><span>Next: save any layer as a reusable component across pages.</span></div></>}
-            {libraryTab === 'assets' && <><div className="studio-lab-panel-heading"><span>Assets</span><button className="icon-button" title="Upload asset" aria-label="Upload asset"><Upload /></button></div><label className="studio-upload"><Upload /><strong>Drop brand assets here</strong><small>Images, logos, banners, video, and references</small><input type="file" accept="image/*,video/*" multiple onChange={(event) => toast.success(`${event.target.files?.length || 0} asset(s) selected for this draft.`)} /></label><p className="studio-lab-help">Uploaded media stays private to your project and can be attached to a layer from the existing content workflow.</p></>}
+            {libraryTab === 'assets' && <>
+              <div className="studio-lab-panel-heading">
+                <span>Assets</span>
+                <span className="studio-lab-count">{assets.length}/20</span>
+              </div>
+              <label className="studio-upload">
+                <Upload />
+                <strong>{uploading ? `Uploading ${uploadProgress}%` : 'Add private assets'}</strong>
+                <small>Images, logos, banners, video, and references</small>
+                <input
+                  type="file"
+                  accept="image/*,video/*,application/pdf"
+                  multiple
+                  disabled={uploading}
+                  onChange={(event) => { void uploadAssets(event.target.files); event.currentTarget.value = '' }}
+                />
+              </label>
+              {uploading && <div className="studio-upload-progress" aria-label={`Upload progress ${uploadProgress}%`}><i style={{ width: `${uploadProgress}%` }} /></div>}
+              {assets.length > 0 && <div className="studio-asset-list">
+                {assets.map((asset) => <article key={asset.path} className="studio-asset-card">
+                  {asset.type.startsWith('video/') ? <video src={asset.url} muted playsInline /> : asset.type.startsWith('image/') ? <img src={asset.url} alt="" /> : <div className="studio-asset-file"><Upload size={16} /></div>}
+                  <div><strong title={asset.name}>{asset.name}</strong><small>{asset.type.split('/').at(-1)?.toUpperCase() || 'FILE'}</small></div>
+                  <div className="studio-asset-actions">
+                    <button type="button" title="Place on canvas" aria-label={`Place ${asset.name} on canvas`} onClick={() => placeAsset(asset)}><Plus size={13} /></button>
+                    <button type="button" title="Use as banner" aria-label={`Use ${asset.name} as banner`} onClick={() => { update({ bannerPath: asset.path }); toast.success('Banner reference updated.') }}><PanelLeft size={13} /></button>
+                    <button type="button" title="Use as logo" aria-label={`Use ${asset.name} as logo`} onClick={() => { update({ logoPath: asset.path }); toast.success('Logo reference updated.') }}><Sparkles size={13} /></button>
+                  </div>
+                </article>)}
+              </div>}
+              <p className="studio-lab-help">Assets upload to a user-scoped Firebase Storage path and stay private to this workspace. Place an asset on the canvas, or assign it as the logo or banner reference.</p>
+            </>}
           </div>
         </aside>
 
@@ -248,6 +347,11 @@ export default function DesignStudio() {
             </div>
             <div className="studio-lab-toolbar-group"><button className="icon-button" title="Select" aria-label="Select tool" aria-pressed><MousePointer2 /></button><button className="icon-button" title="Add text" aria-label="Add text" onClick={() => addComponent('text')}><Type /></button><button className="icon-button" title="Add frame" aria-label="Add frame" onClick={() => addComponent('rectangle')}><PanelLeft /></button><span className="studio-lab-divider" /><button className="icon-button" title="Toggle grid" aria-label="Toggle grid" aria-pressed={grid} onClick={() => setGrid(!grid)}><Grid3X3 /></button><Select aria-label="Zoom" value={zoom} onChange={(event) => setZoom(Number(event.target.value))}><option value={0.5}>50%</option><option value={0.75}>75%</option><option value={1}>Fit</option><option value={1.5}>150%</option></Select></div>
             <div className="studio-lab-toolbar-group"><span className="studio-lab-label">Viewport</span>{([['desktop', Monitor], ['tablet', Tablet], ['mobile', Smartphone]] as const).map(([name, Icon]) => <button key={name} className="icon-button" title={`${name} viewport`} aria-label={`${name} viewport`} aria-pressed={device === name} onClick={() => setDevice(name)}><Icon /></button>)}</div>
+          </div>
+          <div className="studio-lab-tokenbar">
+            <div><span className="studio-lab-token-title"><Palette size={13} /> Design system</span><small>Reusable brand decisions for every page</small></div>
+            <div className="studio-lab-presets">{designPresets.map((preset) => <button key={preset.name} title={`Apply ${preset.name} design system`} onClick={() => applyDesignPreset(preset)}><i style={{ background: preset.primary }} /><i style={{ background: preset.accent }} /><span>{preset.name}</span></button>)}</div>
+            <div className="studio-lab-token-values"><span><b>Radius</b> {draft.visual?.radius ?? defaultVisual.radius}px</span><span><b>Space</b> {draft.visual?.spacing ?? defaultVisual.spacing}px</span><span><b>Type</b> {draft.visual?.fontSize ?? defaultVisual.fontSize}px</span></div>
           </div>
           <div className="studio-lab-canvas-stage">
             {view === 'preview' ? <div className="studio-preview-device" style={{ maxWidth: device === 'mobile' ? 370 : device === 'tablet' ? 680 : 1180 }}><SuiteCanvas draft={draft} page={page} website /></div> : view === 'prototype' ? <div className="studio-prototype-empty"><Play size={28} /><h2>Prototype flow</h2><p>Select a button layer to connect it to another page. Then use Preview to test the flow.</p>{selected?.kind === 'button' ? <div className="studio-prototype-card"><strong>{selected.text || 'Selected button'}</strong><span>Links to {selected.targetPage || 'No destination'}</span></div> : <span className="studio-lab-help">Choose a button from the Layers panel to edit its interaction.</span>}</div> : <DesignArtboard draft={draft} page={page} selected={selectedLayer} selectedIds={selectedLayer ? [selectedLayer] : []} onSelect={(id) => setSelectedLayer(id)} onChange={updateLayers} zoom={zoom} grid={grid} preview={false} />}

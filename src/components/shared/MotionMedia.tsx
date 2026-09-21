@@ -45,6 +45,7 @@ export function MotionMedia({
   children?: ReactNode
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const visible = useInView(ref, { amount: 0.15 })
   const reduced = useSyncExternalStore(
     subscribeReducedMotion,
@@ -71,7 +72,8 @@ export function MotionMedia({
     .slice(0, 4)
     .map((src) => imageSource(src))
   const videoSources = [...new Set(videos)].slice(0, 2)
-  const stableSources = JSON.stringify(sources)
+  const mediaCount = videoSources.length > 0 ? videoSources.length : sources.length
+  const stableSources = JSON.stringify({ sources, videoSources })
   const controls = useAnimationControls()
   useEffect(() => {
     const change = () => setForeground(!document.hidden)
@@ -93,11 +95,21 @@ export function MotionMedia({
     return () => controls.stop()
   }, [active, controls])
   useEffect(() => {
-    const gallery = JSON.parse(stableSources) as string[]
-    if (!active || gallery.length < 2) return
+    const video = videoRef.current
+    if (!video) return
+    if (active) void video.play().catch(() => undefined)
+    else video.pause()
+  }, [active, index])
+  useEffect(() => {
+    const gallery = JSON.parse(stableSources) as { sources: string[]; videoSources: string[] }
+    if (!active || mediaCount < 2) return
     let live = true
     const timer = window.setInterval(() => {
-      const next = (index + 1) % gallery.length
+      const next = (index + 1) % mediaCount
+      if (gallery.videoSources.length) {
+        if (live) setIndex(next)
+        return
+      }
       const image = new Image()
       image.onload = () => {
         if (live) {
@@ -105,13 +117,13 @@ export function MotionMedia({
           setFailed(false)
         }
       }
-      image.src = gallery[next]
+      image.src = gallery.sources[next]
     }, 6500)
     return () => {
       live = false
       window.clearInterval(timer)
     }
-  }, [active, index, stableSources])
+  }, [active, index, mediaCount, stableSources])
   return (
     <div
       ref={ref}
@@ -130,12 +142,13 @@ export function MotionMedia({
             <video
               key={videoSources[index % videoSources.length]}
               src={videoSources[index % videoSources.length]}
+              ref={videoRef}
               poster={sources[0]}
               muted
               loop
               playsInline
               autoPlay={active}
-              preload="metadata"
+              preload="auto"
               aria-label={alt}
               onError={() => setFailed(true)}
             />

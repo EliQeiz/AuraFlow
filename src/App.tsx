@@ -89,6 +89,14 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
+          path="/studio"
+          element={
+            <ProtectedRoute>
+              <DesignStudio />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin"
           element={
             <ProtectedRoute>
@@ -133,7 +141,7 @@ export default function App() {
           <Route path="messages" element={<Messages />} />
           <Route path="activity" element={<Activity />} />
           <Route path="studio" element={<PrototypeStudio />} />
-          <Route path="design-studio" element={<DesignStudio />} />
+          <Route path="design-studio" element={<Navigate to="/studio" replace />} />
           <Route path="businesses" element={<BusinessSystems />} />
           <Route path="templates" element={<MyTemplates />} />
           <Route path="admin" element={<AdminOnly />} />

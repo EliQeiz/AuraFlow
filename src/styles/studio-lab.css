@@ -69,7 +69,19 @@
 .studio-upload strong { color: rgb(var(--aura-ink)); font-size: 12px; }
 .studio-upload small { color: rgb(var(--aura-muted)); font-size: 10px; line-height: 1.5; }
 .studio-upload input { width: 100%; font-size: 10px; }
-.studio-lab-canvas { min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--subtle); }
+.studio-upload-progress { height: 4px; margin: -10px 0 14px; overflow: hidden; border-radius: 999px; background: var(--subtle); }
+.studio-upload-progress i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--primary), var(--cyan)); transition: width .2s ease; }
+.studio-asset-list { display: grid; gap: 7px; margin-top: 14px; }
+.studio-asset-card { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px; border: 1px solid var(--lab-border); border-radius: 6px; background: rgb(var(--aura-surface)); }
+.studio-asset-card > img, .studio-asset-card > video, .studio-asset-file { width: 34px; height: 34px; object-fit: cover; border-radius: 4px; background: var(--subtle); }
+.studio-asset-file { display: grid; place-items: center; color: var(--primary); }
+.studio-asset-card > div:nth-child(2) { min-width: 0; display: grid; gap: 2px; }
+.studio-asset-card strong { overflow: hidden; color: rgb(var(--aura-ink)); font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.studio-asset-card small { color: rgb(var(--aura-muted)); font-size: 9px; }
+.studio-asset-actions { display: flex; gap: 2px; }
+.studio-asset-actions button { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 4px; color: rgb(var(--aura-muted)); }
+.studio-asset-actions button:hover { color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, transparent); }
+.studio-lab-canvas { min-width: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; background: var(--subtle); }
 .studio-lab-toolbar { justify-content: space-between; gap: 10px; min-height: 54px; padding: 9px 14px; border-bottom: 1px solid var(--lab-border); background: rgb(var(--aura-surface) / .78); }
 .studio-lab-mode, .studio-lab-toolbar-group { gap: 3px; }
 .studio-lab-mode { display: flex; border: 1px solid var(--lab-border); border-radius: 6px; padding: 2px; }
@@ -77,6 +89,16 @@
 .studio-lab-mode button:hover, .studio-lab-mode button[aria-selected='true'] { color: rgb(var(--aura-ink)); background: var(--subtle); }
 .studio-lab-toolbar .af-input { width: 70px; min-height: 32px; padding: 6px; font-size: 11px; }
 .studio-lab-label { color: rgb(var(--aura-muted)); font-size: 10px; }
+.studio-lab-tokenbar { display: flex; align-items: center; gap: 20px; min-height: 58px; padding: 9px 14px; border-bottom: 1px solid var(--lab-border); background: rgb(var(--aura-surface) / .66); }
+.studio-lab-tokenbar > div:first-child { display: grid; gap: 3px; min-width: 170px; }
+.studio-lab-token-title { display: inline-flex; align-items: center; gap: 6px; color: rgb(var(--aura-ink)); font-size: 11px; font-weight: 650; }
+.studio-lab-tokenbar small { color: rgb(var(--aura-muted)); font-size: 9px; }
+.studio-lab-presets { display: flex; gap: 6px; overflow-x: auto; }
+.studio-lab-presets button { display: grid; grid-template-columns: 9px 9px auto; align-items: center; gap: 3px; padding: 5px 7px; border: 1px solid var(--lab-border); border-radius: 5px; color: rgb(var(--aura-muted)); background: rgb(var(--aura-surface)); font-size: 10px; white-space: nowrap; }
+.studio-lab-presets button:hover { border-color: var(--primary); color: var(--primary); }
+.studio-lab-presets i { width: 9px; height: 9px; border-radius: 2px; }
+.studio-lab-token-values { display: flex; gap: 12px; margin-left: auto; color: rgb(var(--aura-muted)); font-size: 9px; white-space: nowrap; }
+.studio-lab-token-values b { color: rgb(var(--aura-ink)); font-weight: 600; }
 .studio-lab-canvas-stage { min-height: 0; overflow: auto; padding: 32px; display: flex; align-items: flex-start; justify-content: center; }
 .studio-lab-canvas-stage > .design-artboard-scroll { width: min(100%, 1200px); }
 .studio-preview-device { width: 100%; margin: 0 auto; }
@@ -116,5 +138,7 @@
   .studio-lab-panel { max-height: 310px; }
   .studio-lab-canvas-stage { padding: 14px; }
   .studio-lab-toolbar { flex-wrap: wrap; }
+  .studio-lab-tokenbar { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .studio-lab-token-values { margin-left: 0; }
   .studio-lab-inspector { display: block; }
 }

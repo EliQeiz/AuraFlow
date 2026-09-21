@@ -9,7 +9,9 @@ interface ThemeValue {
 }
 
 const ThemeContext = createContext<ThemeValue | null>(null)
-const themeKey = 'auraflow-theme'
+// v2 intentionally ignores the legacy dark-first preference so existing visitors
+// receive the new light-first experience once, then their future choice persists.
+const themeKey = 'auraflow-theme-v2'
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const [theme, setTheme] = useState<ThemePreference>(() => {

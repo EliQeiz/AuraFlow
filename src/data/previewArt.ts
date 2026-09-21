@@ -38,6 +38,6 @@ export function templateArtwork(
 }
 export function templateVideo(template: Pick<Template, 'category' | 'subcategory'>) {
   if (template.subcategory === 'K-12 School') return [previewVideo.education]
-  if (template.subcategory === 'Fine Dining') return [previewVideo.restaurant, previewVideo.restaurantAlt]
+  if (template.category === 'Restaurant' || template.subcategory === 'Cafe' || template.subcategory === 'Fine Dining') return [previewVideo.restaurant, previewVideo.restaurantAlt]
   return []
 }

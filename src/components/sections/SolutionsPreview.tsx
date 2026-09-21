@@ -1,10 +1,12 @@
 import { ArrowRight, Eye, ServerCog, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { industrySolutions } from '../../data/solutions'
+import { suiteVideo } from '../../data/previewArt'
 import { useAuth } from '../../context/AuthContext'
 import { Badge } from '../ui/Badge'
 import { ButtonLink } from '../ui/Button'
 import { Card } from '../ui/Card'
+import { MotionMedia } from '../shared/MotionMedia'
 
 const featured = industrySolutions.slice(0, 6)
 
@@ -32,7 +34,7 @@ export function SolutionsPreview() {
           <motion.div key={solution.id} initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.06 }}>
             <Card className="group h-full overflow-hidden">
               <div className="aspect-video overflow-hidden">
-                <img loading="lazy" src={solution.image} alt={solution.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                <MotionMedia images={[solution.image]} videos={suiteVideo(solution.slug)} autoplay alt={solution.title} />
               </div>
               <div className="p-5">
                 <ServerCog className="h-5 w-5 text-cyan-100" />
