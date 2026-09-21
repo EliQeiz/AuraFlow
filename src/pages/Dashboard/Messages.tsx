@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router-dom'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Search } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { ChatThread } from '../../components/shared/ChatThread'
 import { StatePanel } from '../../components/ui/StatePanel'
 import { useAuth } from '../../context/AuthContext'
@@ -9,9 +10,11 @@ export default function Messages() {
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()
   const projects = useProjects(user?.uid)
+  const [search, setSearch] = useState('')
   const selected = projects.data.find(
     (project) => project.id === params.get('project'),
   )
+  const visibleProjects = useMemo(() => projects.data.filter((project) => `${project.title} ${project.status}`.toLowerCase().includes(search.toLowerCase())), [projects.data, search])
   return (
     <>
       <div className="workspace-page-header">
@@ -22,6 +25,10 @@ export default function Messages() {
       </div>
       <div className="messages-layout">
         <aside className="thread-list">
+          <label className="thread-search">
+            <Search size={14} />
+            <input aria-label="Search conversations" placeholder="Search conversations" value={search} onChange={(event) => setSearch(event.target.value)} />
+          </label>
           <button
             className="thread-item"
             aria-pressed={!selected}
@@ -41,7 +48,7 @@ export default function Messages() {
               retry={() => void projects.refetch()}
             />
           ) : (
-            projects.data.map((project) => (
+            visibleProjects.map((project) => (
               <button
                 key={project.id}
                 className="thread-item"
@@ -53,6 +60,7 @@ export default function Messages() {
               </button>
             ))
           )}
+          {!projects.isPending && !projects.error && !visibleProjects.length && <p className="thread-empty">No matching conversations.</p>}
         </aside>
         <ChatThread
           key={selected?.id || 'support'}

@@ -4,7 +4,7 @@ import { MotionMedia } from './MotionMedia'
 import { SuiteCanvas } from './SuiteCanvas'
 import { defaultDraft } from '../../domain/studio'
 import type { SuiteBlueprint, Template } from '../../types'
-import { suiteArtwork, templateArtwork } from '../../data/previewArt'
+import { suiteArtwork, suiteVideo, templateArtwork, templateVideo } from '../../data/previewArt'
 
 const headlines: Record<string, string> = {
   Cafe: 'Good coffee. Better company.',
@@ -39,7 +39,7 @@ export function TemplateCover({
   autoplay?: boolean
 }) {
   const artwork = templateArtwork(template)
-  if (artwork) return <ArtworkCover src={artwork} title={template.name} />
+  if (artwork) return <ArtworkCover src={artwork} videos={templateVideo(template)} title={template.name} />
   const software = template.category === 'Tech Startup'
   if (software)
     return (
@@ -117,7 +117,7 @@ export function TemplateCover({
 }
 export function SuiteCover({ suite }: { suite: SuiteBlueprint }) {
   const artwork = suiteArtwork(suite.slug)
-  if (artwork) return <ArtworkCover src={artwork} title={suite.title} />
+  if (artwork) return <ArtworkCover src={artwork} videos={suiteVideo(suite.slug)} title={suite.title} />
   const draft = defaultDraft(
     suite.slug,
     suite.title,
@@ -149,10 +149,10 @@ export function SuiteCover({ suite }: { suite: SuiteBlueprint }) {
   )
 }
 
-export function ArtworkCover({ src, title }: { src: string; title: string }) {
+export function ArtworkCover({ src, videos = [], title }: { src: string; videos?: string[]; title: string }) {
   return (
     <figure className="artwork-cover">
-      <MotionMedia images={[src]} alt={`${title} interface design preview`} />
+      <MotionMedia images={[src]} videos={videos} autoplay alt={`${title} interface design preview`} />
       <figcaption>
         {title}
         <span>Design reference</span>

@@ -33,11 +33,13 @@ function imageSource(source: string, width = 960) {
 }
 export function MotionMedia({
   images,
+  videos = [],
   alt,
   autoplay = false,
   children,
 }: {
   images: string[]
+  videos?: string[]
   alt: string
   autoplay?: boolean
   children?: ReactNode
@@ -68,6 +70,7 @@ export function MotionMedia({
   const sources = [...new Set(images)]
     .slice(0, 4)
     .map((src) => imageSource(src))
+  const videoSources = [...new Set(videos)].slice(0, 2)
   const stableSources = JSON.stringify(sources)
   const controls = useAnimationControls()
   useEffect(() => {
@@ -123,7 +126,20 @@ export function MotionMedia({
     >
       <motion.div className="motion-media-stage" animate={controls}>
         <AnimatePresence initial={false}>
-          {!failed && sources.length > 0 ? (
+          {!failed && videoSources.length > 0 ? (
+            <video
+              key={videoSources[index % videoSources.length]}
+              src={videoSources[index % videoSources.length]}
+              poster={sources[0]}
+              muted
+              loop
+              playsInline
+              autoPlay={active}
+              preload="metadata"
+              aria-label={alt}
+              onError={() => setFailed(true)}
+            />
+          ) : !failed && sources.length > 0 ? (
             <motion.img
               key={sources[index % sources.length]}
               src={sources[index % sources.length]}
@@ -162,9 +178,9 @@ export function MotionMedia({
           {active ? <Pause size={13} /> : <Play size={13} />}
         </button>
       )}
-      {sources.length > 1 && (
+      {videoSources.length + sources.length > 1 && (
         <div className="media-dots" aria-hidden="true">
-          {sources.map((source, i) => (
+          {[...videoSources, ...sources].map((source, i) => (
             <i key={source} data-active={i === index} />
           ))}
         </div>

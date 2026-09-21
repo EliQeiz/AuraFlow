@@ -25,19 +25,19 @@
   -webkit-font-smoothing: antialiased;
 }
 [data-theme='light'] {
-  --aura-dark: 249 250 252;
+  --aura-dark: 247 248 252;
   --aura-surface: 255 255 255;
   --aura-card: 255 255 255;
-  --aura-ink: 28 30 39;
-  --aura-muted: 99 103 119;
-  --line: #e1e3ea;
-  --subtle: #f0f1f6;
-  --primary: #6254df;
-  --primary-hover: #5142c9;
-  --cyan: #097a8a;
+  --aura-ink: 24 27 39;
+  --aura-muted: 89 96 116;
+  --line: #dfe3ee;
+  --subtle: #f0f2f8;
+  --primary: #5f55e8;
+  --primary-hover: #4f45d1;
+  --cyan: #087d99;
   --positive: #167254;
   --danger: #b52642;
-  --shadow: 0 12px 32px #26334c0c;
+  --shadow: 0 16px 42px #26334c16;
   color-scheme: light;
 }
 * {
@@ -183,6 +183,11 @@ button:disabled {
   border-color: #ffffff12;
   box-shadow: inset 0 1px 0 #ffffff12;
 }
+[data-theme='light'] .af-button--primary {
+  color: #fff;
+  background: linear-gradient(135deg, #5f55e8, #159fd1);
+  box-shadow: 0 8px 18px #5f55e82e, inset 0 1px 0 #ffffff55;
+}
 .af-button--primary:hover:not(:disabled) {
   background: var(--primary-hover);
 }
@@ -303,6 +308,9 @@ button:disabled {
   background: rgb(var(--aura-card));
   min-width: 0;
 }
+[data-theme='light'] .af-card {
+  box-shadow: var(--shadow);
+}
 .section-shell {
   width: 100%;
   max-width: 1240px;
@@ -312,6 +320,10 @@ button:disabled {
 .glass {
   border: 1px solid var(--line);
   background: rgb(var(--aura-surface));
+}
+[data-theme='light'] .glass {
+  background: rgb(var(--aura-surface) / 0.86);
+  box-shadow: 0 10px 30px #26334c0b;
 }
 .aura-border {
   border: 1px solid var(--line);

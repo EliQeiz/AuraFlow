@@ -1,6 +1,8 @@
 import {
+  Accessibility,
   Camera,
   Download,
+  Bell,
   LogOut,
   Monitor,
   Moon,
@@ -8,7 +10,7 @@ import {
   Sun,
 } from 'lucide-react'
 import { reload, sendEmailVerification } from 'firebase/auth'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { Button, ButtonLink } from '../../components/ui/Button'
@@ -41,9 +43,16 @@ export default function Settings() {
   const [confirmation, setConfirmation] = useState('')
   const [error, setError] = useState('')
   const [verificationSent, setVerificationSent] = useState(false)
+  const [reduceMotion, setReduceMotion] = useState(() => window.localStorage.getItem('auraflow-reduce-motion') === 'true')
+  const [compactWorkspace, setCompactWorkspace] = useState(() => window.localStorage.getItem('auraflow-compact-workspace') === 'true')
+  const [emailNotifications, setEmailNotifications] = useState(() => window.localStorage.getItem('auraflow-email-notifications') !== 'false')
   const passwordAccount = user?.providerData.some(
     (provider) => provider.providerId === 'password',
   )
+  useEffect(() => {
+    document.documentElement.dataset.reducedMotion = String(reduceMotion)
+    document.documentElement.dataset.compactWorkspace = String(compactWorkspace)
+  }, [compactWorkspace, reduceMotion])
   async function act(name: string, action: () => Promise<void>) {
     setPending(name)
     setError('')
@@ -92,6 +101,11 @@ export default function Settings() {
         throw err
       }
     })
+  }
+  function preference(key: string, value: boolean, setter: (next: boolean) => void) {
+    setter(value)
+    window.localStorage.setItem(key, String(value))
+    toast.success('Workspace preference updated.')
   }
   function exportData() {
     const content = JSON.stringify(
@@ -191,6 +205,44 @@ export default function Settings() {
               Save profile
             </Button>
           </form>
+        </div>
+      </section>
+      <section className="settings-section">
+        <div>
+          <h2>Workspace behavior</h2>
+          <p>Control motion, density, and update preferences for this device.</p>
+        </div>
+        <div className="settings-preferences">
+          <button
+            type="button"
+            className="settings-preference"
+            aria-pressed={reduceMotion}
+            onClick={() => preference('auraflow-reduce-motion', !reduceMotion, setReduceMotion)}
+          >
+            <Accessibility size={18} />
+            <span><strong>Reduce motion</strong><small>Use calmer transitions in the studio and workspace.</small></span>
+            <i aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="settings-preference"
+            aria-pressed={compactWorkspace}
+            onClick={() => preference('auraflow-compact-workspace', !compactWorkspace, setCompactWorkspace)}
+          >
+            <Monitor size={18} />
+            <span><strong>Compact workspace</strong><small>Fit more project information into each view.</small></span>
+            <i aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="settings-preference"
+            aria-pressed={emailNotifications}
+            onClick={() => preference('auraflow-email-notifications', !emailNotifications, setEmailNotifications)}
+          >
+            <Bell size={18} />
+            <span><strong>Email updates</strong><small>Receive important request and project updates.</small></span>
+            <i aria-hidden="true" />
+          </button>
         </div>
       </section>
       <section className="settings-section">

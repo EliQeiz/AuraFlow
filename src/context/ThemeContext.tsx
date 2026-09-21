@@ -14,7 +14,7 @@ const themeKey = 'auraflow-theme'
 export function ThemeProvider({ children }: PropsWithChildren) {
   const [theme, setTheme] = useState<ThemePreference>(() => {
     const saved = window.localStorage.getItem(themeKey)
-    return saved === 'dark' || saved === 'light' || saved === 'system' ? saved : 'dark'
+    return saved === 'dark' || saved === 'light' || saved === 'system' ? saved : 'light'
   })
   const [systemTheme, setSystemTheme] = useState<'dark' | 'light'>(() => (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'))
   const resolvedTheme = theme === 'system' ? systemTheme : theme
