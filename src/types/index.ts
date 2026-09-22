@@ -274,6 +274,31 @@ export interface AfcCertificate {
   certificateCode: string
   issuedAt?: unknown
 }
+
+export interface AfcAssessment {
+  id: string
+  courseId: string
+  title: string
+  durationMinutes: number
+  passMark: number
+  maxAttempts: number
+  questionCount: number
+  published: boolean
+  createdAt?: unknown
+  updatedAt?: unknown
+}
+
+export interface AfcAssessmentQuestion {
+  id: string
+  prompt: string
+  choices: string[]
+}
+
+export interface AfcAssessmentAttempt {
+  attemptId: string
+  deadlineAt: number
+  questions: AfcAssessmentQuestion[]
+}
 export type RequestStatus =
   | 'Submitted'
   | 'Discovery'

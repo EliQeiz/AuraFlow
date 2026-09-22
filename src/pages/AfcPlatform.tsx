@@ -3,6 +3,7 @@ import {
   Award,
   BookOpen,
   CheckCircle2,
+  ClipboardCheck,
   ChevronRight,
   CirclePlay,
   Clock3,
@@ -11,6 +12,7 @@ import {
   Library,
   LogOut,
   Menu,
+  Plus,
   Play,
   Search,
   ShieldCheck,
@@ -18,7 +20,7 @@ import {
   UsersRound,
   X,
 } from 'lucide-react'
-import { useMemo, useState, type FormEvent, type PropsWithChildren } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type PropsWithChildren } from 'react'
 import { FcGoogle } from 'react-icons/fc'
 import {
   Link,
@@ -39,6 +41,7 @@ import { useAuth } from '../context/AuthContext'
 import {
   useAfcAllEnrollmentRequests,
   useAfcAllSubmissions,
+  useAfcAssessments,
   useAfcCertificates,
   useAfcCourses,
   useAfcEnrollments,
@@ -52,10 +55,16 @@ import {
   saveAfcCourse,
   toggleAfcLesson,
 } from '../lib/afc'
+import {
+  createAfcAssessment,
+  recordAfcIntegrityEvent,
+  startAfcAssessment,
+  submitAfcAssessment,
+} from '../lib/afcApi'
 import { loginWithEmail, loginWithGoogle, registerWithEmail } from '../lib/auth'
 import { firebaseConfigured } from '../lib/firebase'
 import { asErrorMessage } from '../lib/utils'
-import type { AfcCourse, AfcCourseLevel } from '../types'
+import type { AfcAssessmentAttempt, AfcCourse, AfcCourseLevel } from '../types'
 
 const fields = [
   'Software development',
@@ -80,8 +89,8 @@ function AfcBrand() {
 
 function AfcShell({ children, learner = false }: PropsWithChildren<{ learner?: boolean }>) {
   const { user, admin, loading, logout } = useAuth()
-  const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
   async function signOut() {
     try {
       await logout()
@@ -141,7 +150,7 @@ function AfcFooter() {
   return (
     <footer className="afc-footer">
       <div><AfcBrand /><p>Practical technology education, built from Ghana for learners everywhere.</p></div>
-      <div><strong>Learn</strong><Link to="/afc/catalog">Explore programs</Link><Link to="/afc/about">How AFC works</Link></div>
+      <div><strong>Learn</strong><Link to="/afc/catalog">Explore programs</Link><Link to="/afc/about">How AFC works</Link><Link to="/afc/verify">Verify a certificate</Link></div>
       <div><strong>AuraFlow</strong><Link to="/">Business platform</Link><Link to="/contact">Contact the team</Link></div>
     </footer>
   )
@@ -266,6 +275,7 @@ function CoursePlayer() {
   const [busy, setBusy] = useState(false)
   const course = courses.find((item) => item.id === courseId)
   const enrollment = enrollments.find((item) => item.courseId === courseId && item.status === 'active')
+  const assessments = useAfcAssessments(courseId, Boolean(enrollment))
   const selected = course?.lessons.find((lesson) => lesson.id === (selectedId || course.lessons[0]?.id))
   const videoEmbed = afcYoutubeEmbedUrl(selected?.videoUrl)
   async function complete() {
@@ -276,7 +286,7 @@ function CoursePlayer() {
   if (isLoading) return <AfcShell learner><StatePanel loading /></AfcShell>
   if (!course || !enrollment) return <Navigate to={course ? `/afc/course/${course.slug}` : '/afc/catalog'} replace />
   const completeLesson = enrollment.completedLessonIds.includes(selected?.id || '')
-  return <AfcShell learner><main className="afc-player"><aside className="afc-player__rail"><Link to="/afc/learn"><ChevronRight className="afc-player__back" /> My learning</Link><p>{course.category}</p><h2>{course.title}</h2><div className="afc-player__progress"><span>Course progress</span><strong>{enrollment.progress}%</strong><div className="afc-progress-track"><i style={{ width: `${enrollment.progress}%` }} /></div></div><ol>{course.lessons.map((lesson, index) => <li key={lesson.id}><button onClick={() => setSelectedId(lesson.id)} className={lesson.id === selected?.id ? 'is-active' : ''}><span>{enrollment.completedLessonIds.includes(lesson.id) ? <CheckCircle2 /> : String(index + 1).padStart(2, '0')}</span><div><b>{lesson.title}</b><small>{lesson.durationMinutes} min</small></div></button></li>)}</ol></aside><section className="afc-player__main"><div className="afc-player__lesson-meta"><span>Lesson {course.lessons.findIndex((lesson) => lesson.id === selected?.id) + 1}</span><span>{selected?.durationMinutes} minutes</span></div><div className="afc-player__video">{videoEmbed ? <iframe title={`${selected?.title || 'Lesson'} video`} src={videoEmbed} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /> : <><img src={course.coverImage} alt="" /><div><CirclePlay /><span>Lesson media is released by your instructor here.</span></div></>}</div><article><h1>{selected?.title}</h1><p>{selected?.summary}</p><div className="afc-player__notes"><h3>Before you continue</h3><p>Use this space for the lesson instructions, resources, and practical context. Course media and materials are supplied through instructor publishing, not exposed through public catalog pages.</p></div><Button onClick={() => void complete()} loading={busy} variant={completeLesson ? 'secondary' : 'primary'}>{completeLesson ? 'Mark as not complete' : 'Mark lesson complete'} <CheckCircle2 /></Button></article></section></main></AfcShell>
+  return <AfcShell learner><main className="afc-player"><aside className="afc-player__rail"><Link to="/afc/learn"><ChevronRight className="afc-player__back" /> My learning</Link><p>{course.category}</p><h2>{course.title}</h2><div className="afc-player__progress"><span>Course progress</span><strong>{enrollment.progress}%</strong><div className="afc-progress-track"><i style={{ width: `${enrollment.progress}%` }} /></div></div><ol>{course.lessons.map((lesson, index) => <li key={lesson.id}><button onClick={() => setSelectedId(lesson.id)} className={lesson.id === selected?.id ? 'is-active' : ''}><span>{enrollment.completedLessonIds.includes(lesson.id) ? <CheckCircle2 /> : String(index + 1).padStart(2, '0')}</span><div><b>{lesson.title}</b><small>{lesson.durationMinutes} min</small></div></button></li>)}</ol></aside><section className="afc-player__main"><div className="afc-player__lesson-meta"><span>Lesson {course.lessons.findIndex((lesson) => lesson.id === selected?.id) + 1}</span><span>{selected?.durationMinutes} minutes</span></div><div className="afc-player__video">{videoEmbed ? <iframe title={`${selected?.title || 'Lesson'} video`} src={videoEmbed} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /> : <><img src={course.coverImage} alt="" /><div><CirclePlay /><span>Lesson media is released by your instructor here.</span></div></>}</div><article><h1>{selected?.title}</h1><p>{selected?.summary}</p><div className="afc-player__notes"><h3>Before you continue</h3><p>Use this space for lesson instructions, resources, and practical context. Course media and materials are supplied through instructor publishing, not exposed through public catalog pages.</p></div><Button onClick={() => void complete()} loading={busy} variant={completeLesson ? 'secondary' : 'primary'}>{completeLesson ? 'Mark as not complete' : 'Mark lesson complete'} <CheckCircle2 /></Button></article>{assessments.data.length ? <section className="afc-assessment-list"><div><p className="afc-kicker">Course assessments</p><h2>Test your understanding</h2><p>Attempts are timed, graded by AFC, and stored only in your learning record.</p></div>{assessments.data.map((assessment) => <article key={assessment.id}><div><ClipboardCheck /><span>{assessment.questionCount} questions · {assessment.durationMinutes} minutes · Pass mark {assessment.passMark}%</span><h3>{assessment.title}</h3></div><ButtonLink to={`/afc/learn/${course.id}/assessment/${assessment.id}`}>Start assessment <ArrowRight /></ButtonLink></article>)}</section> : null}</section></main></AfcShell>
 }
 
 function Certificates() {
@@ -284,7 +294,159 @@ function Certificates() {
   const { data: courses } = useAfcCourses()
   const { data: certificates } = useAfcCertificates(user?.uid)
   const map = useMemo(() => new Map(courses.map((course) => [course.id, course])), [courses])
-  return <AfcShell learner><main className="afc-page"><section className="afc-page-intro"><p className="afc-kicker">Credential wallet</p><h1>Your AFC records.</h1><p>Certificates are issued only after the appropriate course completion and review process.</p></section>{certificates.length ? <section className="afc-certificate-grid-v2">{certificates.map((certificate) => <article key={certificate.id}><Award /><span>AuraFlow Class certificate</span><h2>{map.get(certificate.courseId)?.title || 'Learning program'}</h2><p>Certificate code</p><code>{certificate.certificateCode}</code></article>)}</section> : <section className="afc-empty-learning"><Award /><h2>No certificates have been issued yet.</h2><p>Keep learning. When a course has completion and review requirements, your issued credential will appear here.</p><ButtonLink to="/afc/learn">Open my learning</ButtonLink></section>}</main></AfcShell>
+  return <AfcShell learner><main className="afc-page"><section className="afc-page-intro"><p className="afc-kicker">Credential wallet</p><h1>Your AFC records.</h1><p>Certificates are issued only after the appropriate course completion and review process.</p></section>{certificates.length ? <section className="afc-certificate-grid-v2">{certificates.map((certificate) => <article key={certificate.id}><Award /><span>AuraFlow Class certificate</span><h2>{map.get(certificate.courseId)?.title || 'Learning program'}</h2><p>Certificate code</p><code>{certificate.certificateCode}</code><Link to={`/afc/verify?code=${encodeURIComponent(certificate.certificateCode)}`}>Open verifier <ArrowRight /></Link></article>)}</section> : <section className="afc-empty-learning"><Award /><h2>No certificates have been issued yet.</h2><p>Keep learning. When a course has completion and review requirements, your issued credential will appear here.</p><ButtonLink to="/afc/learn">Open my learning</ButtonLink></section>}</main></AfcShell>
+}
+
+function CertificateVerify() {
+  const location = useLocation()
+  const [code, setCode] = useState(() => new URLSearchParams(location.search).get('code') || '')
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<{ valid: boolean; courseTitle?: string; issuedAt?: string | null } | null>(null)
+  async function verify(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true)
+    try {
+      const response = await fetch(`/api/afc-verify?code=${encodeURIComponent(code)}`)
+      const data = await response.json() as { valid?: boolean; courseTitle?: string; issuedAt?: string | null; message?: string }
+      if (!response.ok) throw new Error(data.message || 'Unable to verify that certificate.')
+      setResult({ valid: Boolean(data.valid), courseTitle: data.courseTitle, issuedAt: data.issuedAt })
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return <AfcShell><main className="afc-page"><section className="afc-verify"><p className="afc-kicker">Credential verification</p><h1>Verify an AFC certificate.</h1><p>Enter an AFC certificate code to confirm its program and issue date. Verification never reveals learner identity or account data.</p><form onSubmit={(event) => void verify(event)}><Field label="Certificate code"><Input value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="AFC-2026-ABC12345" pattern="AFC-\\d{4}-[A-Z0-9]{8}" required /></Field><Button type="submit" loading={busy}>Verify certificate <ShieldCheck /></Button></form>{result ? <div className={result.valid ? 'is-valid' : 'is-invalid'}>{result.valid ? <CheckCircle2 /> : <X />}<div><strong>{result.valid ? 'Verified AFC credential' : 'No credential found'}</strong><p>{result.valid ? `${result.courseTitle}${result.issuedAt ? ` · Issued ${new Date(result.issuedAt).toLocaleDateString()}` : ''}` : 'Check the code and try again. AFC does not disclose learner records during verification.'}</p></div></div> : null}</section></main><AfcFooter /></AfcShell>
+}
+
+function AssessmentPlayer() {
+  const { courseId, assessmentId } = useParams()
+  const { user } = useAuth()
+  const { data: courses, isLoading } = useAfcCourses()
+  const { data: enrollments } = useAfcEnrollments(user?.uid)
+  const enrollment = enrollments.find((item) => item.courseId === courseId && item.status === 'active')
+  const assessments = useAfcAssessments(courseId, Boolean(enrollment))
+  const assessment = assessments.data.find((item) => item.id === assessmentId)
+  const course = courses.find((item) => item.id === courseId)
+  const [attempt, setAttempt] = useState<AfcAssessmentAttempt | null>(null)
+  const [answers, setAnswers] = useState<Record<string, number>>({})
+  const [now, setNow] = useState(0)
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<{ score: number; passed: boolean; expired: boolean } | null>(null)
+
+  useEffect(() => {
+    if (!attempt) return
+    const tick = window.setInterval(() => setNow(Date.now()), 1000)
+    const report = (type: 'visibility-hidden' | 'window-blur' | 'copy' | 'paste') => {
+      void recordAfcIntegrityEvent(attempt.attemptId, type).catch(() => undefined)
+    }
+    const onVisibility = () => { if (document.hidden) report('visibility-hidden') }
+    const onCopy = () => report('copy')
+    const onPaste = () => report('paste')
+    const onBlur = () => report('window-blur')
+    document.addEventListener('visibilitychange', onVisibility)
+    document.addEventListener('copy', onCopy)
+    document.addEventListener('paste', onPaste)
+    window.addEventListener('blur', onBlur)
+    return () => {
+      window.clearInterval(tick)
+      document.removeEventListener('visibilitychange', onVisibility)
+      document.removeEventListener('copy', onCopy)
+      document.removeEventListener('paste', onPaste)
+      window.removeEventListener('blur', onBlur)
+    }
+  }, [attempt])
+
+  async function start() {
+    if (!assessment) return
+    setBusy(true)
+    try {
+      const next = await startAfcAssessment(assessment.id)
+      setAttempt(next)
+      setNow(Date.now())
+      setAnswers({})
+      setResult(null)
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function submit() {
+    if (!attempt) return
+    setBusy(true)
+    try {
+      setResult(await submitAfcAssessment(attempt.attemptId, answers))
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (isLoading || assessments.isLoading) return <AfcShell learner><StatePanel loading /></AfcShell>
+  if (!course || !assessment || !enrollment) return <Navigate to="/afc/learn" replace />
+  const remaining = attempt ? Math.max(0, Math.ceil((attempt.deadlineAt - now) / 1000)) : 0
+  const time = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`
+  const allAnswered = attempt ? attempt.questions.every((question) => answers[question.id] !== undefined) : false
+
+  return <AfcShell learner><main className="afc-assessment-page"><Link className="afc-breadcrumb" to={`/afc/learn/${course.id}`}><ChevronRight className="afc-player__back" /> Back to course</Link>{result ? <section className="afc-assessment-result"><Award /><p className="afc-kicker">Assessment complete</p><h1>{result.expired ? 'Time expired.' : result.passed ? 'You passed.' : 'Keep building your understanding.'}</h1><strong>{result.score}%</strong><p>{result.expired ? 'This attempt closed when its time limit elapsed.' : result.passed ? `You met the ${assessment.passMark}% pass mark.` : `The pass mark is ${assessment.passMark}%. Review the course before another attempt.`}</p><ButtonLink to={`/afc/learn/${course.id}`}>Return to course <ArrowRight /></ButtonLink></section> : !attempt ? <section className="afc-assessment-start"><ClipboardCheck /><p className="afc-kicker">Timed assessment</p><h1>{assessment.title}</h1><p>Complete {assessment.questionCount} questions in {assessment.durationMinutes} minutes. You have up to {assessment.maxAttempts} attempt{assessment.maxAttempts === 1 ? '' : 's'} and need {assessment.passMark}% to pass.</p><ul><li><CheckCircle2 /> Questions and grades are managed by AFC.</li><li><CheckCircle2 /> Your attempt is private to your account.</li><li><CheckCircle2 /> Leaving this tab is recorded for review, not automatically graded.</li></ul><Button onClick={() => void start()} loading={busy}>Begin assessment <ArrowRight /></Button></section> : <section className="afc-assessment-run"><header><div><p className="afc-kicker">{course.title}</p><h1>{assessment.title}</h1></div><div className={remaining < 60 ? 'is-urgent' : ''}><span>Time remaining</span><strong>{time}</strong></div></header><p className="afc-assessment-run__notice">Answer every question before submitting. AFC grades this attempt on the server; answers cannot be changed after submission.</p><ol>{attempt.questions.map((question, index) => <li key={question.id}><span>{String(index + 1).padStart(2, '0')}</span><div><h2>{question.prompt}</h2><div className="afc-answer-grid">{question.choices.map((choice, choiceIndex) => <button type="button" key={choice} className={answers[question.id] === choiceIndex ? 'is-selected' : ''} onClick={() => setAnswers((current) => ({ ...current, [question.id]: choiceIndex }))}><i>{String.fromCharCode(65 + choiceIndex)}</i>{choice}</button>)}</div></div></li>)}</ol><footer><span>{Object.keys(answers).length} of {attempt.questions.length} answered</span><Button onClick={() => void submit()} loading={busy} disabled={!allAnswered}>Submit assessment <CheckCircle2 /></Button></footer></section>}</main></AfcShell>
+}
+
+type AssessmentDraftQuestion = {
+  id: string
+  prompt: string
+  choices: string[]
+  correctOption: number
+}
+
+function AssessmentBuilder({ courses }: { courses: AfcCourse[] }) {
+  const [courseId, setCourseId] = useState('')
+  const [title, setTitle] = useState('')
+  const [durationMinutes, setDurationMinutes] = useState('20')
+  const [passMark, setPassMark] = useState('70')
+  const [maxAttempts, setMaxAttempts] = useState('2')
+  const [prompt, setPrompt] = useState('')
+  const [choices, setChoices] = useState('')
+  const [correctOption, setCorrectOption] = useState('0')
+  const [questions, setQuestions] = useState<AssessmentDraftQuestion[]>([])
+  const [busy, setBusy] = useState(false)
+  const selectedCourseId = courseId || courses[0]?.id || ''
+
+  function addQuestion() {
+    const optionList = choices.split('\n').map((item) => item.trim()).filter(Boolean)
+    const correct = Number(correctOption)
+    if (prompt.trim().length < 8 || optionList.length < 2 || correct >= optionList.length) {
+      toast.error('Add a question, at least two options, and a valid correct answer.')
+      return
+    }
+    setQuestions((current) => [...current, { id: `question_${Date.now()}_${current.length}`, prompt: prompt.trim(), choices: optionList, correctOption: correct }])
+    setPrompt('')
+    setChoices('')
+    setCorrectOption('0')
+  }
+
+  async function publish(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedCourseId || !questions.length) {
+      toast.error('Choose a course and add at least one question.')
+      return
+    }
+    setBusy(true)
+    try {
+      await createAfcAssessment({ courseId: selectedCourseId, title, durationMinutes: Number(durationMinutes), passMark: Number(passMark), maxAttempts: Number(maxAttempts), questions })
+      setTitle('')
+      setQuestions([])
+      toast.success('Assessment published to enrolled learners.')
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return <form className="afc-assessment-builder" onSubmit={(event) => void publish(event)}><div className="afc-section-heading-v2"><div><p className="afc-kicker">Assessment authoring</p><h2>Build a timed knowledge check</h2></div><span className="afc-question-count">{questions.length} question{questions.length === 1 ? '' : 's'}</span></div><div className="afc-builder-fields"><Field label="Course"><Select value={selectedCourseId} onChange={(event) => setCourseId(event.target.value)} required disabled={!courses.length}>{courses.length ? courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>) : <option value="">Publish a course first</option>}</Select></Field><Field label="Assessment title"><Input value={title} onChange={(event) => setTitle(event.target.value)} minLength={4} maxLength={180} required /></Field><Field label="Time limit (minutes)"><Input type="number" min="1" max="240" value={durationMinutes} onChange={(event) => setDurationMinutes(event.target.value)} required /></Field><Field label="Pass mark (%)"><Input type="number" min="0" max="100" value={passMark} onChange={(event) => setPassMark(event.target.value)} required /></Field><Field label="Maximum attempts"><Input type="number" min="1" max="5" value={maxAttempts} onChange={(event) => setMaxAttempts(event.target.value)} required /></Field></div><div className="afc-question-composer"><div><p className="afc-kicker">Add a question</p><Field label="Question"><Textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} minLength={8} maxLength={3000} placeholder="What is the first action a secure API should take?" /></Field><Field label="Options, one per line"><Textarea value={choices} onChange={(event) => setChoices(event.target.value)} placeholder={'Validate identity\nStore password in a client variable\nReturn every record'} /></Field><Field label="Correct option"><Select value={correctOption} onChange={(event) => setCorrectOption(event.target.value)}>{choices.split('\n').map((item) => item.trim()).filter(Boolean).map((item, index) => <option key={`${item}-${index}`} value={index}>{String.fromCharCode(65 + index)}. {item}</option>)}</Select></Field><Button type="button" variant="secondary" onClick={addQuestion}><Plus /> Add question</Button></div><ol>{questions.length ? questions.map((question, index) => <li key={question.id}><button type="button" aria-label={`Remove question ${index + 1}`} onClick={() => setQuestions((current) => current.filter((item) => item.id !== question.id))}>×</button><span>{String(index + 1).padStart(2, '0')}</span><b>{question.prompt}</b><small>Correct: {String.fromCharCode(65 + question.correctOption)} · {question.choices.length} options</small></li>) : <li className="is-empty">Questions you add appear here before publishing.</li>}</ol></div><Button type="submit" loading={busy} disabled={!courses.length || !questions.length}>Publish assessment <ArrowRight /></Button></form>
 }
 
 function Instructor() {
@@ -301,7 +463,7 @@ function Instructor() {
   async function publish(event: FormEvent) { event.preventDefault(); const lessonItems = lessons.split('\n').map((item) => item.trim()).filter(Boolean); if (!lessonItems.length) { toast.error('Add at least one lesson.'); return }; setBusy(true); try { const slug = title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); const parsedLessons = lessonItems.map((item, index) => { const [lessonTitle, rawVideoUrl, rawMinutes] = item.split('|').map((part) => part.trim()); return { id: `lesson-${index + 1}`, title: lessonTitle, summary: 'Instructor notes will be published here.', durationMinutes: Number(rawMinutes) || 45, ...(rawVideoUrl ? { videoUrl: rawVideoUrl } : {}) } }); await saveAfcCourse({ title, slug, summary, category: 'Software development', level: 'Beginner' as AfcCourseLevel, priceGhs: 0, instructorName: 'AuraFlow Class', coverImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1600&q=85', published: true, estimatedHours: Math.max(1, parsedLessons.reduce((total, lesson) => total + lesson.durationMinutes, 0) / 60), outcomes: ['Apply the material in a practical setting'], lessons: parsedLessons }); setTitle(''); setSummary(''); setLessons(''); await coursesQuery.refetch(); toast.success('Course published.'); } catch (error) { toast.error(asErrorMessage(error)) } finally { setBusy(false) } }
   async function decide(id: string, decision: 'approved' | 'declined') { const request = requestsQuery.data.find((item) => item.id === id); if (!request) return; setBusy(true); try { await decideAfcEnrollmentRequest(request, decision); toast.success(decision === 'approved' ? 'Enrollment approved.' : 'Enrollment declined.'); } catch (error) { toast.error(asErrorMessage(error)) } finally { setBusy(false) } }
   async function release(submissionId: string) { setBusy(true); try { await reviewAfcSubmission(submissionId, { status: 'reviewed', score: 70, reviewerNote: 'Reviewed by AuraFlow Class. Open the assignment feedback to continue improving your work.' }); toast.success('Feedback released.'); } catch (error) { toast.error(asErrorMessage(error)) } finally { setBusy(false) } }
-  return <AfcShell learner><main className="afc-instructor"><section className="afc-page-intro"><p className="afc-kicker">Instructor operations</p><h1>Publish learning. Review evidence.</h1><p>Manage what learners see, decide enrollment requests, and release feedback without accessing unrelated AuraFlow workspace data.</p></section><section className="afc-operations-grid"><article><span>Published courses</span><strong>{coursesQuery.data.filter((course) => course.published).length}</strong></article><article><span>Enrollment requests</span><strong>{requestsQuery.data.filter((request) => request.status === 'submitted').length}</strong></article><article><span>Awaiting review</span><strong>{submissionsQuery.data.filter((submission) => submission.status === 'submitted').length}</strong></article></section><section className="afc-teach-grid"><form className="afc-author-form" onSubmit={(event) => void publish(event)}><div className="afc-section-heading-v2"><div><p className="afc-kicker">Course authoring</p><h2>Publish a focused course</h2></div><Button type="button" variant="secondary" onClick={() => void provision()} loading={busy}>Provision starter curriculum</Button></div><Field label="Course title"><Input value={title} onChange={(event) => setTitle(event.target.value)} minLength={4} maxLength={140} required /></Field><Field label="Course summary"><Textarea value={summary} onChange={(event) => setSummary(event.target.value)} minLength={20} maxLength={2400} required /></Field><Field label="Lessons, one per line" hint="Use: Lesson title | YouTube URL | minutes. Video and minutes are optional."><Textarea value={lessons} onChange={(event) => setLessons(event.target.value)} required placeholder="First concept | https://youtu.be/example-id | 35\nGuided practice | | 45\nApplied review" /></Field><Button type="submit" loading={busy}>Publish course <ArrowRight /></Button></form><div className="afc-operations-list"><div><p className="afc-kicker">Enrollment queue</p><h2>Requests to decide</h2>{requestsQuery.data.filter((request) => request.status === 'submitted').length ? requestsQuery.data.filter((request) => request.status === 'submitted').map((request) => <article key={request.id}><div><b>{request.courseId}</b><span>Learner {request.userId.slice(0, 8)}</span></div><div><Button disabled={busy} onClick={() => void decide(request.id, 'approved')}>Approve</Button><Button disabled={busy} variant="secondary" onClick={() => void decide(request.id, 'declined')}>Decline</Button></div></article>) : <p>No paid enrollment requests are waiting.</p>}</div><div><p className="afc-kicker">Review queue</p><h2>Submitted work</h2>{submissionsQuery.data.filter((submission) => submission.status === 'submitted').length ? submissionsQuery.data.filter((submission) => submission.status === 'submitted').map((submission) => <article key={submission.id}><div><b>{submission.title}</b><span>{submission.courseId}</span></div><Button disabled={busy} onClick={() => void release(submission.id)}>Release review</Button></article>) : <p>No submissions are waiting.</p>}</div></div></section></main></AfcShell>
+  return <AfcShell learner><main className="afc-instructor"><section className="afc-page-intro"><p className="afc-kicker">Instructor operations</p><h1>Publish learning. Review evidence.</h1><p>Manage what learners see, decide enrollment requests, and release feedback without accessing unrelated AuraFlow workspace data.</p></section><section className="afc-operations-grid"><article><span>Published courses</span><strong>{coursesQuery.data.filter((course) => course.published).length}</strong></article><article><span>Enrollment requests</span><strong>{requestsQuery.data.filter((request) => request.status === 'submitted').length}</strong></article><article><span>Awaiting review</span><strong>{submissionsQuery.data.filter((submission) => submission.status === 'submitted').length}</strong></article></section><section className="afc-teach-grid"><form className="afc-author-form" onSubmit={(event) => void publish(event)}><div className="afc-section-heading-v2"><div><p className="afc-kicker">Course authoring</p><h2>Publish a focused course</h2></div><Button type="button" variant="secondary" onClick={() => void provision()} loading={busy}>Provision starter curriculum</Button></div><Field label="Course title"><Input value={title} onChange={(event) => setTitle(event.target.value)} minLength={4} maxLength={140} required /></Field><Field label="Course summary"><Textarea value={summary} onChange={(event) => setSummary(event.target.value)} minLength={20} maxLength={2400} required /></Field><Field label="Lessons, one per line" hint="Use: Lesson title | YouTube URL | minutes. Video and minutes are optional."><Textarea value={lessons} onChange={(event) => setLessons(event.target.value)} required placeholder="First concept | https://youtu.be/example-id | 35\nGuided practice | | 45\nApplied review" /></Field><Button type="submit" loading={busy}>Publish course <ArrowRight /></Button></form><div className="afc-operations-list"><div><p className="afc-kicker">Enrollment queue</p><h2>Requests to decide</h2>{requestsQuery.data.filter((request) => request.status === 'submitted').length ? requestsQuery.data.filter((request) => request.status === 'submitted').map((request) => <article key={request.id}><div><b>{request.courseId}</b><span>Learner {request.userId.slice(0, 8)}</span></div><div><Button disabled={busy} onClick={() => void decide(request.id, 'approved')}>Approve</Button><Button disabled={busy} variant="secondary" onClick={() => void decide(request.id, 'declined')}>Decline</Button></div></article>) : <p>No paid enrollment requests are waiting.</p>}</div><div><p className="afc-kicker">Review queue</p><h2>Submitted work</h2>{submissionsQuery.data.filter((submission) => submission.status === 'submitted').length ? submissionsQuery.data.filter((submission) => submission.status === 'submitted').map((submission) => <article key={submission.id}><div><b>{submission.title}</b><span>{submission.courseId}</span></div><Button disabled={busy} onClick={() => void release(submission.id)}>Release review</Button></article>) : <p>No submissions are waiting.</p>}</div></div></section><AssessmentBuilder courses={coursesQuery.data} /></main></AfcShell>
 }
 
 function About() {
@@ -323,5 +485,5 @@ function AfcAuth({ mode }: { mode: 'login' | 'register' }) {
 }
 
 export default function AfcPlatform() {
-  return <Routes><Route index element={<Landing />} /><Route path="catalog" element={<Catalog />} /><Route path="course/:slug" element={<CourseDetail />} /><Route path="about" element={<About />} /><Route path="login" element={<AfcAuth mode="login" />} /><Route path="register" element={<AfcAuth mode="register" />} /><Route path="learn" element={<AfcGuard><LearnerHome /></AfcGuard>} /><Route path="learn/:courseId" element={<AfcGuard><CoursePlayer /></AfcGuard>} /><Route path="certificates" element={<AfcGuard><Certificates /></AfcGuard>} /><Route path="teach" element={<AfcGuard><Instructor /></AfcGuard>} /><Route path="*" element={<Navigate to="/afc" replace />} /></Routes>
+  return <Routes><Route index element={<Landing />} /><Route path="catalog" element={<Catalog />} /><Route path="course/:slug" element={<CourseDetail />} /><Route path="about" element={<About />} /><Route path="verify" element={<CertificateVerify />} /><Route path="login" element={<AfcAuth mode="login" />} /><Route path="register" element={<AfcAuth mode="register" />} /><Route path="learn" element={<AfcGuard><LearnerHome /></AfcGuard>} /><Route path="learn/:courseId" element={<AfcGuard><CoursePlayer /></AfcGuard>} /><Route path="learn/:courseId/assessment/:assessmentId" element={<AfcGuard><AssessmentPlayer /></AfcGuard>} /><Route path="certificates" element={<AfcGuard><Certificates /></AfcGuard>} /><Route path="teach" element={<AfcGuard><Instructor /></AfcGuard>} /><Route path="*" element={<Navigate to="/afc" replace />} /></Routes>
 }

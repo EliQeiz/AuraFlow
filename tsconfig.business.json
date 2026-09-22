@@ -14,6 +14,7 @@
   "include": [
     "api/business.ts",
     "api/afc.ts",
+    "api/afc-verify.ts",
     "api/whatsapp.ts",
     "server/afc/**/*.ts",
     "server/business/**/*.ts",

@@ -17,6 +17,7 @@ import { firebaseConfigured, getFirebaseDb } from '../lib/firebase'
 import { getBlogPosts } from '../lib/firestore'
 import type {
   AfcCertificate,
+  AfcAssessment,
   AfcCourse,
   AfcEnrollment,
   AfcEnrollmentRequest,
@@ -139,6 +140,19 @@ export function useAfcEnrollments(uid?: string) {
         where('userId', '==', uid),
       ),
     Boolean(uid),
+  )
+}
+
+export function useAfcAssessments(courseId?: string, enabled = true) {
+  return useLiveRows<AfcAssessment>(
+    ['afc-assessments', courseId ?? 'none'],
+    () =>
+      query(
+        collection(getFirebaseDb(), 'afcAssessments'),
+        where('courseId', '==', courseId),
+        where('published', '==', true),
+      ),
+    Boolean(courseId) && enabled,
   )
 }
 
