@@ -16,7 +16,7 @@ AuraFlow is a React, TypeScript, Vite, TailwindCSS, Framer Motion, and Firebase 
 ## Core Routes
 
 - Public: `/`, `/afc`, `/services`, `/solutions`, `/solutions/:slug`, `/templates`, `/templates/:slug`, `/portfolio`, `/pricing`, `/blog`, `/about`, `/contact`, `/login`, `/register`, `/forgot-password`.
-- Private client app: `/dashboard`, `/dashboard/studio`, `/dashboard/requests/new`, `/dashboard/requests`, `/dashboard/messages`, `/dashboard/templates`, `/dashboard/afc`, `/dashboard/settings`.
+- Private client app: `/dashboard`, `/dashboard/studio`, `/dashboard/requests/new`, `/dashboard/requests`, `/dashboard/messages`, `/dashboard/templates`, `/dashboard/settings`.
 - Owner/admin: `/dashboard/admin`, visible in navigation only after the admin custom claim is granted.
 
 ## Local Setup
@@ -28,7 +28,7 @@ AuraFlow is a React, TypeScript, Vite, TailwindCSS, Framer Motion, and Firebase 
 
 The local Firebase values are read from Vite `VITE_*` variables. `.env.local` is ignored by git; put the same values in Vercel project environment variables before a production build.
 
-AFC is part of the AuraFlow Firebase application. `/afc` is the public entry and `/dashboard/afc` is the protected learner and instructor workspace. Course content, enrolment, progress, submissions, and certificates use scoped Firestore and Storage rules; paid-course approval remains administrator-controlled until a server-side payment webhook is connected.
+AFC is a first-class AuraFlow product with its own routes and shell: `/afc`, `/afc/catalog`, `/afc/course/:slug`, `/afc/login`, `/afc/register`, `/afc/learn`, `/afc/learn/:courseId`, `/afc/certificates`, and admin-only `/afc/teach`. It shares the secure AuraFlow Firebase identity but has separate learner, instructor, course, progress, submission, and credential surfaces. Course content, enrolment, progress, submissions, and certificates use scoped Firestore and Storage rules; paid-course approval remains administrator-controlled until a server-side payment webhook is connected.
 
 ## Firebase Setup
 

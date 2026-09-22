@@ -875,6 +875,233 @@ button:disabled {
 .afc-admin-submission > div > p { max-height: 90px; overflow: auto; }
 .afc-review-form { grid-template-columns: 86px minmax(0, 1fr); align-items: start; margin-top: 12px; }
 .afc-review-form .af-input { min-height: 38px; }
+
+/* AuraFlow Class is a standalone learning product. These styles stay scoped so
+   its light, academic interface does not alter the AuraFlow business workspace. */
+.afc-app { --afc-ink: #13213a; --afc-muted: #61708a; --afc-blue: #155eef; --afc-blue-dark: #0d3b91; --afc-teal: #0b8d85; --afc-sky: #eaf2ff; --afc-canvas: #f7f9fd; --afc-paper: #ffffff; --afc-line: #dbe3ef; min-height: 100svh; color: var(--afc-ink); background: var(--afc-canvas); font-family: 'DM Sans', system-ui, sans-serif; }
+.afc-app h1, .afc-app h2, .afc-app h3, .afc-app h4 { color: var(--afc-ink); font-family: 'DM Sans', system-ui, sans-serif; letter-spacing: 0; }
+.afc-app .af-button { border-radius: 7px; background: var(--afc-blue); box-shadow: none; }
+.afc-app .af-button:hover { background: #0b4dcc; box-shadow: 0 7px 17px #155eef26; }
+.afc-app .af-button--secondary { color: var(--afc-blue-dark); border-color: #b9cdf7; background: var(--afc-paper); }
+.afc-app .af-button--secondary:hover { color: #0b4dcc; border-color: var(--afc-blue); background: #f6f9ff; }
+.afc-topbar { position: sticky; z-index: 20; top: 0; display: flex; align-items: center; height: 72px; padding: 0 max(30px, calc((100vw - 1340px) / 2)); border-bottom: 1px solid var(--afc-line); background: #fffffff2; backdrop-filter: blur(18px); }
+.afc-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--afc-ink); font-size: 20px; font-weight: 800; line-height: 1; white-space: nowrap; }
+.afc-brand__mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 8px; color: white; background: var(--afc-blue); }
+.afc-brand__mark svg { width: 20px; height: 20px; }
+.afc-brand small { margin-left: 2px; padding-left: 9px; border-left: 1px solid var(--afc-line); color: var(--afc-muted); font-size: 11px; font-weight: 700; letter-spacing: .02em; }
+.afc-nav { display: flex; align-items: center; gap: 26px; margin-left: 52px; }
+.afc-nav a { display: inline-flex; align-items: center; gap: 7px; color: #45536a; font-size: 13px; font-weight: 650; }
+.afc-nav a:hover { color: var(--afc-blue); }
+.afc-nav svg { width: 15px; height: 15px; }
+.afc-topbar__actions { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+.afc-login-link { color: #33435e; font-size: 13px; font-weight: 700; }
+.afc-join-button { min-height: 38px !important; padding-inline: 14px !important; }
+.afc-user-link { display: inline-flex; align-items: center; gap: 9px; max-width: 200px; color: #33435e; font-size: 12px; }
+.afc-user-link span { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; color: var(--afc-blue-dark); background: #dce9ff; font-size: 12px; font-weight: 800; }
+.afc-user-link b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.afc-icon-button, .afc-menu-button { display: grid; width: 35px; height: 35px; place-items: center; border: 1px solid var(--afc-line); border-radius: 6px; color: #44536a; background: var(--afc-paper); }
+.afc-icon-button:hover, .afc-menu-button:hover { color: var(--afc-blue); border-color: #acc3ef; }
+.afc-icon-button svg, .afc-menu-button svg { width: 17px; height: 17px; }
+.afc-menu-button { display: none; }
+.afc-footer { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; max-width: 1340px; margin: 0 auto; padding: 56px 30px; border-top: 1px solid var(--afc-line); color: var(--afc-muted); }
+.afc-footer > div { display: grid; align-content: start; gap: 12px; }
+.afc-footer p { max-width: 320px; font-size: 13px; line-height: 1.65; }
+.afc-footer strong { color: var(--afc-ink); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.afc-footer a:not(.afc-brand) { color: #516079; font-size: 13px; }
+.afc-footer a:hover { color: var(--afc-blue); }
+.afc-kicker { margin-bottom: 13px; color: var(--afc-blue); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.afc-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(420px, .95fr); gap: clamp(48px, 8vw, 126px); align-items: center; max-width: 1340px; min-height: 645px; margin: 0 auto; padding: 86px 30px 94px; }
+.afc-hero__copy { max-width: 645px; }
+.afc-hero h1 { max-width: 640px; font-size: clamp(46px, 5.1vw, 74px); font-weight: 750; line-height: 1.03; }
+.afc-hero__copy > p:not(.afc-kicker) { max-width: 590px; margin-top: 25px; color: #52617a; font-size: 18px; line-height: 1.65; }
+.afc-hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.afc-hero__trust { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 32px; color: #516079; font-size: 12px; font-weight: 650; }
+.afc-hero__trust span { display: inline-flex; align-items: center; gap: 6px; }
+.afc-hero__trust svg { width: 16px; height: 16px; color: var(--afc-teal); }
+.afc-hero__visual { position: relative; overflow: hidden; min-height: 410px; padding: 17px; border: 1px solid #cbd8ef; border-radius: 10px; background: linear-gradient(145deg, #fdfefe, #e7f0ff); box-shadow: 0 28px 64px #183a7624; }
+.afc-hero__visual::before { position: absolute; inset: 0 0 auto; height: 130px; content: ''; background: linear-gradient(90deg, #dfeaff, #eef9ff); }
+.afc-hero__visual-bar { position: relative; display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 8px; border-bottom: 1px solid #dce5f5; color: #52617a; font-size: 10px; }
+.afc-hero__visual-bar span { width: 6px; height: 6px; border-radius: 50%; background: #b8c6df; }
+.afc-hero__visual-bar b { margin-left: 8px; font-weight: 700; }
+.afc-hero__visual-content { position: relative; margin: 44px 20px 0; padding: 28px; border: 1px solid #d8e3f3; border-radius: 8px; background: white; }
+.afc-hero__visual-content > p { color: var(--afc-blue); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.afc-hero__visual-content h2 { max-width: 250px; margin: 10px 0 24px; font-size: 27px; line-height: 1.15; }
+.afc-video-block { display: flex; align-items: center; gap: 12px; min-height: 105px; padding: 20px; border-radius: 7px; color: white; background: linear-gradient(125deg, #0c275d, #155eef); font-size: 12px; font-weight: 700; }
+.afc-video-block svg { width: 35px; height: 35px; padding: 8px; border-radius: 50%; color: #123d91; background: white; }
+.afc-progress-line, .afc-progress-track { width: 100%; height: 6px; overflow: hidden; border-radius: 999px; background: #e3e9f3; }
+.afc-progress-line { margin-top: 24px; }
+.afc-progress-line i, .afc-progress-track i { display: block; width: 42%; height: 100%; border-radius: inherit; background: var(--afc-teal); }
+.afc-hero__visual-content small { display: block; margin-top: 8px; color: #748199; font-size: 10px; }
+.afc-hero__certificate { position: absolute; right: -8px; bottom: 31px; display: flex; align-items: center; gap: 10px; width: 210px; padding: 14px; border: 1px solid #b8d7cb; border-radius: 7px; color: #155245; background: #f2fbf7; box-shadow: 0 13px 28px #183a7620; font-size: 11px; font-weight: 700; }
+.afc-hero__certificate svg { width: 22px; height: 22px; color: #0b8d85; }
+.afc-section, .afc-page, .afc-course-detail, .afc-learner, .afc-player, .afc-instructor { max-width: 1340px; margin: 0 auto; padding-inline: 30px; }
+.afc-section { padding-top: 88px; padding-bottom: 88px; }
+.afc-section--formats { border-top: 1px solid var(--afc-line); }
+.afc-section--catalog { background: #edf4ff; max-width: none; padding-inline: max(30px, calc((100vw - 1280px) / 2)); }
+.afc-section-heading-v2 { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 31px; }
+.afc-section-heading-v2 h2 { font-size: clamp(29px, 3vw, 40px); line-height: 1.13; }
+.afc-section-heading-v2 > a { display: inline-flex; align-items: center; gap: 4px; color: var(--afc-blue); font-size: 13px; font-weight: 750; white-space: nowrap; }
+.afc-section-heading-v2 > a svg { width: 15px; height: 15px; }
+.afc-format-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.afc-format-grid article { min-height: 215px; padding: 25px; border: 1px solid var(--afc-line); border-radius: 8px; background: var(--afc-paper); }
+.afc-format-grid article > svg { width: 26px; height: 26px; padding: 5px; border-radius: 6px; color: var(--afc-blue); background: #eaf2ff; }
+.afc-format-grid article > span { display: block; color: var(--afc-blue); font-size: 12px; font-weight: 800; }
+.afc-format-grid h3 { margin-top: 29px; font-size: 18px; }
+.afc-format-grid p { margin-top: 10px; color: var(--afc-muted); font-size: 13px; line-height: 1.65; }
+.afc-course-grid-v2 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 19px; }
+.afc-course-card-v2 { overflow: hidden; border: 1px solid var(--afc-line); border-radius: 8px; background: var(--afc-paper); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.afc-course-card-v2:hover { transform: translateY(-4px); border-color: #b7caf0; box-shadow: 0 18px 35px #14336f17; }
+.afc-course-card-v2 > img { width: 100%; aspect-ratio: 1.82; object-fit: cover; background: #dbe5f4; }
+.afc-course-card-v2__body { display: flex; min-height: 269px; flex-direction: column; padding: 21px; }
+.afc-course-card-v2__label { color: var(--afc-blue); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.afc-course-card-v2 h3 { margin-top: 10px; font-size: 19px; line-height: 1.25; }
+.afc-course-card-v2 p { display: -webkit-box; overflow: hidden; margin-top: 10px; color: var(--afc-muted); font-size: 12px; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.afc-course-card-v2__meta { display: flex; gap: 13px; margin-top: auto; padding-top: 18px; color: #65748e; font-size: 11px; }
+.afc-course-card-v2__meta span { display: inline-flex; align-items: center; gap: 4px; }
+.afc-course-card-v2__meta svg { width: 13px; height: 13px; }
+.afc-card-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 17px; color: var(--afc-blue); font-size: 12px; font-weight: 800; }
+.afc-card-link svg { width: 15px; height: 15px; }
+.afc-section--integrity { display: grid; grid-template-columns: minmax(0, 1fr) minmax(310px, .68fr); gap: 12vw; align-items: center; }
+.afc-section--integrity h2 { max-width: 530px; font-size: clamp(29px, 3vw, 41px); line-height: 1.14; }
+.afc-section--integrity > div > p:not(.afc-kicker) { max-width: 590px; margin-top: 20px; color: var(--afc-muted); font-size: 15px; line-height: 1.75; }
+.afc-section--integrity ul { display: grid; gap: 19px; margin: 0; padding: 25px; border-left: 3px solid var(--afc-blue); background: #f0f5ff; list-style: none; }
+.afc-section--integrity li { display: flex; align-items: flex-start; gap: 9px; color: #30415d; font-size: 13px; font-weight: 650; line-height: 1.55; }
+.afc-section--integrity svg { width: 18px; height: 18px; flex: none; color: var(--afc-teal); }
+.afc-page { min-height: calc(100svh - 72px); padding-top: 70px; padding-bottom: 94px; }
+.afc-page-intro { max-width: 700px; }
+.afc-page-intro h1 { font-size: clamp(37px, 4.4vw, 59px); line-height: 1.05; }
+.afc-page-intro > p:not(.afc-kicker) { margin-top: 20px; color: var(--afc-muted); font-size: 16px; line-height: 1.7; }
+.afc-catalog-controls { display: grid; grid-template-columns: minmax(250px, 1fr) 210px 190px; gap: 11px; margin-top: 43px; padding: 16px; border: 1px solid var(--afc-line); border-radius: 8px; background: var(--afc-paper); }
+.afc-catalog-controls label { position: relative; }
+.afc-catalog-controls label svg { position: absolute; z-index: 1; top: 50%; left: 13px; width: 16px; height: 16px; transform: translateY(-50%); color: #77869f; }
+.afc-catalog-controls .af-input { min-height: 43px; padding-left: 39px; border-color: #d5deed; background: #fff; }
+.afc-catalog-controls select { min-height: 43px; border: 1px solid #d5deed; border-radius: 5px; color: #35455e; background: #fff; font-size: 13px; }
+.afc-catalog-result { display: flex; justify-content: flex-end; margin: 17px 0 20px; color: #65748e; font-size: 12px; }
+.afc-course-detail { padding-top: 46px; padding-bottom: 92px; }
+.afc-course-detail__hero { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: clamp(30px, 7vw, 115px); padding-bottom: 63px; border-bottom: 1px solid var(--afc-line); }
+.afc-breadcrumb { display: inline-flex; align-items: center; gap: 5px; color: #61708a; font-size: 12px; }
+.afc-breadcrumb svg { width: 14px; height: 14px; }
+.afc-course-detail__hero .afc-kicker { margin-top: 48px; }
+.afc-course-detail__hero h1 { max-width: 750px; font-size: clamp(40px, 5vw, 68px); line-height: 1.04; }
+.afc-course-detail__hero > div > p:not(.afc-kicker) { max-width: 700px; margin-top: 22px; color: var(--afc-muted); font-size: 17px; line-height: 1.7; }
+.afc-course-detail__stats { display: flex; flex-wrap: wrap; gap: 16px 25px; margin-top: 26px; color: #4f5f79; font-size: 12px; font-weight: 650; }
+.afc-course-detail__stats span { display: inline-flex; align-items: center; gap: 6px; }
+.afc-course-detail__stats svg { width: 16px; height: 16px; color: var(--afc-blue); }
+.afc-course-detail__hero aside { overflow: hidden; align-self: start; border: 1px solid var(--afc-line); border-radius: 8px; background: var(--afc-paper); box-shadow: 0 16px 38px #1b3c7514; }
+.afc-course-detail__hero aside img { width: 100%; aspect-ratio: 1.8; object-fit: cover; }
+.afc-course-detail__hero aside strong, .afc-course-detail__hero aside p, .afc-course-detail__hero aside .af-button { margin-inline: 20px; }
+.afc-course-detail__hero aside strong { display: block; margin-top: 20px; color: var(--afc-ink); font-size: 19px; }
+.afc-course-detail__hero aside p { display: block; margin-top: 9px; color: var(--afc-muted); font-size: 12px; line-height: 1.6; }
+.afc-course-detail__hero aside .af-button { width: calc(100% - 40px); margin-top: 20px; margin-bottom: 20px; }
+.afc-course-detail__grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 9vw; padding-top: 64px; }
+.afc-course-detail__grid h2 { margin-bottom: 23px; font-size: 28px; }
+.afc-outcome-list { display: grid; gap: 14px; margin: 0 0 57px; padding: 0; list-style: none; }
+.afc-outcome-list li { display: flex; gap: 10px; color: #44536b; font-size: 14px; line-height: 1.55; }
+.afc-outcome-list svg { width: 18px; height: 18px; flex: none; color: var(--afc-teal); }
+.afc-curriculum { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--afc-line); }
+.afc-curriculum li { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 19px 0; border-bottom: 1px solid var(--afc-line); }
+.afc-curriculum > li > span { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: var(--afc-blue); background: #eaf2ff; font-size: 10px; font-weight: 800; }
+.afc-curriculum b { display: block; font-size: 14px; }
+.afc-curriculum p { margin-top: 5px; color: var(--afc-muted); font-size: 12px; line-height: 1.5; }
+.afc-curriculum small { color: #70809a; font-size: 11px; white-space: nowrap; }
+.afc-course-detail__instructor { align-self: start; padding: 23px; border-radius: 8px; background: #edf4ff; }
+.afc-course-detail__instructor span { color: var(--afc-blue); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.afc-course-detail__instructor h3 { margin-top: 11px; font-size: 18px; }
+.afc-course-detail__instructor p { margin-top: 12px; color: #5d6d86; font-size: 12px; line-height: 1.65; }
+.afc-learner, .afc-instructor { min-height: calc(100svh - 72px); padding-top: 55px; padding-bottom: 90px; }
+.afc-learner__welcome { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.afc-learner__welcome h1 { font-size: clamp(34px, 4vw, 52px); line-height: 1.08; }
+.afc-learner__welcome p:not(.afc-kicker) { margin-top: 14px; color: var(--afc-muted); font-size: 14px; }
+.afc-learning-summary, .afc-operations-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 38px; }
+.afc-learning-summary article, .afc-operations-grid article { padding: 22px; border: 1px solid var(--afc-line); border-radius: 7px; background: var(--afc-paper); }
+.afc-learning-summary span, .afc-operations-grid span { display: block; color: #697993; font-size: 11px; font-weight: 700; }
+.afc-learning-summary strong, .afc-operations-grid strong { display: block; margin-top: 10px; color: var(--afc-ink); font-size: 32px; line-height: 1; }
+.afc-continue { margin-top: 60px; }
+.afc-enrollment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.afc-enrollment-grid article { display: grid; grid-template-columns: 170px minmax(0, 1fr); overflow: hidden; border: 1px solid var(--afc-line); border-radius: 8px; background: var(--afc-paper); }
+.afc-enrollment-grid img { width: 100%; height: 100%; min-height: 200px; object-fit: cover; }
+.afc-enrollment-grid article > div { display: flex; flex-direction: column; padding: 21px; }
+.afc-enrollment-grid span { color: var(--afc-blue); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.afc-enrollment-grid h3 { margin-top: 10px; font-size: 19px; line-height: 1.24; }
+.afc-enrollment-grid p { margin-top: auto; padding-top: 16px; color: var(--afc-muted); font-size: 12px; }
+.afc-enrollment-grid .af-button { align-self: flex-start; margin-top: 17px; }
+.afc-empty-learning { display: grid; max-width: 600px; min-height: 330px; margin: 55px auto 0; place-items: center; align-content: center; padding: 38px; border: 1px dashed #bed0ef; border-radius: 8px; background: #fbfdff; text-align: center; }
+.afc-empty-learning > svg { width: 33px; height: 33px; color: var(--afc-blue); }
+.afc-empty-learning h2 { max-width: 460px; margin-top: 18px; font-size: 25px; }
+.afc-empty-learning p { max-width: 450px; margin: 12px 0 22px; color: var(--afc-muted); font-size: 13px; line-height: 1.65; }
+.afc-player { display: grid; grid-template-columns: 325px minmax(0, 1fr); max-width: none; min-height: calc(100svh - 72px); padding: 0; }
+.afc-player__rail { position: sticky; top: 72px; height: calc(100svh - 72px); overflow: auto; padding: 29px 23px; border-right: 1px solid var(--afc-line); background: var(--afc-paper); }
+.afc-player__rail > a { display: inline-flex; align-items: center; gap: 2px; color: #576781; font-size: 12px; font-weight: 650; }
+.afc-player__back { width: 15px; height: 15px; transform: rotate(180deg); }
+.afc-player__rail > p { margin-top: 30px; color: var(--afc-blue); font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.afc-player__rail h2 { margin-top: 10px; font-size: 20px; line-height: 1.24; }
+.afc-player__progress { margin-top: 27px; padding: 13px; border-radius: 6px; background: #eef4ff; }
+.afc-player__progress span { color: #52627c; font-size: 10px; }
+.afc-player__progress strong { float: right; color: var(--afc-blue); font-size: 11px; }
+.afc-player__progress .afc-progress-track { clear: both; margin-top: 10px; }
+.afc-player__rail ol { display: grid; gap: 3px; margin: 22px 0 0; padding: 0; list-style: none; }
+.afc-player__rail button { display: grid; grid-template-columns: 25px minmax(0, 1fr); width: 100%; gap: 9px; padding: 11px 8px; border: 1px solid transparent; border-radius: 5px; color: #42526c; background: transparent; text-align: left; }
+.afc-player__rail button:hover, .afc-player__rail button.is-active { border-color: #c9d9f5; background: #f1f6ff; }
+.afc-player__rail button > span { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid #cbd7ea; border-radius: 50%; color: #5f708c; font-size: 10px; font-weight: 800; }
+.afc-player__rail button > span svg { width: 14px; height: 14px; color: var(--afc-teal); }
+.afc-player__rail b { display: block; font-size: 12px; line-height: 1.35; }
+.afc-player__rail small { display: block; margin-top: 4px; color: #8090a8; font-size: 10px; }
+.afc-player__main { max-width: 920px; padding: 48px clamp(25px, 6vw, 100px) 80px; }
+.afc-player__lesson-meta { display: flex; justify-content: space-between; color: #65758e; font-size: 11px; font-weight: 700; }
+.afc-player__video { position: relative; display: grid; overflow: hidden; min-height: 360px; margin-top: 17px; place-items: center; border-radius: 8px; background: #07162f; }
+.afc-player__video > img { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: .36; }
+.afc-player__video iframe { position: relative; z-index: 1; width: 100%; height: 100%; min-height: 360px; border: 0; }
+.afc-player__video > div { position: relative; display: grid; gap: 12px; place-items: center; color: white; font-size: 13px; font-weight: 700; text-align: center; }
+.afc-player__video svg { width: 55px; height: 55px; padding: 12px; border-radius: 50%; color: #0f48ad; background: white; }
+.afc-player__main article { margin-top: 36px; }
+.afc-player__main h1 { font-size: clamp(30px, 3.7vw, 46px); line-height: 1.1; }
+.afc-player__main article > p { margin-top: 15px; color: var(--afc-muted); font-size: 15px; line-height: 1.7; }
+.afc-player__notes { margin: 29px 0 25px; padding: 20px; border-left: 3px solid var(--afc-teal); background: #f0faf8; }
+.afc-player__notes h3 { font-size: 14px; }
+.afc-player__notes p { margin-top: 8px; color: #5b6d7a; font-size: 12px; line-height: 1.65; }
+.afc-certificate-grid-v2 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 43px; }
+.afc-certificate-grid-v2 article { position: relative; overflow: hidden; min-height: 260px; padding: 26px; border: 1px solid #b7c9e8; border-radius: 8px; background: linear-gradient(145deg, #ffffff, #eaf2ff); }
+.afc-certificate-grid-v2 article::after { position: absolute; right: -43px; bottom: -43px; width: 144px; height: 144px; border: 26px solid #cbdcff; border-radius: 50%; content: ''; }
+.afc-certificate-grid-v2 svg { width: 27px; height: 27px; color: #d69b18; }
+.afc-certificate-grid-v2 span { display: block; margin-top: 31px; color: #54709d; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.afc-certificate-grid-v2 h2 { position: relative; z-index: 1; margin-top: 11px; font-size: 22px; line-height: 1.2; }
+.afc-certificate-grid-v2 p { margin-top: 25px; color: #64748e; font-size: 10px; }
+.afc-certificate-grid-v2 code { position: relative; z-index: 1; display: inline-block; margin-top: 7px; color: #123d91; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
+.afc-operations-grid { margin-top: 37px; }
+.afc-teach-grid { display: grid; grid-template-columns: minmax(0, .85fr) minmax(340px, 1.15fr); gap: 19px; margin-top: 50px; }
+.afc-author-form, .afc-operations-list { padding: 24px; border: 1px solid var(--afc-line); border-radius: 8px; background: var(--afc-paper); }
+.afc-author-form { display: grid; gap: 16px; }
+.afc-author-form .afc-section-heading-v2 { align-items: start; margin-bottom: 4px; }
+.afc-author-form .afc-section-heading-v2 h2, .afc-operations-list h2 { font-size: 22px; }
+.afc-operations-list { display: grid; gap: 35px; }
+.afc-operations-list > div + div { padding-top: 29px; border-top: 1px solid var(--afc-line); }
+.afc-operations-list > div > p:not(.afc-kicker) { margin-top: 13px; color: var(--afc-muted); font-size: 12px; }
+.afc-operations-list article { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; border-bottom: 1px solid #e7edf5; }
+.afc-operations-list article:last-child { border-bottom: 0; }
+.afc-operations-list article b, .afc-operations-list article span { display: block; }
+.afc-operations-list article b { max-width: 250px; overflow: hidden; color: #33455e; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.afc-operations-list article span { margin-top: 4px; color: #77869e; font-size: 10px; }
+.afc-operations-list article > div:last-child { display: flex; gap: 7px; }
+.afc-operations-list .af-button { min-height: 31px; padding: 5px 9px; font-size: 10px; }
+.afc-about .af-format-grid { margin-top: 40px; }
+.afc-auth-page { display: grid; grid-template-columns: minmax(0, 1fr) minmax(410px, .85fr); min-height: calc(100svh - 72px); }
+.afc-auth-page > section:first-child { display: grid; align-content: center; padding: clamp(50px, 9vw, 120px); color: white; background: linear-gradient(145deg, #071b42, #1257cd); }
+.afc-auth-page > section:first-child .afc-brand { align-self: start; color: white; }
+.afc-auth-page > section:first-child .afc-brand__mark { color: #165ce5; background: white; }
+.afc-auth-page > section:first-child .afc-brand small { border-color: #ffffff42; color: #c8dcff; }
+.afc-auth-page > section:first-child .afc-kicker { margin-top: 85px; color: #93c5fd; }
+.afc-auth-page > section:first-child h1 { max-width: 600px; color: white; font-size: clamp(40px, 4.5vw, 62px); line-height: 1.06; }
+.afc-auth-page > section:first-child > p:not(.afc-kicker) { max-width: 550px; margin-top: 21px; color: #d2e2fd; font-size: 15px; line-height: 1.75; }
+.afc-auth-page > section:first-child ul { display: grid; gap: 13px; margin: 31px 0 0; padding: 0; color: #e6f0ff; list-style: none; font-size: 13px; }
+.afc-auth-page > section:first-child li { display: flex; gap: 8px; align-items: center; }
+.afc-auth-page > section:first-child li svg { width: 17px; height: 17px; color: #65e0d1; }
+.afc-auth-card { align-self: center; width: min(100%, 440px); margin: 45px auto; padding: 37px; border: 1px solid var(--afc-line); border-radius: 9px; background: var(--afc-paper); box-shadow: 0 22px 54px #20375c14; }
+.afc-auth-card h2 { margin-bottom: 24px; font-size: 29px; }
+.afc-auth-card .auth-form { display: grid; gap: 16px; }
+.afc-auth-card .check-label { color: #576780; font-size: 12px; }
+.afc-auth-card .auth-text-link { color: var(--afc-blue); font-size: 12px; font-weight: 750; }
+.afc-auth-card .auth-divider { color: #8492a8; font-size: 11px; }
+.afc-auth-card .inline-alert { margin-bottom: 16px; }
 .afc-review-form textarea { min-height: 70px; }
 .afc-review-form > div { grid-column: 1 / -1; }
 .afc-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 0; }
@@ -1698,6 +1925,28 @@ button:disabled {
   .workspace-page-header h1 {
     font-size: 24px;
   }
+  .afc-topbar { padding-inline: 24px; }
+  .afc-nav { position: absolute; top: 71px; right: 16px; left: 16px; display: none; align-items: stretch; gap: 0; padding: 9px; border: 1px solid var(--afc-line); border-radius: 8px; background: white; box-shadow: 0 16px 34px #1b355e1d; }
+  .afc-nav--open { display: grid; }
+  .afc-nav a { padding: 12px; border-radius: 5px; }
+  .afc-nav a:hover { background: #f1f6ff; }
+  .afc-menu-button { display: grid; }
+  .afc-topbar__actions { gap: 9px; }
+  .afc-hero { grid-template-columns: 1fr; gap: 45px; min-height: auto; padding-block: 65px; }
+  .afc-hero__copy { max-width: 690px; }
+  .afc-hero__visual { max-width: 620px; width: 100%; }
+  .afc-course-grid-v2, .afc-certificate-grid-v2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .afc-course-detail__hero, .afc-course-detail__grid, .afc-section--integrity, .afc-teach-grid, .afc-auth-page { grid-template-columns: 1fr; }
+  .afc-course-detail__hero aside { max-width: 430px; width: 100%; }
+  .afc-course-detail__grid { gap: 38px; }
+  .afc-course-detail__instructor { max-width: 560px; }
+  .afc-enrollment-grid { grid-template-columns: 1fr; }
+  .afc-player { grid-template-columns: 1fr; }
+  .afc-player__rail { position: static; height: auto; max-height: 330px; border-right: 0; border-bottom: 1px solid var(--afc-line); }
+  .afc-player__main { max-width: none; }
+  .afc-auth-page > section:first-child { min-height: 470px; padding: 58px 35px; }
+  .afc-auth-page > section:first-child .afc-kicker { margin-top: 52px; }
+  .afc-auth-card { width: calc(100% - 48px); }
 }
 @media (max-width: 540px) {
   .section-shell {
@@ -1929,6 +2178,45 @@ button:disabled {
   .afc-review-form {
     grid-template-columns: 1fr;
   }
+  .afc-topbar { height: 64px; padding-inline: 18px; }
+  .afc-brand { font-size: 18px; }
+  .afc-brand__mark { width: 30px; height: 30px; }
+  .afc-brand small, .afc-user-link b, .afc-login-link { display: none; }
+  .afc-topbar .afc-join-button { min-height: 34px !important; padding-inline: 10px !important; font-size: 11px; }
+  .afc-nav { top: 63px; }
+  .afc-footer { grid-template-columns: 1fr; gap: 27px; padding: 42px 20px; }
+  .afc-hero, .afc-section, .afc-page, .afc-course-detail, .afc-learner, .afc-instructor { padding-inline: 20px; }
+  .afc-hero { padding-block: 48px; }
+  .afc-hero h1 { font-size: 42px; }
+  .afc-hero__copy > p:not(.afc-kicker) { font-size: 15px; }
+  .afc-hero__visual { min-height: 345px; padding: 11px; }
+  .afc-hero__visual-content { margin: 25px 5px 0; padding: 20px; }
+  .afc-hero__visual-content h2 { font-size: 22px; }
+  .afc-hero__certificate { right: 8px; bottom: 16px; width: 186px; }
+  .afc-section { padding-top: 56px; padding-bottom: 56px; }
+  .afc-section-heading-v2, .afc-learner__welcome { align-items: flex-start; flex-direction: column; }
+  .afc-section-heading-v2 h2 { font-size: 28px; }
+  .afc-format-grid, .afc-course-grid-v2, .afc-certificate-grid-v2, .afc-learning-summary, .afc-operations-grid { grid-template-columns: 1fr; }
+  .afc-catalog-controls { grid-template-columns: 1fr; margin-top: 30px; padding: 11px; }
+  .afc-page { padding-top: 47px; padding-bottom: 58px; }
+  .afc-page-intro h1 { font-size: 37px; }
+  .afc-course-detail { padding-top: 30px; }
+  .afc-course-detail__hero .afc-kicker { margin-top: 30px; }
+  .afc-course-detail__hero h1 { font-size: 39px; }
+  .afc-curriculum li { grid-template-columns: 30px minmax(0, 1fr); gap: 9px; }
+  .afc-curriculum small { grid-column: 2; }
+  .afc-enrollment-grid article { grid-template-columns: 1fr; }
+  .afc-enrollment-grid img { height: 175px; min-height: 0; }
+  .afc-player__rail { top: 64px; max-height: 310px; padding: 20px; }
+  .afc-player__main { padding: 31px 20px 60px; }
+  .afc-player__video { min-height: 220px; }
+  .afc-teach-grid { margin-top: 31px; }
+  .afc-author-form, .afc-operations-list { padding: 18px; }
+  .afc-author-form .afc-section-heading-v2 > .af-button { width: 100%; }
+  .afc-operations-list article { align-items: flex-start; flex-direction: column; }
+  .afc-auth-page > section:first-child { min-height: 420px; padding: 43px 25px; }
+  .afc-auth-page > section:first-child h1 { font-size: 38px; }
+  .afc-auth-card { width: calc(100% - 32px); margin: 25px auto; padding: 25px 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *,

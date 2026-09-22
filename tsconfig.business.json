@@ -13,7 +13,9 @@
   },
   "include": [
     "api/business.ts",
+    "api/afc.ts",
     "api/whatsapp.ts",
+    "server/afc/**/*.ts",
     "server/business/**/*.ts",
     "scripts/business-dev.ts",
     "tests/business*.ts"

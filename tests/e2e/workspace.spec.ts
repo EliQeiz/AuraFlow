@@ -122,6 +122,9 @@ test.describe.serial('AuraFlow rebuilt customer and admin workflows', () => {
     for (const path of [
       '/services',
       '/afc',
+      '/afc/catalog',
+      '/afc/login',
+      '/afc/register',
       '/solutions',
       '/solutions/school-management-system',
       '/solutions/restaurant-ordering-booking',

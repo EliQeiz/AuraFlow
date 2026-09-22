@@ -739,7 +739,9 @@ service cloud.firestore {
     }
 
     match /afcCourses/{courseId} {
-      allow get, list: if signedIn() && (resource.data.published == true || isAdmin());
+      // The public catalog may read published course metadata only. Lesson materials,
+      // enrolments, submissions, and credentials stay behind learner/admin checks below.
+      allow get, list: if resource.data.published == true || isAdmin();
       allow create: if isAdmin() && validAfcCourse() && request.resource.data.createdAt == request.time;
       allow update: if isAdmin() && validAfcCourse();
       allow delete: if isAdmin();
@@ -796,6 +798,32 @@ service cloud.firestore {
         && stringBetween(request.resource.data, 'certificateCode', 8, 80)
         && request.resource.data.issuedAt == request.time;
       allow delete: if isAdmin();
+    }
+
+    match /afcAssessments/{assessmentId} {
+      allow get, list: if isAdmin()
+        || (signedIn() && activeAfcEnrollment(request.auth.uid, resource.data.courseId));
+      allow create, update, delete: if false;
+    }
+
+    match /afcAssessmentAttempts/{attemptId} {
+      allow get, list: if owns(resource.data.userId) || isAdmin();
+      // Attempts are created, timed, and scored by /api/afc with Firebase Admin.
+      allow create, update, delete: if false;
+    }
+
+    match /afcAssessmentIntegrityEvents/{eventId} {
+      allow get, list: if owns(resource.data.userId) || isAdmin();
+      // Integrity signals are append-only server records; browser signals are never trusted as grades.
+      allow create, update, delete: if false;
+    }
+
+    match /afcAssessmentKeys/{assessmentId} {
+      allow read, write: if false;
+    }
+
+    match /afcAssessmentAudit/{auditId} {
+      allow read, write: if false;
     }
 
     match /blog/{postId} {

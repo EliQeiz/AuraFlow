@@ -37,6 +37,26 @@ function asCourse(id: string, value: Record<string, unknown>): AfcCourse {
   return { id, ...value } as AfcCourse
 }
 
+export function afcYoutubeEmbedUrl(value?: string) {
+  if (!value) return undefined
+  try {
+    const url = new URL(value)
+    const host = url.hostname.toLowerCase().replace(/^www\./, '')
+    let id = ''
+    if (host === 'youtu.be') id = url.pathname.split('/').filter(Boolean)[0] || ''
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      id = url.searchParams.get('v') || ''
+      if (!id && url.pathname.startsWith('/embed/'))
+        id = url.pathname.split('/').filter(Boolean)[1] || ''
+    }
+    return /^[a-zA-Z0-9_-]{11}$/.test(id)
+      ? `https://www.youtube-nocookie.com/embed/${id}?rel=0`
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
 export async function listAfcCourses(includeUnpublished = false) {
   const source = collection(getFirebaseDb(), 'afcCourses')
   const snapshot = await getDocs(
@@ -111,6 +131,20 @@ export async function saveAfcCourse(course: Omit<AfcCourse, 'id'>, id?: string) 
     throw new Error('Use a lowercase course slug with letters, numbers, and hyphens.')
   if (course.lessons.length < 1 || course.lessons.length > 50)
     throw new Error('Add between 1 and 50 lessons before saving a course.')
+  if (
+    course.lessons.some(
+      (lesson) =>
+        lesson.title.trim().length < 3 ||
+        lesson.title.trim().length > 180 ||
+        !Number.isInteger(lesson.durationMinutes) ||
+        lesson.durationMinutes < 1 ||
+        lesson.durationMinutes > 480 ||
+        (lesson.videoUrl && !afcYoutubeEmbedUrl(lesson.videoUrl)),
+    )
+  )
+    throw new Error(
+      'Each lesson needs a valid title, duration, and optional YouTube video URL.',
+    )
   const reference = doc(getFirebaseDb(), 'afcCourses', id || slug)
   await setDoc(
     reference,

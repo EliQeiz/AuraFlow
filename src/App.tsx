@@ -8,7 +8,7 @@ import { Legal } from './pages/Legal'
 import { useAuth } from './context/AuthContext'
 
 const Home = lazy(() => import('./pages/Home'))
-const AuraFlowClass = lazy(() => import('./pages/AuraFlowClass'))
+const AfcPlatform = lazy(() => import('./pages/AfcPlatform'))
 const Services = lazy(() => import('./pages/Services'))
 const Solutions = lazy(() => import('./pages/Solutions'))
 const SolutionDetail = lazy(() => import('./pages/SolutionDetail'))
@@ -35,7 +35,6 @@ const AdminConsole = lazy(() => import('./pages/Dashboard/AdminConsole'))
 const Settings = lazy(() => import('./pages/Dashboard/Settings'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 const BusinessSystems = lazy(() => import('./pages/Dashboard/BusinessSystems'))
-const AfcWorkspace = lazy(() => import('./pages/Dashboard/AfcWorkspace'))
 const BusinessSite = lazy(() => import('./pages/BusinessSite'))
 
 function PublicLayout() {
@@ -60,6 +59,7 @@ export default function App() {
   return (
     <Suspense fallback={<StatePanel loading />}>
       <Routes>
+        <Route path="/afc/*" element={<AfcPlatform />} />
         <Route element={<PublicLayout />}>
           <Route
             path="/"
@@ -71,7 +71,6 @@ export default function App() {
               )
             }
           />
-          <Route path="/afc" element={<AuraFlowClass />} />
           <Route path="/services" element={<Services />} />
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/solutions/:slug" element={<SolutionDetail />} />
@@ -145,7 +144,7 @@ export default function App() {
           <Route path="studio" element={<Navigate to={`/studio${location.search}`} replace />} />
           <Route path="design-studio" element={<Navigate to={`/studio${location.search}`} replace />} />
           <Route path="businesses" element={<BusinessSystems />} />
-          <Route path="afc" element={<AfcWorkspace />} />
+          <Route path="afc" element={<Navigate to="/afc/learn" replace />} />
           <Route path="templates" element={<MyTemplates />} />
           <Route path="admin" element={<AdminOnly />} />
           <Route path="settings" element={<Settings />} />

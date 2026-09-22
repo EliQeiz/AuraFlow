@@ -593,7 +593,9 @@ test('AFC courses, learning progress, submissions, and certificates remain scope
   const alice = env.authenticatedContext('afc-alice').firestore()
   const bob = env.authenticatedContext('afc-bob').firestore()
   const admin = env.authenticatedContext('afc-owner', { admin: true }).firestore()
+  const anonymous = env.unauthenticatedContext().firestore()
   const courseId = 'afc-free-course'
+  const draftCourseId = 'afc-private-draft'
   const enrollmentId = `afc-alice_${courseId}`
   await env.withSecurityRulesDisabled(async (context) => {
     await setDoc(doc(context.firestore(), 'afcCourses', courseId), {
@@ -612,7 +614,33 @@ test('AFC courses, learning progress, submissions, and certificates remain scope
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
+    await setDoc(doc(context.firestore(), 'afcCourses', draftCourseId), {
+      title: 'Private instructor draft',
+      slug: draftCourseId,
+      summary: 'An unpublished course draft that must not appear in the public catalog.',
+      category: 'Software development',
+      level: 'Beginner',
+      priceGhs: 0,
+      instructorName: 'AuraFlow Class',
+      coverImage: '',
+      published: false,
+      estimatedHours: 4,
+      outcomes: ['Private outcome'],
+      lessons: [{ id: 'draft-lesson', title: 'Draft lesson' }],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
   })
+  await assertSucceeds(getDoc(doc(anonymous, 'afcCourses', courseId)))
+  await assertSucceeds(
+    getDocs(
+      query(
+        collection(anonymous, 'afcCourses'),
+        where('published', '==', true),
+      ),
+    ),
+  )
+  await assertFails(getDoc(doc(anonymous, 'afcCourses', draftCourseId)))
   await assertSucceeds(getDoc(doc(alice, 'afcCourses', courseId)))
   await assertSucceeds(
     setDoc(doc(alice, 'afcEnrollments', enrollmentId), {
@@ -641,6 +669,24 @@ test('AFC courses, learning progress, submissions, and certificates remain scope
       completedLessonIds: ['lesson-one'],
       progress: 100,
       updatedAt: serverTimestamp(),
+    }),
+  )
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'afcAssessments', 'assessment-one'), {
+      courseId,
+      title: 'Interface assessment',
+      durationMinutes: 20,
+      passMark: 70,
+      maxAttempts: 2,
+      questionCount: 2,
+      published: true,
+    })
+  })
+  await assertSucceeds(getDoc(doc(alice, 'afcAssessments', 'assessment-one')))
+  await assertFails(getDoc(doc(bob, 'afcAssessments', 'assessment-one')))
+  await assertFails(
+    setDoc(doc(alice, 'afcAssessmentAttempts', 'forged-attempt'), {
+      userId: 'afc-alice', courseId, assessmentId: 'assessment-one', score: 100,
     }),
   )
   await assertFails(getDoc(doc(bob, 'afcEnrollments', enrollmentId)))

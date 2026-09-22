@@ -119,14 +119,14 @@ export function useAdminProjects(enabled: boolean) {
 }
 
 export function useAfcCourses(includeUnpublished = false) {
-  const { user } = useAuth()
+  const { admin } = useAuth()
   return useLiveRows<AfcCourse>(
     ['afc-courses', includeUnpublished ? 'all' : 'published'],
     () => {
       const source = collection(getFirebaseDb(), 'afcCourses')
       return includeUnpublished ? source : query(source, where('published', '==', true))
     },
-    Boolean(user),
+    includeUnpublished ? admin : true,
   )
 }
 
