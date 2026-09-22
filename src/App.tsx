@@ -8,6 +8,7 @@ import { Legal } from './pages/Legal'
 import { useAuth } from './context/AuthContext'
 
 const Home = lazy(() => import('./pages/Home'))
+const AuraFlowClass = lazy(() => import('./pages/AuraFlowClass'))
 const Services = lazy(() => import('./pages/Services'))
 const Solutions = lazy(() => import('./pages/Solutions'))
 const SolutionDetail = lazy(() => import('./pages/SolutionDetail'))
@@ -69,6 +70,7 @@ export default function App() {
               )
             }
           />
+          <Route path="/afc" element={<AuraFlowClass />} />
           <Route path="/services" element={<Services />} />
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/solutions/:slug" element={<SolutionDetail />} />

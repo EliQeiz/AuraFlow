@@ -90,12 +90,12 @@ export default function Home() {
           </p>
           <div className="hero-actions">
             <ButtonLink to={user ? '/dashboard' : '/register'}>
-              Start your project
+              Open business workspace
               <ArrowRight />
             </ButtonLink>
-            <ButtonLink to="/solutions" variant="secondary">
-              Explore the platform
-              <ArrowUpRight />
+            <ButtonLink to="/afc" variant="secondary">
+              Explore AFC learning
+              <GraduationCap />
             </ButtonLink>
           </div>
         </div>
@@ -335,11 +335,30 @@ export default function Home() {
         </div>
       </section>
       <section className="home-close">
-        <h2>What will you build?</h2>
-        <ButtonLink to={user ? '/studio' : '/register'}>
-          Open your workspace
-          <ArrowRight />
-        </ButtonLink>
+        <p className="eyebrow">Choose your space</p>
+        <h2>Build a business. Or build your skills.</h2>
+        <div className="home-destination-grid">
+          <article>
+            <Layers2 size={21} />
+            <div>
+              <h3>Business workspace</h3>
+              <p>Shape a project, manage your request, and work with the AuraFlow team.</p>
+            </div>
+            <ButtonLink to={user ? '/dashboard' : '/register'} variant="secondary">
+              Open workspace <ArrowRight />
+            </ButtonLink>
+          </article>
+          <article>
+            <GraduationCap size={21} />
+            <div>
+              <h3>AuraFlow Class</h3>
+              <p>Learn practical technology skills through AFC's secure learning workspace.</p>
+            </div>
+            <ButtonLink to="/afc">
+              Enter AFC <ArrowUpRight />
+            </ButtonLink>
+          </article>
+        </div>
       </section>
     </main>
   )

@@ -5,6 +5,7 @@ AuraFlow is a React, TypeScript, Vite, TailwindCSS, Framer Motion, and Firebase 
 ## Product Model
 
 - The public website markets AuraFlow, shows services, pricing, portfolio concepts, and detailed template previews.
+- The public website also links to AuraFlow Class (AFC), AuraFlow's separate learning workspace for practical technology courses.
 - Visitors can browse public templates and hosted-system examples, but serious requests, uploads, template selections, project chats, and preview feedback require an account.
 - The private client app includes Requests, Prototype Studio, Templates, Messages, Settings, status tracking, client uploads, revision notes, and preview files.
 - The owner/admin console is hidden unless the signed-in Firebase account has the `admin: true` custom claim.
@@ -14,7 +15,7 @@ AuraFlow is a React, TypeScript, Vite, TailwindCSS, Framer Motion, and Firebase 
 
 ## Core Routes
 
-- Public: `/`, `/services`, `/solutions`, `/solutions/:slug`, `/templates`, `/templates/:slug`, `/portfolio`, `/pricing`, `/blog`, `/about`, `/contact`, `/login`, `/register`, `/forgot-password`.
+- Public: `/`, `/afc`, `/services`, `/solutions`, `/solutions/:slug`, `/templates`, `/templates/:slug`, `/portfolio`, `/pricing`, `/blog`, `/about`, `/contact`, `/login`, `/register`, `/forgot-password`.
 - Private client app: `/dashboard`, `/dashboard/studio`, `/dashboard/requests/new`, `/dashboard/requests`, `/dashboard/messages`, `/dashboard/templates`, `/dashboard/settings`.
 - Owner/admin: `/dashboard/admin`, visible in navigation only after the admin custom claim is granted.
 
@@ -26,6 +27,8 @@ AuraFlow is a React, TypeScript, Vite, TailwindCSS, Framer Motion, and Firebase 
 4. Open the local URL printed by Vite.
 
 The local Firebase values are read from Vite `VITE_*` variables. `.env.local` is ignored by git; put the same values in Vercel project environment variables before a production build.
+
+`VITE_AFC_URL` is optional. Set it in the AuraFlow Vercel project only after the separate AFC app has its own production deployment; `/afc` then opens that learning workspace. AFC needs its own Cloudflare bindings for D1 and R2 and must not be deployed as a static route inside this Firebase/Vite application.
 
 ## Firebase Setup
 
