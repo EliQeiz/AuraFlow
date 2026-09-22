@@ -114,13 +114,14 @@ test.describe.serial('AuraFlow rebuilt customer and admin workflows', () => {
       .getByRole('heading', { name: 'Good software should be within reach.' })
       .scrollIntoViewIfNeeded()
     await page
-      .getByRole('heading', { name: 'What will you build?' })
+      .getByRole('heading', { name: 'Build a business. Or build your skills.' })
       .scrollIntoViewIfNeeded()
     await expect(
-      page.getByRole('heading', { name: 'What will you build?' }),
+      page.getByRole('heading', { name: 'Build a business. Or build your skills.' }),
     ).toBeVisible()
     for (const path of [
       '/services',
+      '/afc',
       '/solutions',
       '/solutions/school-management-system',
       '/solutions/restaurant-ordering-booking',

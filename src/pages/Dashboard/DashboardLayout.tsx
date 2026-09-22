@@ -3,6 +3,7 @@ import {
   Bell,
   ExternalLink,
   FolderKanban,
+  GraduationCap,
   Home,
   Store,
   LayoutTemplate,
@@ -34,6 +35,7 @@ const navigation = [
     label: 'Template library',
     Icon: LayoutTemplate,
   },
+  { to: '/dashboard/afc', label: 'AuraFlow Class', Icon: GraduationCap },
   { to: '/dashboard/messages', label: 'Messages', Icon: MessageSquare },
   { to: '/dashboard/activity', label: 'Activity inbox', Icon: Bell },
 ]

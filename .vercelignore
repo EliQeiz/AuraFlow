@@ -20,11 +20,3 @@ firebase-adminsdk*.json
 Screen Recording *.mp4
 Screen Recording*.mp4
 TAS/
-afc/node_modules/
-afc/.next/
-afc/.vinext/
-afc/.wrangler/
-afc/dist/
-afc/work/
-afc/test-results/
-afc/local-seed.sql

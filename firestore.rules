@@ -679,6 +679,125 @@ service cloud.firestore {
       }
     }
 
+    function validAfcCourse() {
+      let d = request.resource.data;
+      return d.keys().hasOnly([
+          'title', 'slug', 'summary', 'category', 'level', 'priceGhs',
+          'instructorName', 'coverImage', 'published', 'estimatedHours',
+          'outcomes', 'lessons', 'createdAt', 'updatedAt'
+        ])
+        && stringBetween(d, 'title', 4, 140)
+        && d.slug is string && d.slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && stringBetween(d, 'summary', 20, 2400)
+        && stringBetween(d, 'category', 2, 100)
+        && d.level in ['Beginner', 'Intermediate', 'Advanced']
+        && d.priceGhs is int && d.priceGhs >= 0 && d.priceGhs <= 100000
+        && stringBetween(d, 'instructorName', 2, 120)
+        && d.coverImage is string && d.coverImage.size() <= 2048
+        && d.published is bool
+        && d.estimatedHours is int && d.estimatedHours >= 1 && d.estimatedHours <= 1000
+        && d.outcomes is list && d.outcomes.size() <= 12
+        && d.lessons is list && d.lessons.size() >= 1 && d.lessons.size() <= 50
+        && d.updatedAt == request.time;
+    }
+    function activeAfcEnrollment(uid, courseId) {
+      return exists(/databases/$(database)/documents/afcEnrollments/$(uid + '_' + courseId))
+        && get(/databases/$(database)/documents/afcEnrollments/$(uid + '_' + courseId)).data.userId == uid
+        && get(/databases/$(database)/documents/afcEnrollments/$(uid + '_' + courseId)).data.status in ['active', 'completed'];
+    }
+    function validAfcEnrollment() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['userId', 'courseId', 'status', 'completedLessonIds', 'progress', 'createdAt', 'updatedAt'])
+        && d.userId is string && d.userId.size() >= 1 && d.userId.size() <= 128
+        && d.courseId is string && d.courseId.size() >= 1 && d.courseId.size() <= 180
+        && d.status in ['active', 'completed']
+        && d.completedLessonIds is list && d.completedLessonIds.size() <= 50
+        && d.progress is int && d.progress >= 0 && d.progress <= 100
+        && d.updatedAt == request.time;
+    }
+    function validAfcEnrollmentRequest() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['userId', 'courseId', 'note', 'status', 'createdAt', 'updatedAt'])
+        && d.userId is string && d.userId.size() >= 1 && d.userId.size() <= 128
+        && d.courseId is string && d.courseId.size() >= 1 && d.courseId.size() <= 180
+        && stringBetween(d, 'note', 0, 1000)
+        && d.status in ['submitted', 'approved', 'declined']
+        && d.updatedAt == request.time;
+    }
+    function validAfcSubmission() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['userId', 'courseId', 'title', 'response', 'attachmentPath', 'status', 'score', 'reviewerNote', 'createdAt', 'updatedAt'])
+        && d.userId is string && d.userId.size() >= 1 && d.userId.size() <= 128
+        && d.courseId is string && d.courseId.size() >= 1 && d.courseId.size() <= 180
+        && stringBetween(d, 'title', 3, 160)
+        && stringBetween(d, 'response', 20, 12000)
+        && optionalString(d, 'attachmentPath', 600)
+        && d.status in ['submitted', 'reviewed', 'returned']
+        && (!d.keys().hasAny(['score']) || (d.score is int && d.score >= 0 && d.score <= 100))
+        && optionalString(d, 'reviewerNote', 4000)
+        && d.updatedAt == request.time;
+    }
+
+    match /afcCourses/{courseId} {
+      allow get, list: if signedIn() && (resource.data.published == true || isAdmin());
+      allow create: if isAdmin() && validAfcCourse() && request.resource.data.createdAt == request.time;
+      allow update: if isAdmin() && validAfcCourse();
+      allow delete: if isAdmin();
+    }
+
+    match /afcEnrollments/{enrollmentId} {
+      allow get, list: if owns(resource.data.userId) || isAdmin();
+      allow create: if (signedIn()
+          && validAfcEnrollment()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.status == 'active'
+          && request.resource.data.createdAt == request.time
+          && exists(/databases/$(database)/documents/afcCourses/$(request.resource.data.courseId))
+          && get(/databases/$(database)/documents/afcCourses/$(request.resource.data.courseId)).data.published == true
+          && get(/databases/$(database)/documents/afcCourses/$(request.resource.data.courseId)).data.priceGhs == 0)
+        || (isAdmin() && validAfcEnrollment() && request.resource.data.createdAt == request.time);
+      allow update: if (owns(resource.data.userId)
+          && validAfcEnrollment()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completedLessonIds', 'progress', 'updatedAt']))
+        || (isAdmin() && validAfcEnrollment());
+      allow delete: if isAdmin();
+    }
+
+    match /afcEnrollmentRequests/{requestId} {
+      allow get, list: if owns(resource.data.userId) || isAdmin();
+      allow create: if owns(request.resource.data.userId)
+        && validAfcEnrollmentRequest()
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.createdAt == request.time
+        && exists(/databases/$(database)/documents/afcCourses/$(request.resource.data.courseId))
+        && get(/databases/$(database)/documents/afcCourses/$(request.resource.data.courseId)).data.published == true
+        && get(/databases/$(database)/documents/afcCourses/$(request.resource.data.courseId)).data.priceGhs > 0;
+      allow update: if isAdmin() && validAfcEnrollmentRequest();
+      allow delete: if false;
+    }
+
+    match /afcSubmissions/{submissionId} {
+      allow get, list: if owns(resource.data.userId) || isAdmin();
+      allow create: if owns(request.resource.data.userId)
+        && validAfcSubmission()
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.createdAt == request.time
+        && activeAfcEnrollment(request.auth.uid, request.resource.data.courseId);
+      allow update: if isAdmin() && validAfcSubmission();
+      allow delete: if false;
+    }
+
+    match /afcCertificates/{certificateId} {
+      allow get, list: if owns(resource.data.userId) || isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['userId', 'courseId', 'certificateCode', 'issuedAt'])
+        && stringBetween(request.resource.data, 'userId', 1, 128)
+        && stringBetween(request.resource.data, 'courseId', 1, 180)
+        && stringBetween(request.resource.data, 'certificateCode', 8, 80)
+        && request.resource.data.issuedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
     match /blog/{postId} {
       allow read: if true;
       allow write: if false;

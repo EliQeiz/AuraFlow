@@ -200,6 +200,80 @@ export interface UserProfile {
 }
 
 export type ThemePreference = 'dark' | 'light' | 'system'
+
+export type AfcCourseLevel = 'Beginner' | 'Intermediate' | 'Advanced'
+export type AfcEnrollmentStatus = 'active' | 'requested' | 'completed'
+export type AfcSubmissionStatus = 'submitted' | 'reviewed' | 'returned'
+
+export interface AfcLesson {
+  id: string
+  title: string
+  summary: string
+  durationMinutes: number
+  videoUrl?: string
+  resourceUrl?: string
+}
+
+export interface AfcCourse {
+  id: string
+  title: string
+  slug: string
+  summary: string
+  category: string
+  level: AfcCourseLevel
+  priceGhs: number
+  instructorName: string
+  coverImage: string
+  published: boolean
+  estimatedHours: number
+  outcomes: string[]
+  lessons: AfcLesson[]
+  createdAt?: unknown
+  updatedAt?: unknown
+}
+
+export interface AfcEnrollment {
+  id: string
+  userId: string
+  courseId: string
+  status: AfcEnrollmentStatus
+  completedLessonIds: string[]
+  progress: number
+  createdAt?: unknown
+  updatedAt?: unknown
+}
+
+export interface AfcEnrollmentRequest {
+  id: string
+  userId: string
+  courseId: string
+  note: string
+  status: 'submitted' | 'approved' | 'declined'
+  createdAt?: unknown
+  updatedAt?: unknown
+}
+
+export interface AfcSubmission {
+  id: string
+  userId: string
+  courseId: string
+  title: string
+  response: string
+  attachmentPath?: string
+  status: AfcSubmissionStatus
+  score?: number
+  reviewerNote?: string
+  createdAt?: unknown
+  updatedAt?: unknown
+}
+
+export interface AfcCertificate {
+  id: string
+  userId: string
+  courseId: string
+  certificateCode: string
+  issuedAt?: unknown
+}
 export type RequestStatus =
   | 'Submitted'
   | 'Discovery'

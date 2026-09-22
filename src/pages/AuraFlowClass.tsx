@@ -2,10 +2,10 @@ import { ArrowLeft, ArrowUpRight, BookOpenCheck, GraduationCap, ShieldCheck } fr
 import { PageWrapper } from '../components/shared/PageWrapper'
 import { SEOHead } from '../components/shared/SEOHead'
 import { ButtonLink } from '../components/ui/Button'
-
-const learningAppUrl = import.meta.env.VITE_AFC_URL?.trim()
+import { useAuth } from '../context/AuthContext'
 
 export default function AuraFlowClass() {
+  const { user } = useAuth()
   return (
     <PageWrapper>
       <SEOHead
@@ -22,20 +22,9 @@ export default function AuraFlowClass() {
               data, AI, product design, and the practical work that connects them.
             </p>
             <div className="hero-actions afc-gateway__actions">
-              {learningAppUrl ? (
-                <a
-                  className="af-button af-button--primary"
-                  href={learningAppUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open learning workspace <ArrowUpRight />
-                </a>
-              ) : (
-                <ButtonLink to="/contact">
-                  Ask about AFC access <ArrowUpRight />
-                </ButtonLink>
-              )}
+              <ButtonLink to={user ? '/dashboard/afc' : '/register'}>
+                {user ? 'Open learning workspace' : 'Create AFC account'} <ArrowUpRight />
+              </ButtonLink>
               <ButtonLink to="/" variant="secondary">
                 <ArrowLeft /> Back to AuraFlow
               </ButtonLink>
@@ -56,12 +45,10 @@ export default function AuraFlowClass() {
             </div>
           </div>
         </section>
-        {!learningAppUrl && (
-          <p className="afc-gateway__notice">
-            The AFC learning application is deployed separately from the AuraFlow business site.
-            Its launch address will be connected here before enrolment opens.
-          </p>
-        )}
+        <p className="afc-gateway__notice">
+          AFC uses the same AuraFlow account, protected workspace, and support team. Learners
+          only see their own progress, submissions, and certificates.
+        </p>
       </main>
     </PageWrapper>
   )

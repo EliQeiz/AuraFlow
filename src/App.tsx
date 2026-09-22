@@ -35,6 +35,7 @@ const AdminConsole = lazy(() => import('./pages/Dashboard/AdminConsole'))
 const Settings = lazy(() => import('./pages/Dashboard/Settings'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 const BusinessSystems = lazy(() => import('./pages/Dashboard/BusinessSystems'))
+const AfcWorkspace = lazy(() => import('./pages/Dashboard/AfcWorkspace'))
 const BusinessSite = lazy(() => import('./pages/BusinessSite'))
 
 function PublicLayout() {
@@ -144,6 +145,7 @@ export default function App() {
           <Route path="studio" element={<Navigate to={`/studio${location.search}`} replace />} />
           <Route path="design-studio" element={<Navigate to={`/studio${location.search}`} replace />} />
           <Route path="businesses" element={<BusinessSystems />} />
+          <Route path="afc" element={<AfcWorkspace />} />
           <Route path="templates" element={<MyTemplates />} />
           <Route path="admin" element={<AdminOnly />} />
           <Route path="settings" element={<Settings />} />

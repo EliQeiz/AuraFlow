@@ -589,6 +589,91 @@ test('a profile cannot create admin claims or upgrade its plan', async () => {
     updateDoc(doc(alice, 'users', 'alice'), { plan: 'Enterprise' }),
   )
 })
+test('AFC courses, learning progress, submissions, and certificates remain scoped', async () => {
+  const alice = env.authenticatedContext('afc-alice').firestore()
+  const bob = env.authenticatedContext('afc-bob').firestore()
+  const admin = env.authenticatedContext('afc-owner', { admin: true }).firestore()
+  const courseId = 'afc-free-course'
+  const enrollmentId = `afc-alice_${courseId}`
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'afcCourses', courseId), {
+      title: 'Frontend foundations',
+      slug: courseId,
+      summary: 'A practical course covering accessible interfaces and component systems.',
+      category: 'Software development',
+      level: 'Beginner',
+      priceGhs: 0,
+      instructorName: 'AuraFlow Class',
+      coverImage: '',
+      published: true,
+      estimatedHours: 12,
+      outcomes: ['Build a component'],
+      lessons: [{ id: 'lesson-one', title: 'Foundations' }],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+  })
+  await assertSucceeds(getDoc(doc(alice, 'afcCourses', courseId)))
+  await assertSucceeds(
+    setDoc(doc(alice, 'afcEnrollments', enrollmentId), {
+      userId: 'afc-alice',
+      courseId,
+      status: 'active',
+      completedLessonIds: [],
+      progress: 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }),
+  )
+  await assertFails(
+    setDoc(doc(bob, 'afcEnrollments', `afc-bob_${courseId}`), {
+      userId: 'afc-alice',
+      courseId,
+      status: 'active',
+      completedLessonIds: [],
+      progress: 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }),
+  )
+  await assertSucceeds(
+    updateDoc(doc(alice, 'afcEnrollments', enrollmentId), {
+      completedLessonIds: ['lesson-one'],
+      progress: 100,
+      updatedAt: serverTimestamp(),
+    }),
+  )
+  await assertFails(getDoc(doc(bob, 'afcEnrollments', enrollmentId)))
+  await assertSucceeds(
+    setDoc(doc(alice, 'afcSubmissions', 'alice-submission'), {
+      userId: 'afc-alice',
+      courseId,
+      title: 'Interface review',
+      response: 'I reviewed the interface hierarchy, keyboard flow, and responsive behaviour.',
+      status: 'submitted',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }),
+  )
+  await assertFails(getDoc(doc(bob, 'afcSubmissions', 'alice-submission')))
+  await assertFails(
+    setDoc(doc(alice, 'afcCertificates', 'alice-certificate'), {
+      userId: 'afc-alice',
+      courseId,
+      certificateCode: 'AFC-2026-ABCDE123',
+      issuedAt: serverTimestamp(),
+    }),
+  )
+  await assertSucceeds(
+    setDoc(doc(admin, 'afcCertificates', 'alice-certificate'), {
+      userId: 'afc-alice',
+      courseId,
+      certificateCode: 'AFC-2026-ABCDE123',
+      issuedAt: serverTimestamp(),
+    }),
+  )
+  await assertSucceeds(getDoc(doc(alice, 'afcCertificates', 'alice-certificate')))
+})
 test(
   'storage isolates clients and rejects executable image uploads',
   { skip: !storageEnabled },

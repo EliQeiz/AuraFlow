@@ -15,7 +15,15 @@ import { useAuth } from '../context/AuthContext'
 import { seedPosts } from '../data/blog'
 import { firebaseConfigured, getFirebaseDb } from '../lib/firebase'
 import { getBlogPosts } from '../lib/firestore'
-import type { ProjectRecord, RequestMessage } from '../types'
+import type {
+  AfcCertificate,
+  AfcCourse,
+  AfcEnrollment,
+  AfcEnrollmentRequest,
+  AfcSubmission,
+  ProjectRecord,
+  RequestMessage,
+} from '../types'
 
 export function useBlogPosts() {
   return useQuery({
@@ -107,5 +115,81 @@ export function useAdminProjects(enabled: boolean) {
         limit(100),
       ),
     enabled && Boolean(user),
+  )
+}
+
+export function useAfcCourses(includeUnpublished = false) {
+  const { user } = useAuth()
+  return useLiveRows<AfcCourse>(
+    ['afc-courses', includeUnpublished ? 'all' : 'published'],
+    () => {
+      const source = collection(getFirebaseDb(), 'afcCourses')
+      return includeUnpublished ? source : query(source, where('published', '==', true))
+    },
+    Boolean(user),
+  )
+}
+
+export function useAfcEnrollments(uid?: string) {
+  return useLiveRows<AfcEnrollment>(
+    ['afc-enrollments', uid ?? 'signed-out'],
+    () =>
+      query(
+        collection(getFirebaseDb(), 'afcEnrollments'),
+        where('userId', '==', uid),
+      ),
+    Boolean(uid),
+  )
+}
+
+export function useAfcSubmissions(uid?: string) {
+  return useLiveRows<AfcSubmission>(
+    ['afc-submissions', uid ?? 'signed-out'],
+    () =>
+      query(
+        collection(getFirebaseDb(), 'afcSubmissions'),
+        where('userId', '==', uid),
+      ),
+    Boolean(uid),
+  )
+}
+
+export function useAfcCertificates(uid?: string) {
+  return useLiveRows<AfcCertificate>(
+    ['afc-certificates', uid ?? 'signed-out'],
+    () =>
+      query(
+        collection(getFirebaseDb(), 'afcCertificates'),
+        where('userId', '==', uid),
+      ),
+    Boolean(uid),
+  )
+}
+
+export function useAfcEnrollmentRequests(uid?: string) {
+  return useLiveRows<AfcEnrollmentRequest>(
+    ['afc-enrollment-requests', uid ?? 'signed-out'],
+    () =>
+      query(
+        collection(getFirebaseDb(), 'afcEnrollmentRequests'),
+        where('userId', '==', uid),
+      ),
+    Boolean(uid),
+  )
+}
+
+export function useAfcAllSubmissions(enabled: boolean) {
+  return useLiveRows<AfcSubmission>(
+    ['afc-submissions-admin'],
+    () => collection(getFirebaseDb(), 'afcSubmissions'),
+    enabled,
+  )
+}
+
+export function useAfcAllEnrollmentRequests(enabled: boolean) {
+  return useLiveRows<AfcEnrollmentRequest>(
+    ['afc-enrollment-requests-admin'],
+    () => collection(getFirebaseDb(), 'afcEnrollmentRequests'),
+    enabled,
   )
 }

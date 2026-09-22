@@ -13,7 +13,6 @@ export default defineConfig([
     'Edma 1/**',
     'Ad/**',
     'TAS/**',
-    'afc/**',
   ]),
   {
     files: ['**/*.{ts,tsx}'],

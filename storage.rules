@@ -38,6 +38,12 @@ service firebase.storage {
       return firestore.get(/databases/(default)/documents/projects/$(projectId)).data.userId == uid;
     }
 
+    function activeAfcEnrollment(uid, courseId) {
+      return firestore.exists(/databases/(default)/documents/afcEnrollments/$(uid + '_' + courseId))
+        && firestore.get(/databases/(default)/documents/afcEnrollments/$(uid + '_' + courseId)).data.userId == uid
+        && firestore.get(/databases/(default)/documents/afcEnrollments/$(uid + '_' + courseId)).data.status in ['active', 'completed'];
+    }
+
     match /drafts/{uid}/{draftId}/{fileName} {
       allow read: if owns(uid) || isAdmin();
       allow create, update: if owns(uid) && validRequestAsset();
@@ -72,6 +78,17 @@ service firebase.storage {
       allow read: if (owns(uid) || isAdmin()) && projectBelongsTo(uid, projectId);
       allow create, update: if isAdmin() && projectBelongsTo(uid, projectId) && validRequestAsset();
       allow delete: if isAdmin();
+    }
+
+    match /afc/courses/{courseId}/{fileName} {
+      allow read: if request.auth != null && (isAdmin() || activeAfcEnrollment(request.auth.uid, courseId));
+      allow create, update, delete: if isAdmin() && validRequestAsset();
+    }
+
+    match /afc/submissions/{uid}/{courseId}/{fileName} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, update: if owns(uid) && activeAfcEnrollment(uid, courseId) && validRequestAsset();
+      allow delete: if owns(uid) || isAdmin();
     }
 
     match /{allPaths=**} {
