@@ -108,11 +108,125 @@ function New-SceneSvg($Scene, [int]$Index, [string]$Path) {
   Set-Content -LiteralPath $Path -Value $svg -Encoding utf8
 }
 
+function New-SceneSvgV2($Scene, [int]$Index, [string]$Path) {
+  $artwork = $script:ArtworkByScene[$Index]
+  $copySide = if ($artwork) { $artwork.Side } else { 'left' }
+  $copyX = if ($copySide -eq 'left') { 118 } else { 1060 }
+  $titleWords = $Scene.Title -split ' '
+  $titleLines = @()
+  $titleLine = ''
+  foreach ($word in $titleWords) {
+    $candidate = if ($titleLine) { "$titleLine $word" } else { $word }
+    if ($candidate.Length -gt 23 -and $titleLine) {
+      $titleLines += $titleLine
+      $titleLine = $word
+    } else {
+      $titleLine = $candidate
+    }
+  }
+  if ($titleLine) { $titleLines += $titleLine }
+
+  $titleSize = if ($titleLines.Count -gt 2) { 42 } elseif ($titleLines.Count -gt 1) { 48 } else { 58 }
+  $titleMarkup = ''
+  for ($i = 0; $i -lt $titleLines.Count; $i++) {
+    $y = 350 + ($i * 62)
+    $titleMarkup += '<text x="' + $copyX + '" y="' + $y + '" class="sans" font-size="' + $titleSize + '" font-weight="700" fill="#102a56">' + (Escape-Xml $titleLines[$i]) + '</text>'
+  }
+
+  $bodyLines = @()
+  foreach ($section in ($Scene.Body -split '\|')) {
+    $line = ''
+    foreach ($word in ($section.Trim() -split ' ')) {
+      $candidate = if ($line) { "$line $word" } else { $word }
+      if ($candidate.Length -gt 38 -and $line) {
+        $bodyLines += (Escape-Xml $line)
+        $line = $word
+      } else {
+        $line = $candidate
+      }
+    }
+    if ($line) { $bodyLines += (Escape-Xml $line) }
+  }
+  $bodyStart = 416 + (($titleLines.Count - 1) * 62)
+  $bodyMarkup = ''
+  for ($i = 0; $i -lt $bodyLines.Count; $i++) {
+    $y = $bodyStart + ($i * 48)
+    $bodyMarkup += '<text x="' + $copyX + '" y="' + $y + '" class="body">' + $bodyLines[$i] + '</text>'
+  }
+
+  $imageMarkup = ''
+  $panelMarkup = ''
+  $visualMarkup = ''
+  if ($artwork) {
+    $imageData = [Convert]::ToBase64String([IO.File]::ReadAllBytes($artwork.Path))
+    $panelX = if ($copySide -eq 'left') { 0 } else { 970 }
+    $imageMarkup = '<image href="data:image/png;base64,' + $imageData + '" x="0" y="102" width="1920" height="978" preserveAspectRatio="xMidYMid slice"/>'
+    $panelMarkup = '<rect x="' + $panelX + '" y="102" width="950" height="978" fill="#f8fbff" fill-opacity=".94"/>'
+    $visualMarkup = '<rect x="' + ($copyX - 28) + '" y="250" width="770" height="' + (290 + ($bodyLines.Count * 48)) + '" rx="28" fill="#ffffff" fill-opacity=".68" stroke="#d7e5f6" stroke-width="2"/>'
+  } else {
+    $visualMarkup = '<rect x="1050" y="194" width="700" height="690" rx="38" fill="#ffffff" filter="url(#shadow)"/><rect x="1050" y="194" width="700" height="690" rx="38" fill="none" stroke="#d4e3f7" stroke-width="3"/>' + $Scene.Diagram
+  }
+
+  $indexLabel = '{0:00}' -f ($Index + 1)
+  $progressWidth = [int](42 + (($Index + 1) / 12 * 473))
+  $svg = @'
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2563eb"/><stop offset="1" stop-color="#6d5dfc"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#1e3a8a" flood-opacity=".14"/></filter>
+    <pattern id="dots" width="34" height="34" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.4" fill="#dce7f7"/></pattern>
+    <style>
+      .sans { font-family: Arial, Helvetica, sans-serif; }
+      .label { font: 600 22px Arial, Helvetica, sans-serif; letter-spacing: 3px; fill: #315a96; }
+      .body { font: 400 28px Arial, Helvetica, sans-serif; fill: #385374; }
+      .mini { font: 600 24px Arial, Helvetica, sans-serif; fill: #315a96; }
+      .diagram { font: 700 22px Arial, Helvetica, sans-serif; fill: #163968; }
+      .small { font: 500 22px Arial, Helvetica, sans-serif; fill: #5e7494; }
+    </style>
+  </defs>
+  <rect width="1920" height="1080" fill="#f8fbff"/>
+  __IMAGE__
+  <rect width="1920" height="1080" fill="url(#dots)" opacity=".14"/>
+  __PANEL__
+  <path d="M0 0H1920V102H0z" fill="#ffffff"/>
+  <path d="M0 101H1920" stroke="#dce7f7" stroke-width="2"/>
+  <rect x="94" y="28" width="46" height="46" rx="14" fill="url(#accent)"/>
+  <path d="M108 48l9-6 9 6v11l-9 6-9-6z" fill="none" stroke="#fff" stroke-width="3"/>
+  <text x="158" y="61" class="sans" font-size="31" font-weight="700" fill="#102a56">AFC</text>
+  <text x="232" y="61" class="sans" font-size="24" font-weight="500" fill="#68809d">AuraFlow Class - Machine learning foundations</text>
+  <rect x="1665" y="31" width="154" height="42" rx="21" fill="#edf4ff"/>
+  <text x="1712" y="59" class="mini">__INDEX__ / 12</text>
+  <path d="M__COPY_X__ 212c72-68 161-86 260-53" fill="none" stroke="#75d8ff" stroke-width="13" stroke-linecap="round" opacity=".56"/>
+  <text x="__COPY_X__" y="285" class="label">MACHINE LEARNING, EXPLAINED</text>
+  __VISUAL__
+  __TITLE__
+  __BODY__
+  <rect x="__COPY_X__" y="916" width="515" height="8" rx="4" fill="#dbeafe"/>
+  <rect x="__COPY_X__" y="916" width="__PROGRESS__" height="8" rx="4" fill="url(#accent)"/>
+  <text x="__COPY_X__" y="973" class="small">AFC - Learn the idea, then build with it.</text>
+</svg>
+'@
+  $svg = $svg.Replace('__IMAGE__', $imageMarkup).Replace('__PANEL__', $panelMarkup).Replace('__INDEX__', $indexLabel).Replace('__COPY_X__', $copyX).Replace('__VISUAL__', $visualMarkup).Replace('__TITLE__', $titleMarkup).Replace('__BODY__', $bodyMarkup).Replace('__PROGRESS__', $progressWidth)
+  Set-Content -LiteralPath $Path -Value $svg -Encoding utf8
+}
+
 Require-Command ffmpeg
 Require-Command ffprobe
 Add-Type -AssemblyName System.Speech
 
 $root = Split-Path -Parent $PSScriptRoot
+$artworkRoot = Join-Path $root 'docs\afc-video-production\assets'
+$script:ArtworkByScene = @{
+  0 = [pscustomobject]@{ Path = (Join-Path $artworkRoot 'shop-forecast.png'); Side = 'left' }
+  1 = [pscustomobject]@{ Path = (Join-Path $artworkRoot 'shop-forecast.png'); Side = 'left' }
+  2 = [pscustomobject]@{ Path = (Join-Path $artworkRoot 'learner-data-notes.png'); Side = 'right' }
+  7 = [pscustomobject]@{ Path = (Join-Path $artworkRoot 'pattern-clusters.png'); Side = 'left' }
+  8 = [pscustomobject]@{ Path = (Join-Path $artworkRoot 'logistics-planner.png'); Side = 'right' }
+  9 = [pscustomobject]@{ Path = (Join-Path $artworkRoot 'logistics-planner.png'); Side = 'right' }
+  10 = [pscustomobject]@{ Path = (Join-Path $artworkRoot 'responsible-health-data.png'); Side = 'left' }
+  11 = [pscustomobject]@{ Path = (Join-Path $artworkRoot 'shop-forecast.png'); Side = 'left' }
+}
+$script:ArtworkByScene.Values | ForEach-Object { if (-not (Test-Path -LiteralPath $_.Path)) { throw "Missing AFC artwork: $($_.Path)" } }
 $output = Join-Path $root 'artifacts\afc-machine-learning-overview'
 $slides = Join-Path $output 'slides'
 $audio = Join-Path $output 'audio'
@@ -149,7 +263,7 @@ for ($index = 0; $index -lt $scenes.Count; $index++) {
   $pngPath = Join-Path $slides "scene-$sceneNumber.png"
   $wavPath = Join-Path $audio "scene-$sceneNumber.wav"
   $mp4Path = Join-Path $segments "scene-$sceneNumber.mp4"
-  New-SceneSvg -Scene $scene -Index $index -Path $svgPath
+  New-SceneSvgV2 -Scene $scene -Index $index -Path $svgPath
   & node (Join-Path $PSScriptRoot 'render-afc-video-slide.mjs') $svgPath $pngPath
   $voice.SetOutputToWaveFile($wavPath)
   $voice.Speak($scene.Narration)
@@ -163,7 +277,9 @@ for ($index = 0; $index -lt $scenes.Count; $index++) {
     $captionEnd = $captionStart + $captionDuration
     $vtt += "$(To-VttTime $captionStart) --> $(To-VttTime $captionEnd)`r`n$($captionSentences[$captionIndex].Trim())`r`n`r`n"
   }
-  & ffmpeg -hide_banner -loglevel error -y -loop 1 -i $pngPath -i $wavPath -filter:v "scale=1920:1080,zoompan=z='min(zoom+0.00016,1.045)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1920x1080:fps=25,format=yuv420p" -c:v libx264 -preset veryfast -crf 19 -c:a aac -b:a 192k -shortest -movflags +faststart $mp4Path
+  $fadeOut = [Math]::Max(0, $duration - 0.55)
+  $videoFilter = "scale=1920:1080,zoompan=z='min(zoom+0.00016,1.045)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1920x1080:fps=25,fade=t=in:st=0:d=0.45,fade=t=out:st=$($fadeOut):d=0.55,format=yuv420p"
+  & ffmpeg -hide_banner -loglevel error -y -loop 1 -i $pngPath -i $wavPath -filter:v $videoFilter -c:v libx264 -preset veryfast -crf 19 -c:a aac -b:a 192k -shortest -movflags +faststart $mp4Path
   $currentTime += $duration
 }
 

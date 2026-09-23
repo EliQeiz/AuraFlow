@@ -18,6 +18,8 @@ The render script creates the following files under `artifacts/afc-machine-learn
 
 - Original AFC sketchboard style: warm white paper, blue and violet ink, cyan highlights, rounded diagrams, and calm movement.
 - No Simplilearn logo, wording, scenes, drawings, or narration is reused.
+- Scene artwork is original AFC-commissioned illustration: a Ghanaian neighbourhood shop owner, learner studying examples, logistics planner, clustering wall, and responsible healthcare review. It is used only in the AFC lesson package.
+- Each scene is composed on a fixed safe grid, with a protected copy column and a separate image or diagram region. This prevents text, panels, and visuals from overlapping.
 - Example context: forecasting stock for a neighbourhood shop. The example is illustrative; it does not imply that automated forecasts replace human judgment.
 - Narration: clear conversational English, paced for beginner learners. The generated desktop voice is a production draft; replace it with an approved human or licensed neural voice before publishing a public course.
 
