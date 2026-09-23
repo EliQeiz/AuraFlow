@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { Firestore } from 'firebase-admin/firestore'
 import { z } from 'zod'
 import { BusinessError, type Actor } from '../business/firebase.js'
+import { foundationAssessments } from './foundation.js'
 
 const idSchema = z.string().trim().regex(/^[a-z0-9][a-z0-9_-]{2,179}$/i)
 const questionSchema = z.object({
@@ -37,12 +38,14 @@ const integrityEventSchema = z.object({
   attemptId: idSchema,
   type: z.enum(['visibility-hidden', 'window-blur', 'fullscreen-exit', 'copy', 'paste', 'network-reconnected']),
 })
+const foundationInstallSchema = z.object({ action: z.literal('foundation-install') })
 
 const commandSchema = z.discriminatedUnion('action', [
   createAssessmentSchema,
   startAssessmentSchema,
   submitAssessmentSchema,
   integrityEventSchema,
+  foundationInstallSchema,
 ])
 
 type AssessmentKey = z.infer<typeof questionSchema>
@@ -85,6 +88,43 @@ async function readAssessment(db: Firestore, assessmentId: string) {
 
 export async function afcCommand(db: Firestore, actor: Actor, raw: unknown) {
   const command = commandSchema.parse(raw)
+  if (command.action === 'foundation-install') {
+    requireAdmin(actor)
+    const now = new Date().toISOString()
+    let installed = 0
+    await db.runTransaction(async (transaction) => {
+      for (const assessment of foundationAssessments) {
+        const course = await transaction.get(db.doc(`afcCourses/${assessment.courseId}`))
+        if (!course.exists)
+          throw new BusinessError(409, 'Install the AFC courses before their assessments.')
+        const reference = db.doc(`afcAssessments/${assessment.id}`)
+        const existing = await transaction.get(reference)
+        if (existing.exists) continue
+        installed += 1
+        transaction.create(reference, {
+          courseId: assessment.courseId,
+          title: assessment.title,
+          durationMinutes: assessment.durationMinutes,
+          passMark: assessment.passMark,
+          maxAttempts: assessment.maxAttempts,
+          questionCount: assessment.questions.length,
+          published: true,
+          createdBy: actor.uid,
+          createdAt: now,
+          updatedAt: now,
+        })
+        transaction.create(db.doc(`afcAssessmentKeys/${assessment.id}`), {
+          assessmentId: assessment.id,
+          questions: assessment.questions,
+          createdAt: now,
+        })
+        transaction.create(db.doc(`afcAssessmentAudit/${randomUUID()}`), {
+          action: 'foundation-assessment-installed', assessmentId: assessment.id, actorId: actor.uid, createdAt: now,
+        })
+      }
+    })
+    return { installed, total: foundationAssessments.length }
+  }
   if (command.action === 'assessment-create') {
     requireAdmin(actor)
     const course = await db.doc(`afcCourses/${command.courseId}`).get()

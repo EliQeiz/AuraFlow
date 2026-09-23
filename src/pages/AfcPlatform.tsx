@@ -58,6 +58,7 @@ import {
 } from '../lib/afc'
 import {
   createAfcAssessment,
+  installAfcFoundationAssessments,
   recordAfcIntegrityEvent,
   startAfcAssessment,
   submitAfcAssessment,
@@ -495,7 +496,24 @@ function Instructor() {
   const [summary, setSummary] = useState('')
   const [lessons, setLessons] = useState('')
   if (!admin) return <Navigate to="/afc/learn" replace />
-  async function provision() { setBusy(true); try { await createAfcStarterCourses(); await coursesQuery.refetch(); toast.success('The five-course AFC foundation is published.'); } catch (error) { toast.error(asErrorMessage(error)) } finally { setBusy(false) } }
+  async function provision() {
+    setBusy(true)
+    try {
+      await createAfcStarterCourses()
+      await coursesQuery.refetch()
+      try {
+        const result = await installAfcFoundationAssessments()
+        toast.success(result.installed ? `Five courses and ${result.installed} secure assessments are published.` : 'The five-course foundation and secure assessments are already published.')
+      } catch (error) {
+        toast.success('The five-course AFC foundation is published.')
+        toast.error(`Course assessments need the AFC server: ${asErrorMessage(error)}`)
+      }
+    } catch (error) {
+      toast.error(asErrorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
   async function publish(event: FormEvent) { event.preventDefault(); const lessonItems = lessons.split('\n').map((item) => item.trim()).filter(Boolean); if (!lessonItems.length) { toast.error('Add at least one lesson.'); return }; setBusy(true); try { const slug = title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); const parsedLessons = lessonItems.map((item, index) => { const [lessonTitle, rawVideoUrl, rawMinutes] = item.split('|').map((part) => part.trim()); return { id: `lesson-${index + 1}`, title: lessonTitle, summary: 'Instructor notes will be published here.', durationMinutes: Number(rawMinutes) || 45, ...(rawVideoUrl ? { videoUrl: rawVideoUrl } : {}) } }); await saveAfcCourse({ title, slug, summary, category: 'Software development', level: 'Beginner' as AfcCourseLevel, priceGhs: 0, instructorName: 'AuraFlow Class', coverImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1600&q=85', published: true, estimatedHours: Math.max(1, parsedLessons.reduce((total, lesson) => total + lesson.durationMinutes, 0) / 60), outcomes: ['Apply the material in a practical setting'], lessons: parsedLessons }); setTitle(''); setSummary(''); setLessons(''); await coursesQuery.refetch(); toast.success('Course published.'); } catch (error) { toast.error(asErrorMessage(error)) } finally { setBusy(false) } }
   async function decide(id: string, decision: 'approved' | 'declined') { const request = requestsQuery.data.find((item) => item.id === id); if (!request) return; setBusy(true); try { await decideAfcEnrollmentRequest(request, decision); toast.success(decision === 'approved' ? 'Enrollment approved.' : 'Enrollment declined.'); } catch (error) { toast.error(asErrorMessage(error)) } finally { setBusy(false) } }
   async function release(submissionId: string) { setBusy(true); try { await reviewAfcSubmission(submissionId, { status: 'reviewed', score: 70, reviewerNote: 'Reviewed by AuraFlow Class. Open the assignment feedback to continue improving your work.' }); toast.success('Feedback released.'); } catch (error) { toast.error(asErrorMessage(error)) } finally { setBusy(false) } }

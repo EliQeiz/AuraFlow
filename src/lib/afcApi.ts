@@ -38,6 +38,12 @@ export async function createAfcAssessment(input: {
   })
 }
 
+export async function installAfcFoundationAssessments() {
+  return afcRequest<{ installed: number; total: number }>({
+    action: 'foundation-install',
+  })
+}
+
 export async function startAfcAssessment(assessmentId: string) {
   return afcRequest<AfcAssessmentAttempt>({
     action: 'assessment-start',
