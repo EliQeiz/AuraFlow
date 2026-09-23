@@ -4,8 +4,10 @@ import { getFirestore } from 'firebase-admin/firestore'
 
 export function businessServices() {
   const existing = getApps().find((app) => app.name === 'auraflow-business')
-  const projectId = process.env.FIREBASE_PROJECT_ID
-  if (!projectId) throw new Error('BUSINESS_BACKEND_UNCONFIGURED')
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+  if (!projectId || (process.env.NODE_ENV === 'production' && !serviceAccountJson))
+    throw new Error('BUSINESS_BACKEND_UNCONFIGURED')
   if (
     process.env.NODE_ENV === 'production' &&
     (process.env.FIRESTORE_EMULATOR_HOST ||
@@ -17,10 +19,10 @@ export function businessServices() {
     initializeApp(
       {
         projectId,
-        ...(process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+        ...(serviceAccountJson
           ? {
               credential: cert(
-                JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON),
+                JSON.parse(serviceAccountJson),
               ),
             }
           : {}),

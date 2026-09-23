@@ -207,11 +207,20 @@ export type AfcSubmissionStatus = 'submitted' | 'reviewed' | 'returned'
 
 export interface AfcLesson {
   id: string
+  moduleTitle?: string
   title: string
   summary: string
   durationMinutes: number
   videoUrl?: string
   resourceUrl?: string
+}
+
+export interface AfcAssignmentBrief {
+  id: string
+  title: string
+  brief: string
+  deliverables: string[]
+  rubric: string[]
 }
 
 export interface AfcCourse {
@@ -228,6 +237,7 @@ export interface AfcCourse {
   estimatedHours: number
   outcomes: string[]
   lessons: AfcLesson[]
+  assignments?: AfcAssignmentBrief[]
   createdAt?: unknown
   updatedAt?: unknown
 }

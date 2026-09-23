@@ -684,7 +684,7 @@ service cloud.firestore {
       return d.keys().hasOnly([
           'title', 'slug', 'summary', 'category', 'level', 'priceGhs',
           'instructorName', 'coverImage', 'published', 'estimatedHours',
-          'outcomes', 'lessons', 'createdAt', 'updatedAt'
+          'outcomes', 'lessons', 'assignments', 'createdAt', 'updatedAt'
         ])
         && stringBetween(d, 'title', 4, 140)
         && d.slug is string && d.slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
@@ -698,6 +698,7 @@ service cloud.firestore {
         && d.estimatedHours is int && d.estimatedHours >= 1 && d.estimatedHours <= 1000
         && d.outcomes is list && d.outcomes.size() <= 12
         && d.lessons is list && d.lessons.size() >= 1 && d.lessons.size() <= 50
+        && (!d.keys().hasAny(['assignments']) || (d.assignments is list && d.assignments.size() <= 8))
         && d.updatedAt == request.time;
     }
     function activeAfcEnrollment(uid, courseId) {

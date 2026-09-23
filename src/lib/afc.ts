@@ -111,12 +111,11 @@ export async function createAfcStarterCourses() {
     afcStarterCourses.map(async (course) => {
       const reference = doc(db, 'afcCourses', course.slug)
       const existing = await getDoc(reference)
-      if (!existing.exists())
-        await setDoc(reference, {
-          ...course,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        })
+      await setDoc(reference, {
+        ...course,
+        ...(existing.exists() ? {} : { createdAt: serverTimestamp() }),
+        updatedAt: serverTimestamp(),
+      }, { merge: true })
     }),
   )
 }
@@ -145,6 +144,24 @@ export async function saveAfcCourse(course: Omit<AfcCourse, 'id'>, id?: string) 
     throw new Error(
       'Each lesson needs a valid title, duration, and optional YouTube video URL.',
     )
+  if (
+    course.assignments &&
+    (course.assignments.length > 8 ||
+      course.assignments.some(
+        (assignment) =>
+          assignment.id.length < 3 ||
+          assignment.id.length > 120 ||
+          assignment.title.length < 4 ||
+          assignment.title.length > 180 ||
+          assignment.brief.length < 20 ||
+          assignment.brief.length > 4000 ||
+          assignment.deliverables.length < 1 ||
+          assignment.deliverables.length > 10 ||
+          assignment.rubric.length < 1 ||
+          assignment.rubric.length > 10,
+      ))
+  )
+    throw new Error('Each assignment needs a clear brief, deliverables, and review rubric.')
   const reference = doc(getFirebaseDb(), 'afcCourses', id || slug)
   await setDoc(
     reference,

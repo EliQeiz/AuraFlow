@@ -38,7 +38,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       res.status(400).json({ message: 'Enter a valid AFC certificate code.' })
       return
     }
-    console.error('afc_certificate_verify_failure', error instanceof Error ? error.name : 'unknown')
+    console.error('afc_certificate_verify_failure', error instanceof Error ? error.message : 'unknown')
     res.status(503).json({ message: 'Certificate verification is temporarily unavailable.' })
   }
 }
