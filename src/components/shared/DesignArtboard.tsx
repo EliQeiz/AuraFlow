@@ -162,6 +162,7 @@ export function DesignArtboard({
                 border: ['rectangle', 'ellipse'].includes(layer.kind)
                   ? `2px solid ${layer.stroke}`
                   : undefined,
+                overflow: layer.kind === 'image' ? 'hidden' : undefined,
               }
               return (
                 <div

@@ -235,26 +235,6 @@ export async function decideAfcEnrollmentRequest(
   }
 }
 
-export async function toggleAfcLesson(
-  enrollment: AfcEnrollment,
-  course: AfcCourse,
-  lessonId: string,
-) {
-  const user = currentUser()
-  if (enrollment.userId !== user.uid || enrollment.status !== 'active')
-    throw new Error('This lesson is not available in your current enrolment.')
-  if (!course.lessons.some((lesson) => lesson.id === lessonId))
-    throw new Error('That lesson does not belong to this course.')
-  const completed = enrollment.completedLessonIds.includes(lessonId)
-    ? enrollment.completedLessonIds.filter((id) => id !== lessonId)
-    : [...enrollment.completedLessonIds, lessonId]
-  await updateDoc(doc(getFirebaseDb(), 'afcEnrollments', enrollment.id), {
-    completedLessonIds: completed,
-    progress: Math.round((completed.length / course.lessons.length) * 100),
-    updatedAt: serverTimestamp(),
-  })
-}
-
 export async function submitAfcAssignment(input: {
   courseId: string
   title: string

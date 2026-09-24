@@ -14,7 +14,7 @@ import './styles/experience.css'
 import './styles/design-editor.css'
 import './styles/studio-lab.css'
 
-const firstTheme = window.localStorage.getItem('auraflow-theme-v2')
+const firstTheme = window.localStorage.getItem('auraflow-theme-v3')
 document.documentElement.dataset.theme = firstTheme === 'dark' ? 'dark' : 'light'
 document.documentElement.style.colorScheme = firstTheme === 'dark' ? 'dark' : 'light'
 import './styles/business.css'

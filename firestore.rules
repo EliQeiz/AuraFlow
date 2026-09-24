@@ -254,6 +254,22 @@ service cloud.firestore {
         && (items.size() < 9 || layerGroupMatches(uid, draftId, items, 4))
         && (items.size() < 11 || layerGroupMatches(uid, draftId, items, 5));
     }
+    function validReusableComponent(d) {
+      return d is map
+        && d.keys().hasOnly(['id', 'name', 'layer'])
+        && d.id.matches('^[a-zA-Z0-9-]{1,80}$')
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 80
+        && validLayer(d.layer);
+    }
+    function validReusableComponents(items) {
+      return items is list && items.size() <= 6
+        && (items.size() < 1 || validReusableComponent(items[0]))
+        && (items.size() < 2 || validReusableComponent(items[1]))
+        && (items.size() < 3 || validReusableComponent(items[2]))
+        && (items.size() < 4 || validReusableComponent(items[3]))
+        && (items.size() < 5 || validReusableComponent(items[4]))
+        && (items.size() < 6 || validReusableComponent(items[5]));
+    }
     function validVisual(d) {
       return d is map && d.keys().hasOnly(['background','surface','ink','radius','spacing','fontSize','brightness','saturation','imageOpacity'])
         && d.background.matches('^#[a-fA-F0-9]{6}$') && d.surface.matches('^#[a-fA-F0-9]{6}$') && d.ink.matches('^#[a-fA-F0-9]{6}$')
@@ -279,16 +295,17 @@ service cloud.firestore {
         && data.modules is list && data.modules.size() >= 1 && data.modules.size() <= 30
         && data.roles is list && data.roles.size() <= 20
         && data.workflows is list && data.workflows.size() <= 20
-        && data.pages is list && data.pages.size() >= 1 && data.pages.size() <= 15
+        && data.pages is list && data.pages.size() >= 1 && data.pages.size() <= 20
         && data.notes is string && data.notes.size() <= 6000
         && draftPath(data.logoPath, uid) && draftPath(data.bannerPath, uid)
-        && validDraftMedia(data.mediaPaths, uid);
+        && validDraftMedia(data.mediaPaths, uid)
+        && validReusableComponents(data.reusableComponents);
     }
 
     function validDraft(uid, draftId) {
       return validDesign(request.resource.data, uid)
         && (!request.resource.data.keys().hasAny(['layers']) || validLayers(request.resource.data.layers, uid, draftId))
-        && request.resource.data.keys().hasOnly(['schemaVersion', 'suiteSlug', 'name', 'headline', 'description', 'primaryColor', 'accentColor', 'theme', 'font', 'modules', 'roles', 'workflows', 'pages', 'notes', 'logoPath', 'bannerPath', 'mediaPaths', 'visual', 'layers', 'userId', 'revision', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['schemaVersion', 'suiteSlug', 'name', 'headline', 'description', 'primaryColor', 'accentColor', 'theme', 'font', 'modules', 'roles', 'workflows', 'pages', 'notes', 'logoPath', 'bannerPath', 'mediaPaths', 'reusableComponents', 'visual', 'layers', 'userId', 'revision', 'updatedAt'])
         && request.resource.data.userId == uid
         && request.resource.data.revision is int
         && request.resource.data.updatedAt == request.time;
@@ -759,10 +776,10 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/afcCourses/$(request.resource.data.courseId)).data.published == true
           && get(/databases/$(database)/documents/afcCourses/$(request.resource.data.courseId)).data.priceGhs == 0)
         || (isAdmin() && validAfcEnrollment() && request.resource.data.createdAt == request.time);
-      allow update: if (owns(resource.data.userId)
-          && validAfcEnrollment()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completedLessonIds', 'progress', 'updatedAt']))
-        || (isAdmin() && validAfcEnrollment());
+      // Lesson progress is written by the AFC server after it verifies the enrolled
+      // learner, the course sequence, and the resulting percentage. A browser must
+      // never be able to mint course completion or a certificate path by itself.
+      allow update: if isAdmin() && validAfcEnrollment();
       allow delete: if isAdmin();
     }
 

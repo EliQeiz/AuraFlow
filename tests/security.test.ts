@@ -664,7 +664,7 @@ test('AFC courses, learning progress, submissions, and certificates remain scope
       updatedAt: serverTimestamp(),
     }),
   )
-  await assertSucceeds(
+  await assertFails(
     updateDoc(doc(alice, 'afcEnrollments', enrollmentId), {
       completedLessonIds: ['lesson-one'],
       progress: 100,

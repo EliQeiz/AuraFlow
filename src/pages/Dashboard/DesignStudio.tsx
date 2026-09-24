@@ -3,9 +3,11 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  CopyPlus,
   Download,
   FilePlus2,
   Grid3X3,
+  House,
   ImagePlus,
   Layers3,
   Monitor,
@@ -17,6 +19,7 @@ import {
   Plus,
   Redo2,
   Save,
+  Send,
   Smartphone,
   Sparkles,
   Tablet,
@@ -26,6 +29,7 @@ import {
   X,
 } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Button } from '../../components/ui/Button'
 import { Field } from '../../components/ui/Field'
@@ -83,6 +87,7 @@ function download(name: string, content: string, type = 'application/json') {
 
 export default function DesignStudio() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const artboard = useRef<HTMLDivElement>(null)
   const [draftId] = useState(() => `studio-${crypto.randomUUID()}`)
   const [revision, setRevision] = useState(0)
@@ -297,6 +302,48 @@ export default function DesignStudio() {
       setSaving(false)
     }
   }
+  function saveSelectedAsComponent() {
+    if (!selected) {
+      toast.error('Select a layer before saving a reusable component.')
+      return
+    }
+    const name = selected.text.trim().slice(0, 80) || `${selected.kind} component`
+    update({
+      reusableComponents: [
+        ...draft.reusableComponents,
+        { id: crypto.randomUUID(), name, layer: selected },
+      ].slice(-6),
+    })
+    setLibraryTab('components')
+    toast.success(`${name} is now available in this project library.`)
+  }
+  function placeReusableComponent(component: StudioDraft['reusableComponents'][number]) {
+    if ((draft.layers?.length || 0) >= 12) {
+      toast.error('This prototype is at the 12-layer limit.')
+      return
+    }
+    const layer = { ...component.layer, id: crypto.randomUUID(), page, x: 64, y: 120 }
+    updateLayers([...(draft.layers || []), layer])
+    setSelectedLayer(layer.id)
+    setLibraryTab('layers')
+    toast.success(`${component.name} added to ${page}.`)
+  }
+  async function handoff() {
+    if (!user) {
+      toast.error('Sign in before sending a design to AuraFlow.')
+      return
+    }
+    setSaving(true)
+    try {
+      const nextRevision = await saveDraft(draftId, draft, revision)
+      setRevision(nextRevision)
+      navigate(`/dashboard/new?draft=${encodeURIComponent(draftId)}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not prepare this design for a project request.')
+    } finally {
+      setSaving(false)
+    }
+  }
   async function exportPng() {
     const node = artboard.current?.querySelector('#design-artboard') as HTMLElement | null
     if (!node) return
@@ -319,11 +366,13 @@ export default function DesignStudio() {
           <span className="studio-lab-status"><Check size={13} /> Local draft</span>
         </div>
         <div className="studio-lab-actions">
+          <Link className="icon-button" title="Visit AuraFlow website" aria-label="Visit AuraFlow website" to="/"><House /></Link>
           <button className="icon-button" title="Undo" aria-label="Undo" disabled={!past.length} onClick={undo}><Undo2 /></button>
           <button className="icon-button" title="Redo" aria-label="Redo" disabled={!future.length} onClick={redo}><Redo2 /></button>
           <span className="studio-lab-divider" />
           <StudioHistory id={draftId} disabled={!user} onRestore={(restored) => { setDraft(restored); toast.success('Checkpoint restored.') }} />
           <Button variant="secondary" onClick={() => download(`${draft.name || 'auraflow-design'}.json`, JSON.stringify(draft, null, 2))}><Download /> Export</Button>
+          <Button variant="secondary" loading={saving} onClick={() => void handoff()}><Send /> Send to AuraFlow</Button>
           <Button loading={saving} onClick={() => void save()}><Save /> Save</Button>
         </div>
       </header>
@@ -350,7 +399,7 @@ export default function DesignStudio() {
               <Field label="Business system"><Select value={draft.suiteSlug} onChange={(event) => chooseSuite(event.target.value)}>{suiteBlueprints.map((item) => <option key={item.slug} value={item.slug}>{item.title}</option>)}</Select></Field>
             </>}
             {libraryTab === 'layers' && <><div className="studio-lab-panel-heading"><span>{page} layers</span><span className="studio-lab-count">{pageLayers.length}/12</span></div><LayerList layers={pageLayers} selected={selectedLayer} selectedIds={selectedLayer ? [selectedLayer] : []} onSelect={setSelectedLayer} onChange={(next) => updateLayers([...(draft.layers || []).filter((layer) => layer.page !== page), ...next])} /></>}
-            {libraryTab === 'components' && <><div className="studio-lab-panel-heading"><span>Components</span><span className="studio-lab-count">Reusable</span></div><p className="studio-lab-help">Add a component to the active page, then tune it from the inspector.</p><div className="studio-component-grid">{componentPresets.map(({ kind, label, icon: Icon }) => <button key={kind} onClick={() => addComponent(kind)}><Icon /><span>{label}</span></button>)}</div><div className="studio-lab-note"><Sparkles size={15} /><span>Next: save any layer as a reusable component across pages.</span></div></>}
+            {libraryTab === 'components' && <><div className="studio-lab-panel-heading"><span>Components</span><span className="studio-lab-count">Reusable</span></div><p className="studio-lab-help">Build with primitives, then save your own patterns for consistent pages and faster iterations.</p><div className="studio-component-grid">{componentPresets.map(({ kind, label, icon: Icon }) => <button key={kind} onClick={() => addComponent(kind)}><Icon /><span>{label}</span></button>)}</div>{selected && <button className="studio-save-component" onClick={saveSelectedAsComponent}><CopyPlus size={15} /> Save selected layer to library</button>}{draft.reusableComponents.length > 0 && <div className="studio-reusable-list">{draft.reusableComponents.map((component) => <button key={component.id} onClick={() => placeReusableComponent(component)}><span><b>{component.name}</b><small>{component.layer.kind}</small></span><Plus size={15} /></button>)}</div>}<div className="studio-lab-note"><Sparkles size={15} /><span>Reusable components stay private to this project and travel with its handoff.</span></div></>}
             {libraryTab === 'assets' && <>
               <div className="studio-lab-panel-heading">
                 <span>Assets</span>

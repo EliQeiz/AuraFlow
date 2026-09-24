@@ -134,7 +134,10 @@ export default function DashboardLayout() {
   const { profileError, refreshProfile, profile } = useAuth()
   const { setTheme } = useTheme()
   useEffect(() => {
-    if (profile?.theme) setTheme(profile.theme)
+    // Existing profiles may still carry AuraFlow's retired dark-first default.
+    // Only a saved v3 choice can override the new light-first baseline here.
+    if (window.localStorage.getItem('auraflow-theme-v3')) return
+    if (profile?.theme === 'light') setTheme('light')
   }, [profile?.theme, setTheme])
   return (
     <div className="workspace">

@@ -16,6 +16,7 @@ export function Footer() {
           </div>
           <div>
             <h3>Platform</h3>
+            <Link to="/">Home</Link>
             <Link to="/solutions">Business suites</Link>
             <Link to="/templates">Templates</Link>
             <Link to="/services">Custom development</Link>

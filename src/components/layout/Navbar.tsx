@@ -6,6 +6,7 @@ import { Brand } from '../shared/Brand'
 import { ButtonLink } from '../ui/Button'
 
 const links = [
+  ['Home', '/'],
   ['Platform', '/solutions'],
   ['Templates', '/templates'],
   ['Services', '/services'],

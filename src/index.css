@@ -3,28 +3,6 @@
 @tailwind utilities;
 
 :root {
-  --aura-dark: 12 13 17;
-  --aura-surface: 18 19 25;
-  --aura-card: 23 24 31;
-  --aura-ink: 241 241 245;
-  --aura-muted: 150 152 166;
-  --line: #292b35;
-  --subtle: #1c1e27;
-  --primary: #766dff;
-  --primary-hover: #8b83ff;
-  --cyan: #56d7e5;
-  --positive: #61cda5;
-  --danger: #f0949d;
-  --shadow: 0 12px 32px #0003;
-  color-scheme: dark;
-  font-family: 'DM Sans', system-ui, sans-serif;
-  color: rgb(var(--aura-ink));
-  background: rgb(var(--aura-dark));
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-}
-[data-theme='light'] {
   --aura-dark: 247 248 252;
   --aura-surface: 255 255 255;
   --aura-card: 255 255 255;
@@ -39,6 +17,28 @@
   --danger: #b52642;
   --shadow: 0 16px 42px #26334c16;
   color-scheme: light;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: rgb(var(--aura-ink));
+  background: rgb(var(--aura-dark));
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+[data-theme='dark'] {
+  --aura-dark: 12 13 17;
+  --aura-surface: 18 19 25;
+  --aura-card: 23 24 31;
+  --aura-ink: 241 241 245;
+  --aura-muted: 150 152 166;
+  --line: #292b35;
+  --subtle: #1c1e27;
+  --primary: #766dff;
+  --primary-hover: #8b83ff;
+  --cyan: #56d7e5;
+  --positive: #61cda5;
+  --danger: #f0949d;
+  --shadow: 0 12px 32px #0003;
+  color-scheme: dark;
 }
 * {
   box-sizing: border-box;
@@ -889,6 +889,9 @@ button:disabled {
 .afc-brand__mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 8px; color: white; background: var(--afc-blue); }
 .afc-brand__mark svg { width: 20px; height: 20px; }
 .afc-brand small { margin-left: 2px; padding-left: 9px; border-left: 1px solid var(--afc-line); color: var(--afc-muted); font-size: 11px; font-weight: 700; letter-spacing: .02em; }
+.afc-aura-link { display: inline-flex; align-items: center; gap: 6px; margin-left: 24px; color: #516079; font-size: 12px; font-weight: 700; }
+.afc-aura-link:hover { color: var(--afc-blue); }
+.afc-aura-link svg { width: 14px; height: 14px; }
 .afc-nav { display: flex; align-items: center; gap: 26px; margin-left: 52px; }
 .afc-nav a { display: inline-flex; align-items: center; gap: 7px; color: #45536a; font-size: 13px; font-weight: 650; }
 .afc-nav a:hover { color: var(--afc-blue); }
@@ -1052,6 +1055,8 @@ button:disabled {
 .afc-player__rail ol { display: grid; gap: 3px; margin: 22px 0 0; padding: 0; list-style: none; }
 .afc-player__rail button { display: grid; grid-template-columns: 25px minmax(0, 1fr); width: 100%; gap: 9px; padding: 11px 8px; border: 1px solid transparent; border-radius: 5px; color: #42526c; background: transparent; text-align: left; }
 .afc-player__rail button:hover, .afc-player__rail button.is-active { border-color: #c9d9f5; background: #f1f6ff; }
+.afc-player__rail button.is-locked { opacity: .58; }
+.afc-player__rail button.is-locked:hover { cursor: not-allowed; }
 .afc-player__rail button > span { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid #cbd7ea; border-radius: 50%; color: #5f708c; font-size: 10px; font-weight: 800; }
 .afc-player__rail button > span svg { width: 14px; height: 14px; color: var(--afc-teal); }
 .afc-player__rail b { display: block; font-size: 12px; line-height: 1.35; }
@@ -2003,6 +2008,7 @@ button:disabled {
     font-size: 24px;
   }
   .afc-topbar { padding-inline: 24px; }
+  .afc-aura-link { margin-left: auto; margin-right: 10px; }
   .afc-nav { position: absolute; top: 71px; right: 16px; left: 16px; display: none; align-items: stretch; gap: 0; padding: 9px; border: 1px solid var(--afc-line); border-radius: 8px; background: white; box-shadow: 0 16px 34px #1b355e1d; }
   .afc-nav--open { display: grid; }
   .afc-nav a { padding: 12px; border-radius: 5px; }

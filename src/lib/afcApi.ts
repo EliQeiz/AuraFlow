@@ -44,6 +44,21 @@ export async function installAfcFoundationAssessments() {
   })
 }
 
+export async function setAfcLessonProgress(input: {
+  courseId: string
+  lessonId: string
+  completed: boolean
+}) {
+  return afcRequest<{
+    completedLessonIds: string[]
+    progress: number
+    status: 'active' | 'completed'
+  }>({
+    action: 'lesson-progress',
+    ...input,
+  })
+}
+
 export async function startAfcAssessment(assessmentId: string) {
   return afcRequest<AfcAssessmentAttempt>({
     action: 'assessment-start',

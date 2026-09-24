@@ -39,6 +39,12 @@ const integrityEventSchema = z.object({
   type: z.enum(['visibility-hidden', 'window-blur', 'fullscreen-exit', 'copy', 'paste', 'network-reconnected']),
 })
 const foundationInstallSchema = z.object({ action: z.literal('foundation-install') })
+const lessonProgressSchema = z.object({
+  action: z.literal('lesson-progress'),
+  courseId: idSchema,
+  lessonId: idSchema,
+  completed: z.boolean(),
+})
 
 const commandSchema = z.discriminatedUnion('action', [
   createAssessmentSchema,
@@ -46,6 +52,7 @@ const commandSchema = z.discriminatedUnion('action', [
   submitAssessmentSchema,
   integrityEventSchema,
   foundationInstallSchema,
+  lessonProgressSchema,
 ])
 
 type AssessmentKey = z.infer<typeof questionSchema>
@@ -58,6 +65,8 @@ type Assessment = {
   questionCount: number
   published: boolean
 }
+
+type CourseLesson = { id?: unknown }
 
 function requireAdmin(actor: Actor) {
   if (!actor.admin) throw new BusinessError(403, 'Only AFC instructors can manage assessments.')
@@ -187,6 +196,63 @@ export async function afcCommand(db: Firestore, actor: Actor, raw: unknown) {
       }
     }
     throw new BusinessError(409, 'You have used all attempts for this assessment.')
+  }
+
+  if (command.action === 'lesson-progress') {
+    const courseRef = db.doc(`afcCourses/${command.courseId}`)
+    const enrollmentRef = db.doc(`afcEnrollments/${actor.uid}_${command.courseId}`)
+    return db.runTransaction(async (transaction) => {
+      const [courseSnapshot, enrollmentSnapshot] = await Promise.all([
+        transaction.get(courseRef),
+        transaction.get(enrollmentRef),
+      ])
+      const course = courseSnapshot.data()
+      const enrollment = enrollmentSnapshot.data()
+      if (!courseSnapshot.exists || course?.published !== true)
+        throw new BusinessError(404, 'This course is not available.')
+      if (!enrollmentSnapshot.exists || enrollment?.userId !== actor.uid || !['active', 'completed'].includes(String(enrollment?.status)))
+        throw new BusinessError(403, 'Enroll in this course before recording lesson progress.')
+
+      const lessons = Array.isArray(course.lessons) ? course.lessons as CourseLesson[] : []
+      const lessonIds = lessons.map((lesson) => typeof lesson.id === 'string' ? lesson.id : '').filter(Boolean)
+      const lessonIndex = lessonIds.indexOf(command.lessonId)
+      if (lessonIndex < 0) throw new BusinessError(400, 'That lesson does not belong to this course.')
+
+      const completed = new Set(
+        Array.isArray(enrollment.completedLessonIds)
+          ? enrollment.completedLessonIds.filter((id: unknown): id is string => typeof id === 'string' && lessonIds.includes(id))
+          : [],
+      )
+      if (command.completed && !completed.has(command.lessonId)) {
+        const prerequisiteIds = lessonIds.slice(0, lessonIndex)
+        if (prerequisiteIds.some((id) => !completed.has(id)))
+          throw new BusinessError(409, 'Complete the preceding lesson before continuing.')
+        completed.add(command.lessonId)
+      }
+      if (!command.completed) {
+        if (lessonIds.slice(lessonIndex + 1).some((id) => completed.has(id)))
+          throw new BusinessError(409, 'Reopen later lessons before reopening this lesson.')
+        completed.delete(command.lessonId)
+      }
+
+      const completedLessonIds = lessonIds.filter((id) => completed.has(id))
+      const progress = Math.round((completedLessonIds.length / lessonIds.length) * 100)
+      const now = new Date().toISOString()
+      transaction.update(enrollmentRef, {
+        completedLessonIds,
+        progress,
+        status: completedLessonIds.length === lessonIds.length ? 'completed' : 'active',
+        updatedAt: now,
+      })
+      transaction.create(db.doc(`afcCourseProgressAudit/${randomUUID()}`), {
+        action: command.completed ? 'lesson-completed' : 'lesson-reopened',
+        courseId: command.courseId,
+        lessonId: command.lessonId,
+        actorId: actor.uid,
+        createdAt: now,
+      })
+      return { completedLessonIds, progress, status: completedLessonIds.length === lessonIds.length ? 'completed' : 'active' }
+    })
   }
 
   if (command.action === 'assessment-submit') {

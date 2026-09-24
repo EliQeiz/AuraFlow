@@ -1,6 +1,15 @@
 import { z } from 'zod'
 import { layerSchema, visualSchema } from './composition'
 
+export const reusableComponentSchema = z
+  .object({
+    id: z.string().regex(/^[a-zA-Z0-9-]{1,80}$/),
+    name: z.string().trim().min(1).max(80),
+    layer: layerSchema,
+  })
+  .strict()
+export type ReusableComponent = z.infer<typeof reusableComponentSchema>
+
 export const draftSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -28,13 +37,14 @@ export const draftSchema = z
         'Layer IDs must be unique.',
       )
       .optional(),
+    reusableComponents: z.array(reusableComponentSchema).max(6).default([]),
     modules: z.array(z.string().max(180)).min(1).max(30),
     roles: z.array(z.string().max(120)).max(20),
     workflows: z.array(z.string().max(180)).max(20),
     pages: z
       .array(z.string().trim().min(1).max(80))
       .min(1)
-      .max(15)
+      .max(20)
       .refine(
         (pages) => new Set(pages).size === pages.length,
         'Page names must be unique.',
@@ -84,4 +94,5 @@ export const defaultDraft = (
   logoPath: '',
   bannerPath: '',
   mediaPaths: [],
+  reusableComponents: [],
 })

@@ -155,6 +155,8 @@ test('studio documents are versioned, bounded and preserve brand controls', () =
     { primaryColor: 'url(evil)' },
     { schemaVersion: 99 },
     { mediaPaths: Array(21).fill('path') },
+    { layers: Array.from({ length: 13 }, () => newLayer('text', 'Home')) },
+    { reusableComponents: [{ id: 'bad', name: 'Bad', layer: { unsafe: true } }] },
   ])
     assert.equal(draftSchema.safeParse({ ...draft, ...patch }).success, false)
 })

@@ -8,6 +8,7 @@ import {
   CirclePlay,
   Clock3,
   GraduationCap,
+  House,
   LayoutDashboard,
   Library,
   LogOut,
@@ -54,12 +55,12 @@ import {
   reviewAfcSubmission,
   saveAfcCourse,
   submitAfcAssignment,
-  toggleAfcLesson,
 } from '../lib/afc'
 import {
   createAfcAssessment,
   installAfcFoundationAssessments,
   recordAfcIntegrityEvent,
+  setAfcLessonProgress,
   startAfcAssessment,
   submitAfcAssessment,
 } from '../lib/afcApi'
@@ -125,6 +126,9 @@ function AfcShell({ children, learner = false }: PropsWithChildren<{ learner?: b
     <div className="afc-app">
       <header className="afc-topbar">
         <AfcBrand />
+        <Link className="afc-aura-link" to="/">
+          <House /> AuraFlow
+        </Link>
         <nav className={menuOpen ? 'afc-nav afc-nav--open' : 'afc-nav'} aria-label="AFC navigation">
           {navigation.map(({ to, label, Icon }) => (
             <Link key={to} to={to} onClick={() => setMenuOpen(false)}>
@@ -318,12 +322,24 @@ function CoursePlayer() {
   async function complete() {
     if (!course || !enrollment || !selected) return
     setBusy(true)
-    try { await toggleAfcLesson(enrollment, course, selected.id) } catch (error) { toast.error(asErrorMessage(error)) } finally { setBusy(false) }
+    try { await setAfcLessonProgress({ courseId: course.id, lessonId: selected.id, completed: !completeLesson }) } catch (error) { toast.error(asErrorMessage(error)) } finally { setBusy(false) }
   }
   if (isLoading) return <AfcShell learner><StatePanel loading /></AfcShell>
   if (!course || !enrollment) return <Navigate to={course ? `/afc/course/${course.slug}` : '/afc/catalog'} replace />
+  const enrolledCourse = course
+  const activeEnrollment = enrollment
   const completeLesson = enrollment.completedLessonIds.includes(selected?.id || '')
-  return <AfcShell learner><main className="afc-player"><aside className="afc-player__rail"><Link to="/afc/learn"><ChevronRight className="afc-player__back" /> My learning</Link><p>{course.category}</p><h2>{course.title}</h2><div className="afc-player__progress"><span>Course progress</span><strong>{enrollment.progress}%</strong><div className="afc-progress-track"><i style={{ width: `${enrollment.progress}%` }} /></div></div><ol>{course.lessons.map((lesson, index) => <li key={lesson.id}>{lesson.moduleTitle && (index === 0 || course.lessons[index - 1]?.moduleTitle !== lesson.moduleTitle) ? <p className="afc-player__module">{lesson.moduleTitle}</p> : null}<button onClick={() => setSelectedId(lesson.id)} className={lesson.id === selected?.id ? 'is-active' : ''}><span>{enrollment.completedLessonIds.includes(lesson.id) ? <CheckCircle2 /> : String(index + 1).padStart(2, '0')}</span><div><b>{lesson.title}</b><small>{lesson.durationMinutes} min</small></div></button></li>)}</ol></aside><section className="afc-player__main"><div className="afc-player__lesson-meta"><span>{selected?.moduleTitle || 'Course lesson'} · Lesson {course.lessons.findIndex((lesson) => lesson.id === selected?.id) + 1}</span><span>{selected?.durationMinutes} minutes</span></div><div className="afc-player__video">{videoEmbed ? <iframe title={`${selected?.title || 'Lesson'} video`} src={videoEmbed} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /> : <><img src={course.coverImage} alt="" /><div><CirclePlay /><span>Lesson media is released by your instructor here.</span></div></>}</div><article><h1>{selected?.title}</h1><p>{selected?.summary}</p><div className="afc-player__notes"><h3>Before you continue</h3><p>Use this space for lesson instructions, resources, and practical context. Course media and materials are supplied through instructor publishing, not exposed through public catalog pages.</p></div><Button onClick={() => void complete()} loading={busy} variant={completeLesson ? 'secondary' : 'primary'}>{completeLesson ? 'Mark as not complete' : 'Mark lesson complete'} <CheckCircle2 /></Button></article>{assessments.data.length ? <section className="afc-assessment-list"><div><p className="afc-kicker">Course assessments</p><h2>Test your understanding</h2><p>Attempts are timed, graded by AFC, and stored only in your learning record.</p></div>{assessments.data.map((assessment) => <article key={assessment.id}><div><ClipboardCheck /><span>{assessment.questionCount} questions · {assessment.durationMinutes} minutes · Pass mark {assessment.passMark}%</span><h3>{assessment.title}</h3></div><ButtonLink to={`/afc/learn/${course.id}/assessment/${assessment.id}`}>Start assessment <ArrowRight /></ButtonLink></article>)}</section> : null}<AssignmentSubmission course={course} /></section></main></AfcShell>
+  function lessonLocked(index: number) {
+    return index > 0 && !enrolledCourse.lessons.slice(0, index).every((lesson) => activeEnrollment.completedLessonIds.includes(lesson.id))
+  }
+  function selectLesson(lessonId: string, index: number) {
+    if (lessonLocked(index)) {
+      toast.error('Complete the preceding lesson before opening this one.')
+      return
+    }
+    setSelectedId(lessonId)
+  }
+  return <AfcShell learner><main className="afc-player"><aside className="afc-player__rail"><Link to="/afc/learn"><ChevronRight className="afc-player__back" /> My learning</Link><p>{course.category}</p><h2>{course.title}</h2><div className="afc-player__progress"><span>Course progress</span><strong>{enrollment.progress}%</strong><div className="afc-progress-track"><i style={{ width: `${enrollment.progress}%` }} /></div></div><ol>{course.lessons.map((lesson, index) => <li key={lesson.id}>{lesson.moduleTitle && (index === 0 || course.lessons[index - 1]?.moduleTitle !== lesson.moduleTitle) ? <p className="afc-player__module">{lesson.moduleTitle}</p> : null}<button onClick={() => selectLesson(lesson.id, index)} className={`${lesson.id === selected?.id ? 'is-active' : ''}${lessonLocked(index) ? ' is-locked' : ''}`} aria-disabled={lessonLocked(index)}><span>{enrollment.completedLessonIds.includes(lesson.id) ? <CheckCircle2 /> : String(index + 1).padStart(2, '0')}</span><div><b>{lesson.title}</b><small>{lessonLocked(index) ? 'Complete earlier lesson' : `${lesson.durationMinutes} min`}</small></div></button></li>)}</ol></aside><section className="afc-player__main"><div className="afc-player__lesson-meta"><span>{selected?.moduleTitle || 'Course lesson'} · Lesson {course.lessons.findIndex((lesson) => lesson.id === selected?.id) + 1}</span><span>{selected?.durationMinutes} minutes</span></div><div className="afc-player__video">{videoEmbed ? <iframe title={`${selected?.title || 'Lesson'} video`} src={videoEmbed} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /> : <><img src={course.coverImage} alt="" /><div><CirclePlay /><span>Lesson media is released by your instructor here.</span></div></>}</div><article><h1>{selected?.title}</h1><p>{selected?.summary}</p><div className="afc-player__notes"><h3>Before you continue</h3><p>Use this space for lesson instructions, resources, and practical context. Course media and materials are supplied through instructor publishing, not exposed through public catalog pages.</p></div><Button onClick={() => void complete()} loading={busy} variant={completeLesson ? 'secondary' : 'primary'}>{completeLesson ? 'Mark as not complete' : 'Mark lesson complete'} <CheckCircle2 /></Button></article>{assessments.data.length ? <section className="afc-assessment-list"><div><p className="afc-kicker">Course assessments</p><h2>Test your understanding</h2><p>Attempts are timed, graded by AFC, and stored only in your learning record.</p></div>{assessments.data.map((assessment) => <article key={assessment.id}><div><ClipboardCheck /><span>{assessment.questionCount} questions · {assessment.durationMinutes} minutes · Pass mark {assessment.passMark}%</span><h3>{assessment.title}</h3></div><ButtonLink to={`/afc/learn/${course.id}/assessment/${assessment.id}`}>Start assessment <ArrowRight /></ButtonLink></article>)}</section> : null}<AssignmentSubmission course={course} /></section></main></AfcShell>
 }
 
 function Certificates() {

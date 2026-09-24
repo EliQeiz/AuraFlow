@@ -56,7 +56,8 @@ export function MotionMedia({
     [paused, setPaused] = useState(false),
     [manual, setManual] = useState(false),
     [index, setIndex] = useState(0),
-    [failed, setFailed] = useState(false)
+    [imageFailedFor, setImageFailedFor] = useState<string | null>(null),
+    [videoFailedFor, setVideoFailedFor] = useState<string | null>(null)
   const [foreground, setForeground] = useState(() => !document.hidden)
   const connection = (
     navigator as Navigator & { connection?: { saveData?: boolean } }
@@ -72,8 +73,11 @@ export function MotionMedia({
     .slice(0, 4)
     .map((src) => imageSource(src))
   const videoSources = [...new Set(videos)].slice(0, 2)
-  const mediaCount = videoSources.length > 0 ? videoSources.length : sources.length
   const stableSources = JSON.stringify({ sources, videoSources })
+  const imageFailed = imageFailedFor === stableSources
+  const videoFailed = videoFailedFor === stableSources
+  const shouldRenderVideo = videoSources.length > 0 && !videoFailed
+  const mediaCount = shouldRenderVideo ? videoSources.length : sources.length
   const controls = useAnimationControls()
   useEffect(() => {
     const change = () => setForeground(!document.hidden)
@@ -106,7 +110,7 @@ export function MotionMedia({
     let live = true
     const timer = window.setInterval(() => {
       const next = (index + 1) % mediaCount
-      if (gallery.videoSources.length) {
+      if (shouldRenderVideo) {
         if (live) setIndex(next)
         return
       }
@@ -114,7 +118,7 @@ export function MotionMedia({
       image.onload = () => {
         if (live) {
           setIndex(next)
-          setFailed(false)
+          setImageFailedFor(null)
         }
       }
       image.src = gallery.sources[next]
@@ -123,7 +127,7 @@ export function MotionMedia({
       live = false
       window.clearInterval(timer)
     }
-  }, [active, index, mediaCount, stableSources])
+  }, [active, index, mediaCount, shouldRenderVideo, stableSources])
   return (
     <div
       ref={ref}
@@ -138,7 +142,7 @@ export function MotionMedia({
     >
       <motion.div className="motion-media-stage" animate={controls}>
         <AnimatePresence initial={false}>
-          {!failed && videoSources.length > 0 ? (
+          {!imageFailed && shouldRenderVideo ? (
             <video
               key={videoSources[index % videoSources.length]}
               src={videoSources[index % videoSources.length]}
@@ -148,11 +152,14 @@ export function MotionMedia({
               loop
               playsInline
               autoPlay={active}
-              preload="auto"
+              preload="metadata"
               aria-label={alt}
-              onError={() => setFailed(true)}
+              onError={() => {
+                setVideoFailedFor(stableSources)
+                setIndex(0)
+              }}
             />
-          ) : !failed && sources.length > 0 ? (
+          ) : !imageFailed && sources.length > 0 ? (
             <motion.img
               key={sources[index % sources.length]}
               src={sources[index % sources.length]}
@@ -163,7 +170,7 @@ export function MotionMedia({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: reduced ? 0 : 0.7 }}
-              onError={() => setFailed(true)}
+          onError={() => setImageFailedFor(stableSources)}
             />
           ) : (
             <div className="media-unavailable">
@@ -191,9 +198,9 @@ export function MotionMedia({
           {active ? <Pause size={13} /> : <Play size={13} />}
         </button>
       )}
-      {videoSources.length + sources.length > 1 && (
+      {mediaCount > 1 && (
         <div className="media-dots" aria-hidden="true">
-          {[...videoSources, ...sources].map((source, i) => (
+          {(shouldRenderVideo ? videoSources : sources).map((source, i) => (
             <i key={source} data-active={i === index} />
           ))}
         </div>
