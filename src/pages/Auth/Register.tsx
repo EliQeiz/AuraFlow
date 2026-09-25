@@ -9,7 +9,7 @@ import { PasswordInput } from '../../components/ui/PasswordInput'
 import { SEOHead } from '../../components/shared/SEOHead'
 import { useAuth } from '../../context/AuthContext'
 import { loginWithGoogle, registerWithEmail } from '../../lib/auth'
-import { firebaseConfigured } from '../../lib/firebase'
+import { backendConfigured } from '../../lib/backend'
 import { asErrorMessage } from '../../lib/utils'
 import { authDestination, registrationSchema } from '../../domain/auth'
 
@@ -77,7 +77,7 @@ export default function Register() {
         title="Create your AuraFlow account"
         footer="A workspace for the business you want to build."
       >
-        {!firebaseConfigured && (
+        {!backendConfigured && (
           <p className="inline-alert error mb-5" role="alert">
             Account services are temporarily unavailable. Please contact
             support.
@@ -93,7 +93,7 @@ export default function Register() {
           variant="secondary"
           onClick={google}
           loading={pending === 'google'}
-          disabled={Boolean(pending) || !firebaseConfigured}
+          disabled={Boolean(pending) || !backendConfigured}
         >
           <FcGoogle size={18} /> Continue with Google
         </Button>
@@ -164,7 +164,7 @@ export default function Register() {
           <Button
             type="submit"
             loading={pending === 'email'}
-            disabled={Boolean(pending) || !firebaseConfigured}
+            disabled={Boolean(pending) || !backendConfigured}
           >
             Create account
           </Button>

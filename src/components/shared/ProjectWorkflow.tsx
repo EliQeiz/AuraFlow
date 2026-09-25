@@ -14,7 +14,9 @@ import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useLiveRows } from '../../hooks/useFirebase'
 import { getFirebaseDb } from '../../lib/firebase'
-import { createWork, respondToWork } from '../../lib/workflow'
+import { backendProvider } from '../../lib/backend'
+import { useQuery } from '@tanstack/react-query'
+import { createWork, listProjectWork, respondToWork } from '../../lib/workflow'
 import { asErrorMessage } from '../../lib/utils'
 import {
   canTransition,
@@ -42,7 +44,8 @@ export function ProjectWorkflow({
   asAdmin?: boolean
 }) {
   const { user } = useAuth()
-  const rows = useLiveRows<WorkItem>(
+  const supabaseRows = useQuery({ queryKey: ['work-items', 'supabase', user?.uid ?? '', project.id], queryFn: () => listProjectWork(project.id), enabled: backendProvider === 'supabase' && Boolean(user) })
+  const firebaseRows = useLiveRows<WorkItem>(
     ['work-items', user!.uid, project.id],
     () =>
       query(
@@ -50,7 +53,9 @@ export function ProjectWorkflow({
         orderBy('createdAt', 'desc'),
         limit(100),
       ),
+    backendProvider === 'firebase' && Boolean(user),
   )
+  const rows = backendProvider === 'supabase' ? { ...supabaseRows, data: supabaseRows.data ?? ([] as WorkItem[]) } : firebaseRows
   const [params] = useSearchParams()
   const [kind, setKind] = useState<WorkInput['kind']>(() => {
     const value = params.get('kind')

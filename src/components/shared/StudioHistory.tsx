@@ -1,9 +1,8 @@
-import { collection, limit, orderBy, query } from 'firebase/firestore'
 import { History, RotateCcw } from 'lucide-react'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
-import { useLiveRows } from '../../hooks/useFirebase'
-import { getFirebaseDb } from '../../lib/firebase'
+import { listDraftVersions } from '../../lib/studio'
 import {
   draftSchema,
   type SavedDraft,
@@ -25,23 +24,11 @@ export function StudioHistory({
 }) {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
-  const versions = useLiveRows<SavedDraft>(
-    ['design-versions', user!.uid, id],
-    () =>
-      query(
-        collection(
-          getFirebaseDb(),
-          'users',
-          user!.uid,
-          'drafts',
-          id,
-          'versions',
-        ),
-        orderBy('revision', 'desc'),
-        limit(50),
-      ),
-    open,
-  )
+  const versions = useQuery({
+    queryKey: ['design-versions', user?.uid ?? 'signed-out', id],
+    queryFn: () => listDraftVersions(id) as Promise<SavedDraft[]>,
+    enabled: open && Boolean(user),
+  })
   return (
     <>
       <Button variant="ghost" disabled={disabled} onClick={() => setOpen(true)}>
@@ -60,14 +47,14 @@ export function StudioHistory({
             error={versions.error}
             retry={() => void versions.refetch()}
           />
-        ) : !versions.data.length ? (
+        ) : !(versions.data ?? []).length ? (
           <StatePanel
             title="No checkpoints yet"
             description="Your next save will create the first checkpoint."
           />
         ) : (
           <div className="history-list">
-            {versions.data.map((version) => (
+            {(versions.data ?? []).map((version) => (
               <article key={version.id}>
                 <div>
                   <strong>
@@ -98,7 +85,7 @@ export function StudioHistory({
             ))}
           </div>
         )}
-        {versions.data.length === 50 && (
+        {(versions.data ?? []).length === 50 && (
           <p className="field-hint">Latest 50 checkpoints shown.</p>
         )}
       </Modal>

@@ -16,6 +16,8 @@
     "api/afc.ts",
     "api/afc-verify.ts",
     "api/whatsapp.ts",
+    "server/backend.ts",
+    "server/supabase.ts",
     "server/afc/**/*.ts",
     "server/business/**/*.ts",
     "scripts/business-dev.ts",

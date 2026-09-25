@@ -1,9 +1,12 @@
 import { collection, limitToLast, orderBy, query } from 'firebase/firestore'
 import { Send } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
 import { useLiveRows } from '../../hooks/useFirebase'
 import { getFirebaseDb } from '../../lib/firebase'
+import { backendProvider } from '../../lib/backend'
+import { getSupabase } from '../../lib/supabase'
 import { sendProjectMessage } from '../../lib/firestore'
 import {
   sendSupportMessage,
@@ -63,7 +66,19 @@ export function ChatThread({
   const [audioPending, setAudioPending] = useState(false)
   const [audioProgress, setAudioProgress] = useState(0)
   const log = useRef<HTMLDivElement>(null)
-  const messages = useLiveRows<RequestMessage>(
+  const supabaseMessages = useQuery({
+    queryKey: ['live-chat', 'supabase', user?.uid ?? 'signed-out', support ? 'support' : 'project', id, String(count)],
+    queryFn: async () => {
+      const table = support ? 'support_messages' : 'project_messages'
+      const column = support ? 'conversation_id' : 'project_id'
+      const { data, error } = await getSupabase().from(table).select('id, author_id, author_name, role, text, kind, media_path, media_type, duration_ms, transcript, language, created_at').eq(column, id).order('created_at', { ascending: true }).limit(count)
+      if (error) throw error
+      return (data ?? []).map((message) => ({ id: message.id, authorId: message.author_id, authorName: message.author_name, role: message.role, text: message.text, kind: message.kind, mediaPath: message.media_path ?? undefined, mediaType: message.media_type ?? undefined, durationMs: message.duration_ms ?? undefined, transcript: message.transcript ?? undefined, language: message.language ?? undefined, createdAt: message.created_at }) as RequestMessage)
+    },
+    enabled: backendProvider === 'supabase' && Boolean(user && id),
+    refetchInterval: 5000,
+  })
+  const firebaseMessages = useLiveRows<RequestMessage>(
     [
       'live-chat',
       user!.uid,
@@ -82,7 +97,11 @@ export function ChatThread({
         orderBy('createdAt', 'asc'),
         limitToLast(count),
       ),
+    backendProvider === 'firebase' && Boolean(user && id),
   )
+  const messages = backendProvider === 'supabase'
+    ? { ...supabaseMessages, data: supabaseMessages.data ?? ([] as RequestMessage[]) }
+    : firebaseMessages
   const lastId = messages.data.at(-1)?.id
   const ownerId = clientId || user?.uid || ''
   useEffect(() => {

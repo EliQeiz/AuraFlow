@@ -9,7 +9,7 @@ import { PasswordInput } from '../../components/ui/PasswordInput'
 import { SEOHead } from '../../components/shared/SEOHead'
 import { useAuth } from '../../context/AuthContext'
 import { loginWithEmail, loginWithGoogle } from '../../lib/auth'
-import { firebaseConfigured } from '../../lib/firebase'
+import { backendConfigured } from '../../lib/backend'
 import { asErrorMessage } from '../../lib/utils'
 import { authDestination } from '../../domain/auth'
 
@@ -58,7 +58,7 @@ export default function Login() {
         title="Welcome back to AuraFlow"
         footer="Your projects, conversations, and next big idea."
       >
-        {!firebaseConfigured && (
+        {!backendConfigured && (
           <p className="inline-alert error mb-5" role="alert">
             Account services are temporarily unavailable. Please contact
             support.
@@ -74,7 +74,7 @@ export default function Login() {
           variant="secondary"
           onClick={google}
           loading={pending === 'google'}
-          disabled={Boolean(pending) || !firebaseConfigured}
+          disabled={Boolean(pending) || !backendConfigured}
         >
           <FcGoogle size={18} /> Continue with Google
         </Button>
@@ -110,7 +110,7 @@ export default function Login() {
           <Button
             type="submit"
             loading={pending === 'email'}
-            disabled={Boolean(pending) || !firebaseConfigured}
+            disabled={Boolean(pending) || !backendConfigured}
           >
             Sign in
           </Button>

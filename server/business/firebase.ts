@@ -1,6 +1,7 @@
 import { cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
+export { BusinessError, type Actor } from '../errors.js'
 
 export function businessServices() {
   const existing = getApps().find((app) => app.name === 'auraflow-business')
@@ -31,12 +32,3 @@ export function businessServices() {
     )
   return { db: getFirestore(app), auth: getAuth(app) }
 }
-export class BusinessError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message)
-  }
-}
-export type Actor = { uid: string; admin: boolean }

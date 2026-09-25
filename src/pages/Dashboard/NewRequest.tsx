@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   ArrowRight,
 } from 'lucide-react'
-import { doc, getDoc } from 'firebase/firestore'
 import { useQuery } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -21,8 +20,9 @@ import { suiteBlueprints } from '../../data/suiteBlueprints'
 import { templates } from '../../data/templates'
 import { draftSchema, type StudioDraft } from '../../domain/studio'
 import { requestSchema } from '../../domain/projects'
-import { getFirebaseDb } from '../../lib/firebase'
+import { backendProvider } from '../../lib/backend'
 import { createProjectRequest, attachProjectAsset } from '../../lib/firestore'
+import { getDraft } from '../../lib/studio'
 import { validateMedia, uploadPrivateMedia } from '../../lib/media'
 import { asErrorMessage } from '../../lib/utils'
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
@@ -35,11 +35,8 @@ export default function NewRequest() {
     queryKey: ['brief-draft', user?.uid, draftId],
     enabled: Boolean(draftId),
     queryFn: async () => {
-      const snapshot = await getDoc(
-        doc(getFirebaseDb(), 'users', user!.uid, 'drafts', draftId!),
-      )
-      if (!snapshot.exists()) throw new Error('Design not found.')
-      return draftSchema.parse(snapshot.data())
+      const saved = await getDraft(draftId!)
+      return draftSchema.parse(saved.draft)
     },
   })
   if (draftId && draft.isPending) return <StatePanel loading />
@@ -144,7 +141,7 @@ function RequestForm({ draft }: { draft?: StudioDraft }) {
       await createProjectRequest(valid, requestId)
       requestCreated = true
       setCreated(true)
-      const designPaths = draft
+      const designPaths = backendProvider === 'firebase' && draft
         ? [draft.logoPath, draft.bannerPath, ...draft.mediaPaths].filter(
             Boolean,
           )
@@ -161,13 +158,13 @@ function RequestForm({ draft }: { draft?: StudioDraft }) {
       for (let index = 0; index < files.length; index++) {
         const file = files[index]
         const path = `projects/${user!.uid}/${requestId}/references/${index}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_').slice(-100)}`
-        await uploadPrivateMedia(path, file, (percent) =>
+        const uploadedPath = await uploadPrivateMedia(path, file, (percent) =>
           setProgress(`Uploading ${index + 1} of ${files.length}: ${percent}%`),
         )
         await attachProjectAsset(requestId, {
           id: `asset-${index}`,
           name: file.name,
-          path,
+          path: uploadedPath,
           url: '',
           contentType: file.type,
           kind: 'reference',

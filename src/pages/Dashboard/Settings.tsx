@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   Sun,
 } from 'lucide-react'
-import { reload, sendEmailVerification } from 'firebase/auth'
 import { useEffect, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
@@ -22,7 +21,12 @@ import { UserAvatar } from '../../components/shared/UserAvatar'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { useProjects } from '../../hooks/useFirebase'
-import { changePassword, uploadAvatar } from '../../lib/auth'
+import {
+  changePassword,
+  refreshAccountUser,
+  sendAccountVerification,
+  uploadAvatar,
+} from '../../lib/auth'
 import { patchUserProfile } from '../../lib/firestore'
 import {
   startSupportConversation,
@@ -290,7 +294,7 @@ export default function Settings() {
                 disabled={Boolean(pending) || verificationSent}
                 onClick={() =>
                   void act('verify', async () => {
-                    await sendEmailVerification(user!)
+                    await sendAccountVerification(user!)
                     setVerificationSent(true)
                     toast.success('Verification email sent.')
                   })
@@ -302,10 +306,10 @@ export default function Settings() {
                 variant="ghost"
                 onClick={() =>
                   void act('check', async () => {
-                    await reload(user!)
+                    const refreshed = await refreshAccountUser()
                     await refreshProfile()
                     toast.success(
-                      user!.emailVerified
+                      refreshed?.emailVerified
                         ? 'Email verified.'
                         : 'Not verified yet. Check the link in your email.',
                     )

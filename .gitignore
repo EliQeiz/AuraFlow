@@ -13,6 +13,8 @@ test-results/
 playwright-report/
 artifacts/
 artifacts/afc-machine-learning-overview/
+.tmp/
+Screen Recording*.mp4
 dist
 dist-ssr
 .vercel/
@@ -37,3 +39,4 @@ firebase-adminsdk*.json
 *.sln
 *.sw?
 .vercel
+supabase/.temp/

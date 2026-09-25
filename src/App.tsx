@@ -35,7 +35,9 @@ const AdminConsole = lazy(() => import('./pages/Dashboard/AdminConsole'))
 const Settings = lazy(() => import('./pages/Dashboard/Settings'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 const BusinessSystems = lazy(() => import('./pages/Dashboard/BusinessSystems'))
+const BusinessCenterWorkspace = lazy(() => import('./pages/Dashboard/BusinessCenterWorkspace'))
 const BusinessSite = lazy(() => import('./pages/BusinessSite'))
+const BusinessCenter = lazy(() => import('./pages/BusinessCenter'))
 
 function PublicLayout() {
   return (
@@ -73,6 +75,7 @@ export default function App() {
           />
           <Route path="/services" element={<Services />} />
           <Route path="/solutions" element={<Solutions />} />
+          <Route path="/business-center" element={<BusinessCenter />} />
           <Route path="/solutions/:slug" element={<SolutionDetail />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/templates/:slug" element={<TemplateDetail />} />
@@ -144,6 +147,7 @@ export default function App() {
           <Route path="studio" element={<Navigate to={`/studio${location.search}`} replace />} />
           <Route path="design-studio" element={<Navigate to={`/studio${location.search}`} replace />} />
           <Route path="businesses" element={<BusinessSystems />} />
+          <Route path="business-center" element={<BusinessCenterWorkspace />} />
           <Route path="afc" element={<Navigate to="/afc/learn" replace />} />
           <Route path="templates" element={<MyTemplates />} />
           <Route path="admin" element={<AdminOnly />} />

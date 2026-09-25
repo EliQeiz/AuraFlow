@@ -6,7 +6,7 @@ import { Field } from '../../components/ui/Field'
 import { Input } from '../../components/ui/Input'
 import { requestPasswordReset } from '../../lib/auth'
 import { asErrorMessage } from '../../lib/utils'
-import { firebaseConfigured } from '../../lib/firebase'
+import { backendConfigured } from '../../lib/backend'
 
 export default function ForgotPassword() {
   const [sent, setSent] = useState(false)
@@ -56,7 +56,7 @@ export default function ForgotPassword() {
           <Button
             type="submit"
             loading={pending}
-            disabled={!firebaseConfigured}
+            disabled={!backendConfigured}
           >
             Send reset link
           </Button>

@@ -158,7 +158,8 @@ export function CallPanel({ scope, title, asAdmin = false }: CallPanelProps) {
   }
 
   async function hangUp() {
-    if (current) await updateCall(current.id, { status: 'ended' }).catch(() => undefined)
+    const activeCall = current
+    if (activeCall) await updateCall(activeCall.id, { status: 'ended' }).catch(() => undefined)
     cleanupMedia()
   }
 

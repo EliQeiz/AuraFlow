@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Home,
   Store,
+  Building2,
   LayoutTemplate,
   LogOut,
   Menu,
@@ -30,6 +31,7 @@ const navigation = [
   { to: '/dashboard/requests', label: 'Projects', Icon: FolderKanban },
   { to: '/studio', label: 'Studio Lab', Icon: PenTool },
   { to: '/dashboard/businesses', label: 'Business systems', Icon: Store },
+  { to: '/dashboard/business-center', label: 'Business Center', Icon: Building2 },
   {
     to: '/dashboard/templates',
     label: 'Template library',

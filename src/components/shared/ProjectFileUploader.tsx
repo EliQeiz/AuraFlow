@@ -34,11 +34,11 @@ export function ProjectFileUploader({
     try {
       const { file, id } = selection
       const path = `projects/${user.uid}/${projectId}/references/${id}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_').slice(-100)}`
-      await uploadPrivateMedia(path, file, setProgress)
+      const uploadedPath = await uploadPrivateMedia(path, file, setProgress)
       await attachProjectAsset(projectId, {
         id,
         name: file.name,
-        path,
+        path: uploadedPath,
         url: '',
         contentType: file.type,
         kind: 'reference',

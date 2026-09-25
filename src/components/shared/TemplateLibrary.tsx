@@ -1,11 +1,10 @@
 import { ArrowUpRight, Bookmark, Check, Search } from 'lucide-react'
-import { arrayRemove, arrayUnion, doc, updateDoc } from 'firebase/firestore'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
 import { suiteBlueprints } from '../../data/suiteBlueprints'
 import { templates } from '../../data/templates'
-import { getFirebaseDb } from '../../lib/firebase'
+import { patchUserProfile } from '../../lib/firestore'
 import { asErrorMessage } from '../../lib/utils'
 import { Input, Select } from '../ui/Input'
 import { Button, ButtonLink } from '../ui/Button'
@@ -53,11 +52,10 @@ export function TemplateLibrary({
     if (!user || !profile || pending) return
     setPending(id)
     try {
-      await updateDoc(doc(getFirebaseDb(), 'users', user.uid), {
-        savedTemplates: profile?.savedTemplates?.includes(id)
-          ? arrayRemove(id)
-          : arrayUnion(id),
-      })
+      const saved = new Set(profile.savedTemplates ?? [])
+      if (saved.has(id)) saved.delete(id)
+      else saved.add(id)
+      await patchUserProfile(user.uid, { savedTemplates: [...saved] })
       await refreshProfile()
     } catch (error) {
       toast.error(asErrorMessage(error))

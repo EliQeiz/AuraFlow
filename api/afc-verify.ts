@@ -1,6 +1,8 @@
 import { z, ZodError } from 'zod'
 import type { ApiRequest, ApiResponse } from '../server/http.js'
 import { businessServices } from '../server/business/firebase.js'
+import { serverBackendProvider } from '../server/backend.js'
+import { getSupabaseAdmin } from '../server/supabase.js'
 
 const codeSchema = z.string().trim().toUpperCase().regex(/^AFC-\d{4}-[A-Z0-9]{8}$/)
 
@@ -15,6 +17,31 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   try {
     const rawCode = Array.isArray(req.query?.code) ? req.query?.code[0] : req.query?.code
     const code = codeSchema.parse(rawCode)
+    if (serverBackendProvider === 'supabase') {
+      const db = getSupabaseAdmin()
+      const { data: certificate, error: certificateError } = await db
+        .from('afc_certificates')
+        .select('course_id, issued_at')
+        .eq('certificate_code', code)
+        .maybeSingle()
+      if (certificateError) throw certificateError
+      if (!certificate) {
+        res.status(200).json({ valid: false })
+        return
+      }
+      const { data: course, error: courseError } = await db
+        .from('afc_courses')
+        .select('title')
+        .eq('id', certificate.course_id)
+        .maybeSingle()
+      if (courseError) throw courseError
+      res.status(200).json({
+        valid: true,
+        courseTitle: course?.title || 'AuraFlow Class program',
+        issuedAt: certificate.issued_at,
+      })
+      return
+    }
     const { db } = businessServices()
     const certificates = await db
       .collection('afcCertificates')

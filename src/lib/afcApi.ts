@@ -1,4 +1,6 @@
 import { getFirebaseAuth } from './firebase'
+import { backendProvider } from './backend'
+import { getSupabase } from './supabase'
 import type { AfcAssessmentAttempt } from '../types'
 
 type AssessmentDraftQuestion = {
@@ -9,12 +11,14 @@ type AssessmentDraftQuestion = {
 }
 
 async function afcRequest<T>(body: Record<string, unknown>): Promise<T> {
-  const user = getFirebaseAuth().currentUser
-  if (!user) throw new Error('Sign in to continue.')
+  const token = backendProvider === 'supabase'
+    ? (await getSupabase().auth.getSession()).data.session?.access_token
+    : await getFirebaseAuth().currentUser?.getIdToken()
+  if (!token) throw new Error('Sign in to continue.')
   const response = await fetch('/api/afc', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${await user.getIdToken()}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),

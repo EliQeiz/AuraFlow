@@ -8,6 +8,7 @@ import { ButtonLink } from '../ui/Button'
 const links = [
   ['Home', '/'],
   ['Platform', '/solutions'],
+  ['Business Center', '/business-center'],
   ['Templates', '/templates'],
   ['Services', '/services'],
   ['Pricing', '/pricing'],

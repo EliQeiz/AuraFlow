@@ -1,9 +1,12 @@
 import type { IncomingMessage } from 'node:http'
 import { businessServices } from '../server/business/firebase.js'
+import { serverBackendProvider } from '../server/backend.js'
+import { getSupabaseAdmin } from '../server/supabase.js'
 import {
   receiveWhatsAppStatuses,
   validWebhookSignature,
 } from '../server/business/whatsapp.js'
+import { receiveSupabaseWhatsAppStatuses } from '../server/business/supabase-whatsapp.js'
 import type { ApiResponse } from '../server/http.js'
 
 export const config = { api: { bodyParser: false } }
@@ -52,10 +55,9 @@ export default async function handler(req: IncomingMessage, res: ApiResponse) {
       res.status(401).end()
       return
     }
-    await receiveWhatsAppStatuses(
-      businessServices().db,
-      JSON.parse(body.toString('utf8')),
-    )
+    const payload = JSON.parse(body.toString('utf8'))
+    if (serverBackendProvider === 'supabase') await receiveSupabaseWhatsAppStatuses(getSupabaseAdmin(), payload)
+    else await receiveWhatsAppStatuses(businessServices().db, payload)
     res.status(200).end()
   } catch {
     res.status(500).end()

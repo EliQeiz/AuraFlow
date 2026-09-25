@@ -1,8 +1,12 @@
 import { createHash } from 'node:crypto'
 import { ZodError } from 'zod'
 import type { ApiRequest, ApiResponse } from '../server/http.js'
-import { BusinessError, businessServices } from '../server/business/firebase.js'
+import { BusinessError } from '../server/errors.js'
+import { businessServices } from '../server/business/firebase.js'
+import { serverBackendProvider } from '../server/backend.js'
+import { getSupabaseAdmin, requireSupabaseActor } from '../server/supabase.js'
 import { afcCommand } from '../server/afc/service.js'
+import { supabaseAfcCommand } from '../server/afc/supabase-service.js'
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   res.setHeader('Cache-Control', 'no-store')
@@ -20,6 +24,19 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const token = String(req.headers.authorization || '').match(/^Bearer (.+)$/)?.[1]
     if (!token) throw new BusinessError(401, 'Sign in to continue.')
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
+    if (serverBackendProvider === 'supabase') {
+      let actor
+      try { actor = await requireSupabaseActor(`Bearer ${token}`) } catch { throw new BusinessError(401, 'Your session expired. Sign in again.') }
+      const db = getSupabaseAdmin()
+      const subjectHash = createHash('sha256').update(actor.uid).digest('hex')
+      const { data: accepted, error: quotaError } = await db.rpc('consume_api_rate_limit', {
+        p_scope: 'afc', p_subject_hash: subjectHash, p_max_requests: 60,
+      })
+      if (quotaError) throw new BusinessError(503, 'AFC protection services are unavailable.')
+      if (accepted !== true) throw new BusinessError(429, 'Too many AFC requests. Please wait a minute.')
+      res.status(200).json(await supabaseAfcCommand(db, actor, body))
+      return
+    }
     const { db, auth } = businessServices()
     let decoded
     try { decoded = await auth.verifyIdToken(token, true) } catch { throw new BusinessError(401, 'Your session expired. Sign in again.') }

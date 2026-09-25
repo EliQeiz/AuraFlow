@@ -18,6 +18,7 @@ const firstTheme = window.localStorage.getItem('auraflow-theme-v3')
 document.documentElement.dataset.theme = firstTheme === 'dark' ? 'dark' : 'light'
 document.documentElement.style.colorScheme = firstTheme === 'dark' ? 'dark' : 'light'
 import './styles/business.css'
+import './styles/business-center.css'
 import './styles/messaging.css'
 import App from './App.tsx'
 
