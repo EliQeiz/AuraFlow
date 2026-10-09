@@ -9,21 +9,13 @@ import {
   Database,
   ExternalLink,
   FileWarning,
-  MapPin,
-  PackageCheck,
-  QrCode,
-  ShieldCheck,
   Smartphone,
-  Sparkles,
-  Upload,
-  Wifi,
-  WifiOff,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { SEOHead } from '../components/shared/SEOHead'
-import { Button, ButtonLink } from '../components/ui/Button'
+import { ButtonLink } from '../components/ui/Button'
 import { ProductRecording } from '../components/shared/ProductRecording'
+import { LabDemo } from '../components/labs/LabDemos'
 import { getPortfolioLab, portfolioLabs, type PortfolioLab } from '../data/labs'
 import { getProductUrl } from '../lib/productLinks'
 
@@ -61,96 +53,6 @@ function LabCard({ lab }: { lab: PortfolioLab }) {
   )
 }
 
-function ErpSandbox() {
-  const [stock, setStock] = useState(28)
-  const [events, setEvents] = useState<string[]>(['Purchase order approved by Ama Mensah'])
-  function dispatch() {
-    if (stock <= 0) return
-    setStock((current) => current - 1)
-    setEvents((current) => [`Dispatch recorded · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, ...current].slice(0, 3))
-  }
-  return (
-    <div className="lab-sandbox lab-erp" aria-label="Interactive ERP sandbox">
-      <header><span><Boxes /> Operations control</span><small>Tenant demo · sandbox data</small></header>
-      <div className="lab-erp__metrics">
-        <div><span>Available stock</span><strong>{stock}</strong><small>Solar controllers · Accra</small></div>
-        <div><span>Orders to fulfil</span><strong>06</strong><small>Two need approval</small></div>
-        <div><span>Audit coverage</span><strong>100%</strong><small>All demo events captured</small></div>
-      </div>
-      <section className="lab-erp__action">
-        <div><PackageCheck /><span><b>Warehouse dispatch</b><small>Record a sample inventory movement and audit event.</small></span></div>
-        <Button onClick={dispatch} disabled={stock === 0}>Record dispatch</Button>
-      </section>
-      <ol className="lab-event-list">{events.map((event) => <li key={event}><CheckCircle2 /> {event}</li>)}</ol>
-    </div>
-  )
-}
-
-function BuildProofSandbox() {
-  const [loaded, setLoaded] = useState(false)
-  return (
-    <div className="lab-sandbox lab-buildproof" aria-label="Interactive construction audit sandbox">
-      <header><span><FileWarning /> Evidence review</span><small>Sample BoQ · demo data</small></header>
-      {!loaded ? (
-        <div className="lab-empty-action"><Upload /><h3>Review a sample materials audit</h3><p>Load a controlled BoQ, supplier receipts, and delivery confirmations.</p><Button onClick={() => setLoaded(true)}>Load audit</Button></div>
-      ) : (
-        <>
-          <div className="lab-risk-grid">
-            <div className="is-alert"><span>Price variance</span><strong>+18.4%</strong><small>Rebar · supplier comparison</small></div>
-            <div className="is-alert"><span>Quantity drift</span><strong>+12 bags</strong><small>Cement · planned vs received</small></div>
-            <div><span>Confirmed deliveries</span><strong>17/19</strong><small>Two require evidence</small></div>
-          </div>
-          <section className="lab-burn"><div><span>Material burn rate</span><b>Within review threshold</b></div><div className="lab-bars">{[44, 62, 51, 77, 66, 84, 71].map((height, index) => <i key={index} style={{ height: `${height}%` }} />)}</div></section>
-        </>
-      )}
-    </div>
-  )
-}
-
-function EnergySandbox() {
-  const [humidity, setHumidity] = useState(44)
-  const [temperature, setTemperature] = useState(61)
-  const result = useMemo(() => Math.max(48, Math.round(91 - humidity * 0.21 - temperature * 0.12)), [humidity, temperature])
-  return (
-    <div className="lab-sandbox lab-energy" aria-label="Interactive material stability predictor">
-      <header><span><Sparkles /> Stability predictor</span><small>Illustrative inference sandbox</small></header>
-      <div className="lab-energy__grid">
-        <div className="lab-sliders">
-          <label>Humidity stress <b>{humidity}%</b><input aria-label="Humidity stress" type="range" min="15" max="85" value={humidity} onChange={(event) => setHumidity(Number(event.target.value))} /></label>
-          <label>Thermal stress <b>{temperature}°C</b><input aria-label="Thermal stress" type="range" min="25" max="95" value={temperature} onChange={(event) => setTemperature(Number(event.target.value))} /></label>
-          <p><ShieldCheck /> Inputs remain local to this demonstration.</p>
-        </div>
-        <div className="lab-prediction"><span>Estimated T80 stability</span><strong>{result}<small>days</small></strong><p>Model consensus: <b>moderate confidence</b></p><div className="lab-model-lines"><i style={{ width: `${Math.min(94, result + 4)}%` }} /><i style={{ width: `${Math.min(94, result - 5)}%` }} /><i style={{ width: `${Math.min(94, result + 1)}%` }} /></div></div>
-      </div>
-    </div>
-  )
-}
-
-function FieldSandbox() {
-  const [online, setOnline] = useState(false)
-  const [queued, setQueued] = useState(3)
-  const [scanned, setScanned] = useState(false)
-  function sync() { if (online) setQueued(0) }
-  return (
-    <div className="lab-sandbox lab-field" aria-label="Interactive offline field capture sandbox">
-      <header><span><Smartphone /> Field capture</span><button className="lab-status-toggle" onClick={() => setOnline((value) => !value)}>{online ? <><Wifi /> Online</> : <><WifiOff /> Offline</>}</button></header>
-      <div className="lab-field__phone">
-        <div className="lab-field__status"><span>{online ? 'Connected to AuraFlow' : 'Working offline'}</span><small>{queued} queued record{queued === 1 ? '' : 's'}</small></div>
-        <button className="lab-qr" onClick={() => { setScanned(true); if (!online) setQueued((value) => value + 1) }}><QrCode /><span>{scanned ? 'ASSET · AF-2048' : 'Scan a site asset'}</span></button>
-        {scanned && <p className="lab-field__capture"><MapPin /> Site verified · 5.6037° N, 0.1870° W</p>}
-      </div>
-      <Button variant="secondary" onClick={sync} disabled={!online || queued === 0}>{queued ? 'Synchronise queued records' : 'Everything is synchronised'}</Button>
-    </div>
-  )
-}
-
-function Sandbox({ lab }: { lab: PortfolioLab }) {
-  if (lab.slug === 'cloud-erp') return <ErpSandbox />
-  if (lab.slug === 'buildproof-ai') return <BuildProofSandbox />
-  if (lab.slug === 'energymat-ml') return <EnergySandbox />
-  return <FieldSandbox />
-}
-
 function Architecture({ lab }: { lab: PortfolioLab }) {
   return (
     <section className="lab-architecture">
@@ -174,8 +76,12 @@ function LabDetail({ lab }: { lab: PortfolioLab }) {
           <div><p className="eyebrow">{lab.eyebrow}</p><h1>{lab.title}</h1><p className="labs-detail-hero__lede">{lab.summary}</p><div className="labs-detail-hero__facts"><span><Icon /> {lab.category}</span><span><BarChart3 /> {lab.metric}</span></div></div>
           {lab.recording ? (
             <ProductRecording src={lab.recording.src} title={lab.title} label={lab.recording.label} duration={lab.recording.duration} />
-          ) : <Sandbox lab={lab} />}
+          ) : <aside className="lab-demo-teaser"><Icon /><span>{lab.statusLabel}</span><strong>Interactive concept demo below</strong><p>Explore the designed workflow using controlled browser-only sample data.</p></aside>}
         </div>
+      </section>
+      <section className="section-shell lab-demo-section">
+        <div className="lab-demo-section__heading"><p className="eyebrow">Explore the workflow</p><h2>Try the core product interaction.</h2><p>All controls use sample data in this browser. Nothing is sent to a product backend or stored after a reset.</p></div>
+        <LabDemo slug={lab.slug} />
       </section>
       <Architecture lab={lab} />
       <section className="section-shell lab-product-module">
