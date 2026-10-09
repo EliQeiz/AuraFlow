@@ -1,365 +1,81 @@
 import {
   ArrowRight,
   ArrowUpRight,
-  Building2,
-  Check,
+  Boxes,
+  CheckCircle2,
+  Cpu,
+  FileWarning,
   GraduationCap,
-  Layers2,
-  Monitor,
-  ShoppingBag,
+  ShieldCheck,
   Smartphone,
-  UtensilsCrossed,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SEOHead } from '../components/shared/SEOHead'
-import { SuiteCover } from '../components/shared/TemplateCover'
 import { ButtonLink } from '../components/ui/Button'
 import { useAuth } from '../context/AuthContext'
-import { defaultDraft } from '../domain/studio'
-import { suiteBlueprints } from '../data/suiteBlueprints'
+import { portfolioLabs } from '../data/labs'
 import founder from '../assets/images/elisha-afari.jpg'
-import { TemplateCover } from '../components/shared/TemplateCover'
-import { templates } from '../data/templates'
 
-const featured = [
-  {
-    slug: 'school-management-system',
-    name: 'Education',
-    description: 'A connected school, from admissions to the parent portal.',
-    Icon: GraduationCap,
-  },
-  {
-    slug: 'restaurant-ordering-booking',
-    name: 'Restaurants & cafes',
-    description: 'Menus, reservations, and a better guest experience.',
-    Icon: UtensilsCrossed,
-  },
-  {
-    slug: 'hotel-lodge-guesthouse-booking',
-    name: 'Hotels & guest houses',
-    description: 'Bring your property, rooms, and reservations together.',
-    Icon: Building2,
-  },
-  {
-    slug: 'ecommerce-storefront',
-    name: 'Commerce',
-    description: 'A storefront and operations that work together.',
-    Icon: ShoppingBag,
-  },
-]
-const examples = [
-  'Adinkra Academy',
-  'The Accra Table',
-  'Akwaaba House',
-  'Form & Everyday',
-]
+const icons = [Boxes, FileWarning, Cpu, Smartphone]
 
 export default function Home() {
   const { user } = useAuth()
   const [selected, setSelected] = useState(0)
-  const suite = suiteBlueprints.find(
-    (item) => item.slug === featured[selected].slug,
-  )!
-  const draft = defaultDraft(
-    suite.slug,
-    examples[selected],
-    suite.modules.slice(0, 3).map((item) => item.title),
-    [],
-  )
-  draft.primaryColor = ['#5c58c9', '#b55c49', '#387e7d', '#6960bd'][selected]
+  const lab = portfolioLabs[selected]
+  const Icon = icons[selected]
+
   return (
-    <main>
+    <main className="portfolio-home">
       <SEOHead
-        title="Websites & Business Software"
-        description="Design your next website or business system with AuraFlow. Explore industry suites, shape your prototype, and work directly with our team in Ghana."
+        title="AuraFlow Labs | Engineering systems for real-world operations"
+        description="AuraFlow is a Ghanaian software engineering portfolio spanning multi-tenant operations, industrial intelligence, applied machine learning, and offline-first mobile workflows."
       />
-      <section className="home-hero">
-        <div className="hero-intro">
-          <p className="eyebrow">Built in Ghana. Built around your business.</p>
-          <h1>
-            Business software.
-            <br />
-            <span>Your way.</span>
-          </h1>
+      <section className="portfolio-hero section-shell">
+        <div className="portfolio-hero__copy">
+          <p className="eyebrow">AuraFlow Labs · Ghana to global</p>
+          <h1>Software systems built for real-world complexity.</h1>
           <p>
-            Start with a template. Make it your own.
-            <br />
-            Work with AuraFlow to turn your vision into a working website, app,
-            or business system.
+            Applied ML, multi-tenant operations, audited industrial workflows,
+            and field-ready mobile products. Built as systems that can be
+            inspected, tested, and extended.
           </p>
           <div className="hero-actions">
-            <ButtonLink to={user ? '/dashboard' : '/register'}>
-              Open business workspace
-              <ArrowRight />
-            </ButtonLink>
-            <ButtonLink to="/afc" variant="secondary">
-              Explore AFC learning
-              <GraduationCap />
-            </ButtonLink>
+            <ButtonLink to="/labs">Explore flagship systems <ArrowRight /></ButtonLink>
+            <ButtonLink to="/about" variant="secondary">About the engineer <ArrowUpRight /></ButtonLink>
           </div>
         </div>
-        <div className="hero-product">
-          <div className="hero-editor">
-            <div className="editor-topbar">
-              <div>
-                <Layers2 size={14} />
-                <strong>AuraFlow Studio</strong>
-                <span>/ {examples[selected]}</span>
-              </div>
-              <div>
-                <span className="hidden sm:inline-flex items-center gap-1">
-                  <Check size={11} /> Design preview
-                </span>
-                <Monitor size={13} />
-                <Smartphone size={12} />
-              </div>
-            </div>
-            <div className="editor-body">
-              <aside className="editor-left">
-                <p className="editor-label">BUSINESS SUITES</p>
-                {featured.map(({ name, Icon }, index) => (
-                  <button
-                    key={name}
-                    aria-pressed={selected === index}
-                    onClick={() => setSelected(index)}
-                  >
-                    <Icon size={14} />
-                    {name}
-                  </button>
-                ))}
-              </aside>
-              <div className="editor-canvas">
-                <SuiteCover key={selected} suite={suite} />
-              </div>
-              <aside className="editor-right">
-                <p className="editor-label">PROJECT DESIGN</p>
-                <div className="editor-property">
-                  <span>Business</span>
-                  <span>{featured[selected].name.split(' ')[0]}</span>
-                </div>
-                <div className="editor-property">
-                  <span>Primary color</span>
-                  <i
-                    className="color-chip"
-                    style={{ background: draft.primaryColor }}
-                  />
-                </div>
-                <div className="editor-property">
-                  <span>Typography</span>
-                  <span>Modern</span>
-                </div>
-                <p className="editor-label mt-8">INCLUDED MODULES</p>
-                {suite.modules.slice(0, 4).map((module) => (
-                  <div className="editor-property" key={module.id}>
-                    <span>{module.title}</span>
-                    <Check size={12} className="text-[var(--positive)]" />
-                  </div>
-                ))}
-              </aside>
-            </div>
-          </div>
-        </div>
-      </section>
-      <div className="industry-band">
-        <div className="section-shell">
-          <span>
-            <GraduationCap size={17} />
-            Schools & education
-          </span>
-          <span>
-            <ShoppingBag size={17} />
-            Shops & commerce
-          </span>
-          <span>
-            <UtensilsCrossed size={17} />
-            Food & hospitality
-          </span>
-          <span>
-            <Building2 size={17} />
-            Every kind of business
-          </span>
-        </div>
-      </div>
-      <section className="home-section">
-        <div className="section-shell">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">A starting point that fits</p>
-              <h2>
-                Your industry.
-                <br />
-                Your kind of platform.
-              </h2>
-              <p>
-                Choose a business suite and shape the pages, brand, and
-                workflows around the way you work.
-              </p>
-            </div>
-            <ButtonLink to="/solutions" variant="ghost">
-              View all suites
-              <ArrowRight />
-            </ButtonLink>
-          </div>
-          <div className="suite-grid">
-            {featured.slice(0, 3).map((item) => {
-              const data = suiteBlueprints.find((s) => s.slug === item.slug)!
-              return (
-                <article key={item.slug} className="suite-tile">
-                  <div className="suite-tile-media">
-                    <SuiteCover suite={data} />
-                  </div>
-                  <h3>
-                    <Link to={`/solutions/${item.slug}`}>{item.name}</Link>
-                    <ArrowUpRight size={17} />
-                  </h3>
-                  <p>{item.description}</p>
-                </article>
-              )
+        <div className="portfolio-console" aria-label="Interactive portfolio system preview">
+          <header><span>AuraFlow Labs</span><small>Selected system</small></header>
+          <div className="portfolio-console__nav">
+            {portfolioLabs.map((item, index) => {
+              const ItemIcon = icons[index]
+              return <button key={item.slug} aria-pressed={index === selected} onClick={() => setSelected(index)}><ItemIcon /> {item.index}</button>
             })}
           </div>
+          <div className="portfolio-console__body">
+            <div><p>{lab.category}</p><h2>{lab.title}</h2><span>{lab.metric}</span></div>
+            <Icon className="portfolio-console__icon" />
+          </div>
+          <div className="portfolio-console__signals">
+            {lab.capabilities.slice(0, 3).map((capability) => <span key={capability}><CheckCircle2 /> {capability}</span>)}
+          </div>
+          <Link to={`/labs/${lab.slug}`}>Open case study <ArrowRight /></Link>
         </div>
       </section>
-      <section className="home-section">
-        <div className="section-shell">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">From first idea to launch</p>
-              <h2>
-                Build with a team,
-                <br />
-                at every step.
-              </h2>
-            </div>
-            <p>
-              Keep your designs, files, feedback, and conversations in one
-              project workspace.
-            </p>
-          </div>
-          <div className="process-grid">
-            {[
-              [
-                '01',
-                'Make it yours',
-                'Choose your suite, set your colors, and assemble the pages and features you need.',
-              ],
-              [
-                '02',
-                'Tell us the details',
-                'Share your brief, content, photos, and references directly in your workspace.',
-              ],
-              [
-                '03',
-                'Review together',
-                'Talk to our team, follow progress, and request changes to your previews.',
-              ],
-              [
-                '04',
-                'Launch your business',
-                'Agree a hosted or custom delivery plan, with the support your business needs.',
-              ],
-            ].map(([number, title, text]) => (
-              <article key={number}>
-                <span>{number}</span>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
-            ))}
-          </div>
+      <section className="portfolio-signal-band"><div className="section-shell"><span><Boxes /> Multi-tenant systems</span><span><FileWarning /> Industrial intelligence</span><span><Cpu /> Applied ML</span><span><Smartphone /> Offline-first mobile</span></div></section>
+      <section className="portfolio-section section-shell">
+        <div className="portfolio-section__heading"><div><p className="eyebrow">Flagship systems</p><h2>Proof, not empty promises.</h2></div><p>Every lab is a focused case study: the operational problem, the design constraints, the engineering approach, and a safe interactive demonstration.</p></div>
+        <div className="portfolio-project-grid">
+          {portfolioLabs.map((item, index) => {
+            const ItemIcon = icons[index]
+            return <article key={item.slug}><div className={`portfolio-project-card__graphic portfolio-project-card__graphic--${item.slug}`}><span>{item.index}</span><ItemIcon /><i /><i /><i /></div><p className="eyebrow">{item.category}</p><h3>{item.title}</h3><p>{item.summary}</p><Link to={`/labs/${item.slug}`}>Explore the system <ArrowRight /></Link></article>
+          })}
         </div>
       </section>
-      <section className="home-section">
-        <div className="section-shell">
-          <div className="founder-band">
-            <img
-              src={founder}
-              alt="Elisha Afari, founder of AuraFlow"
-              loading="lazy"
-            />
-            <div>
-              <p className="eyebrow">A note from our founder</p>
-              <h2>Good software should be within reach.</h2>
-              <p>
-                We are building AuraFlow for the schools, shops, and businesses
-                that make our communities work. Start where you are. Let's build
-                what comes next.
-              </p>
-              <Link
-                to="/about"
-                className="inline-flex items-center gap-2 text-xs mt-5"
-              >
-                Elisha Afari · Founder
-                <ArrowUpRight size={13} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="home-section website-showcase">
-        <div className="section-shell">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">A website with your point of view</p>
-              <h2>
-                Make a lasting
-                <br />
-                first impression.
-              </h2>
-            </div>
-            <ButtonLink to="/templates" variant="secondary">
-              Browse website templates
-              <ArrowUpRight />
-            </ButtonLink>
-          </div>
-          <div className="website-showcase-grid">
-            {[
-              'cafe-restaurant',
-              'boutique-hotel-hotel',
-              'general-practice-clinic',
-            ].map((slug, index) => {
-              const template = templates.find((item) => item.slug === slug)!
-              return (
-                <article key={slug}>
-                  <TemplateCover template={template} autoplay={index === 0} />
-                  <div className="showcase-caption">
-                    <Link to={`/templates/${slug}`}>
-                      {template.name}
-                      <ArrowUpRight size={16} />
-                    </Link>
-                    <span>{template.category}</span>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-      <section className="home-close">
-        <p className="eyebrow">Choose your space</p>
-        <h2>Build a business. Or build your skills.</h2>
-        <div className="home-destination-grid">
-          <article>
-            <Layers2 size={21} />
-            <div>
-              <h3>Business workspace</h3>
-              <p>Shape a project, manage your request, and work with the AuraFlow team.</p>
-            </div>
-            <ButtonLink to={user ? '/dashboard' : '/register'} variant="secondary">
-              Open workspace <ArrowRight />
-            </ButtonLink>
-          </article>
-          <article>
-            <GraduationCap size={21} />
-            <div>
-              <h3>AuraFlow Class</h3>
-              <p>Learn practical technology skills through AFC's secure learning workspace.</p>
-            </div>
-            <ButtonLink to="/afc">
-              Enter AFC <ArrowUpRight />
-            </ButtonLink>
-          </article>
-        </div>
-      </section>
+      <section className="portfolio-evidence"><div className="section-shell"><div><p className="eyebrow">A more useful portfolio</p><h2>Evidence before promises.</h2><p>AuraFlow uses working sandboxes, explicit architecture, and technical case studies so clients, employers, and partners can understand what is actually being built.</p></div><div className="portfolio-evidence__list"><span><ShieldCheck /> Safe, login-free demonstrations</span><span><Cpu /> Clear technical boundaries and trade-offs</span><span><CheckCircle2 /> Real workflows over decorative mockups</span></div></div></section>
+      <section className="portfolio-founder section-shell"><img src={founder} alt="Elisha Afari, founder and engineer at AuraFlow" loading="lazy" /><div><p className="eyebrow">The person behind the systems</p><h2>Built with practical curiosity.</h2><p>I am Elisha Afari, a Ghanaian software engineer building useful systems where operations, data, and people meet. AuraFlow Labs is where that work is made visible, inspectable, and ready for the next challenge.</p><Link to="/about">Meet Elisha <ArrowUpRight /></Link></div></section>
+      <section className="portfolio-platforms section-shell"><div><p className="eyebrow">Beyond the portfolio</p><h2>Products with a purpose.</h2></div><div className="portfolio-platforms__cards"><article><GraduationCap /><h3>AuraFlow Class</h3><p>Practical technical learning, course operations, and high-integrity assessment.</p><ButtonLink to="/afc" variant="secondary">Enter AFC <ArrowRight /></ButtonLink></article><article><Boxes /><h3>Business Center</h3><p>Configurable operational platforms for schools, hospitality, commerce, and growing teams.</p><ButtonLink to={user ? '/dashboard' : '/business-center'}>Explore Business Center <ArrowRight /></ButtonLink></article></div></section>
     </main>
   )
 }

@@ -9,25 +9,25 @@ export function Footer() {
           <div>
             <Brand />
             <p>
-              Websites and business software.
+              Engineering systems and applied software.
               <br />
-              Built with you. Built in Ghana.
+              Built in Ghana. Made to hold up.
             </p>
           </div>
           <div>
-            <h3>Platform</h3>
+            <h3>Portfolio</h3>
             <Link to="/">Home</Link>
-            <Link to="/solutions">Business suites</Link>
-            <Link to="/templates">Templates</Link>
-            <Link to="/services">Custom development</Link>
-            <Link to="/pricing">Pricing</Link>
+            <Link to="/labs">Flagship systems</Link>
+            <Link to="/labs/cloud-erp">Modular Cloud ERP</Link>
+            <Link to="/labs/buildproof-ai">BuildProof AI</Link>
+            <Link to="/labs/energymat-ml">EnergyMat ML Studio</Link>
           </div>
           <div>
-            <h3>AuraFlow</h3>
-            <Link to="/about">Our story</Link>
-            <Link to="/portfolio">Concepts & work</Link>
-            <Link to="/blog">Journal</Link>
-            <Link to="/contact">Contact</Link>
+            <h3>Platforms</h3>
+            <Link to="/business-center">Business Center</Link>
+            <Link to="/afc">AuraFlow Class</Link>
+            <Link to="/about">About the engineer</Link>
+            <Link to="/contact">Start a conversation</Link>
           </div>
           <div>
             <h3>Let's talk</h3>

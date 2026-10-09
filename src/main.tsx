@@ -14,12 +14,14 @@ import './styles/experience.css'
 import './styles/design-editor.css'
 import './styles/studio-lab.css'
 
-const firstTheme = window.localStorage.getItem('auraflow-theme-v3')
+const firstTheme = window.localStorage.getItem('auraflow-theme-v4')
 document.documentElement.dataset.theme = firstTheme === 'dark' ? 'dark' : 'light'
 document.documentElement.style.colorScheme = firstTheme === 'dark' ? 'dark' : 'light'
 import './styles/business.css'
 import './styles/business-center.css'
 import './styles/messaging.css'
+import './styles/labs.css'
+import './styles/aura-brand.css'
 import App from './App.tsx'
 
 const queryClient = new QueryClient({

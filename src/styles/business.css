@@ -89,7 +89,7 @@
 .business-check input {
   margin-top: 4px;
   flex-shrink: 0;
-  accent-color: #6c63ff;
+  accent-color: var(--primary);
 }
 .business-admin {
   padding: 16px 0;

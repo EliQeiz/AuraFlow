@@ -7,11 +7,9 @@ import { ButtonLink } from '../ui/Button'
 
 const links = [
   ['Home', '/'],
-  ['Platform', '/solutions'],
+  ['Labs', '/labs'],
   ['Business Center', '/business-center'],
-  ['Templates', '/templates'],
-  ['Services', '/services'],
-  ['Pricing', '/pricing'],
+  ['AFC', '/afc'],
   ['About', '/about'],
 ] as const
 export function Navbar() {
@@ -34,8 +32,8 @@ export function Navbar() {
               Sign in
             </Link>
           )}
-          <ButtonLink to={user ? '/dashboard' : '/register'}>
-            {user ? 'Open workspace' : 'Get started'}
+          <ButtonLink to={user ? '/dashboard' : '/labs'}>
+            {user ? 'Open workspace' : 'View work'}
             <ArrowUpRight />
           </ButtonLink>
           <button

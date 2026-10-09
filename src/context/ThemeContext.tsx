@@ -9,9 +9,9 @@ interface ThemeValue {
 }
 
 const ThemeContext = createContext<ThemeValue | null>(null)
-// This key deliberately starts a new preference generation: older dark-first
-// defaults must not override AuraFlow's light-first product baseline.
-const themeKey = 'auraflow-theme-v3'
+// A new generation prevents the former dark-first product default from
+// overriding AuraFlow's official light-first blue, navy, and orange system.
+const themeKey = 'auraflow-theme-v4'
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const [theme, setTheme] = useState<ThemePreference>(() => {

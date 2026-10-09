@@ -15,7 +15,7 @@ export function Brand({
       </span>
       {!compact && (
         <span>
-          AuraFlow<span className="brand-period">.</span>
+          <span className="brand-aura">Aura</span><span className="brand-flow">Flow</span><span className="brand-period">.</span>
         </span>
       )}
     </Link>

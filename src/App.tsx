@@ -38,6 +38,7 @@ const BusinessSystems = lazy(() => import('./pages/Dashboard/BusinessSystems'))
 const BusinessCenterWorkspace = lazy(() => import('./pages/Dashboard/BusinessCenterWorkspace'))
 const BusinessSite = lazy(() => import('./pages/BusinessSite'))
 const BusinessCenter = lazy(() => import('./pages/BusinessCenter'))
+const Labs = lazy(() => import('./pages/Labs'))
 
 function PublicLayout() {
   return (
@@ -75,6 +76,8 @@ export default function App() {
           />
           <Route path="/services" element={<Services />} />
           <Route path="/solutions" element={<Solutions />} />
+          <Route path="/labs" element={<Labs />} />
+          <Route path="/labs/:slug" element={<Labs />} />
           <Route path="/business-center" element={<BusinessCenter />} />
           <Route path="/solutions/:slug" element={<SolutionDetail />} />
           <Route path="/templates" element={<Templates />} />
