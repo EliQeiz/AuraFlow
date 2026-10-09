@@ -23,6 +23,7 @@ import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { SEOHead } from '../components/shared/SEOHead'
 import { Button, ButtonLink } from '../components/ui/Button'
+import { ProductRecording } from '../components/shared/ProductRecording'
 import { getPortfolioLab, portfolioLabs, type PortfolioLab } from '../data/labs'
 import { getProductUrl } from '../lib/productLinks'
 
@@ -37,13 +38,13 @@ function LabCard({ lab }: { lab: PortfolioLab }) {
   const Icon = icons[lab.slug]
   return (
     <article className="lab-card">
-      <div className={`lab-card__visual lab-card__visual--${lab.slug}`}>
-        <span className="lab-card__index">{lab.index}</span>
-        <Icon />
-        <div className="lab-card__screen" aria-hidden="true">
-          <i /><i /><i /><i />
+      {lab.recording ? (
+        <ProductRecording src={lab.recording.src} title={lab.title} label={lab.recording.label} duration={lab.recording.duration} controls={false} />
+      ) : (
+        <div className="lab-card__status-visual">
+          <span>{lab.index}</span><Icon /><p>{lab.status === 'planned' ? 'Planned product direction' : 'Source available for review'}</p>
         </div>
-      </div>
+      )}
       <div className="lab-card__body">
         <span className={`lab-status lab-status--${lab.status}`}>{lab.statusLabel}</span>
         <p className="eyebrow">{lab.category}</p>
@@ -171,7 +172,9 @@ function LabDetail({ lab }: { lab: PortfolioLab }) {
         <Link to="/labs" className="labs-back"><ArrowLeft /> All flagship systems</Link>
         <div className="labs-detail-hero__grid">
           <div><p className="eyebrow">{lab.eyebrow}</p><h1>{lab.title}</h1><p className="labs-detail-hero__lede">{lab.summary}</p><div className="labs-detail-hero__facts"><span><Icon /> {lab.category}</span><span><BarChart3 /> {lab.metric}</span></div></div>
-          <Sandbox lab={lab} />
+          {lab.recording ? (
+            <ProductRecording src={lab.recording.src} title={lab.title} label={lab.recording.label} duration={lab.recording.duration} />
+          ) : <Sandbox lab={lab} />}
         </div>
       </section>
       <Architecture lab={lab} />
@@ -207,9 +210,9 @@ function LabIndex() {
   return (
     <main className="labs-page">
       <SEOHead title="AuraFlow Labs | Flagship Engineering Systems" description="Four portfolio systems spanning multi-tenant operations, industrial audit, applied machine learning, and offline-first mobile workflows." />
-      <section className="labs-hero section-shell"><p className="eyebrow">AuraFlow Labs · Ghana to global</p><h1>Engineering systems that hold up in the real world.</h1><p>Explore four flagship builds that demonstrate secure multi-tenant workflows, industrial intelligence, applied machine learning, and resilient mobile operations.</p><div className="hero-actions"><ButtonLink to="/labs/cloud-erp">Explore flagship systems <ArrowRight /></ButtonLink><ButtonLink to="/about" variant="secondary">Meet the engineer</ButtonLink></div></section>
+      <section className="labs-hero section-shell"><p className="eyebrow">AuraFlow Labs · Ghana to global</p><h1>Engineering systems that hold up in the real world.</h1><p>Explore two active product codebases with recorded walkthroughs, alongside two clearly marked research directions in industrial intelligence, applied machine learning, and field operations.</p><div className="hero-actions"><ButtonLink to="/labs/cloud-erp">Explore flagship systems <ArrowRight /></ButtonLink><ButtonLink to="/about" variant="secondary">Meet the engineer</ButtonLink></div></section>
       <section className="section-shell labs-grid">{portfolioLabs.map((lab) => <LabCard key={lab.slug} lab={lab} />)}</section>
-      <section className="labs-method"><div className="section-shell"><p className="eyebrow">How the work is presented</p><h2>Less marketing theatre. More evidence.</h2><div>{[['01', 'Interactive sandbox', 'Explore a controlled workflow without creating an account.'], ['02', 'Architecture context', 'See the boundaries between the user interface, trusted services, data, and events.'], ['03', 'Technical case study', 'Understand the trade-offs, the stack, and the problem each system addresses.']].map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}</div></div></section>
+      <section className="labs-method"><div className="section-shell"><p className="eyebrow">How the work is presented</p><h2>Less marketing theatre. More evidence.</h2><div>{[['01', 'Source recordings', 'Watch real product walkthroughs where a released product recording is available.'], ['02', 'Architecture context', 'See the boundaries between the user interface, trusted services, data, and events.'], ['03', 'Technical case study', 'Understand the trade-offs, the stack, and the problem each system addresses.']].map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}</div></div></section>
     </main>
   )
 }

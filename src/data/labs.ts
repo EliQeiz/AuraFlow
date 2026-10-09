@@ -18,6 +18,11 @@ export interface PortfolioLab {
   statusLabel: string
   modules: string[]
   productKey?: 'buildproof' | 'crestview'
+  recording?: {
+    src: string
+    label: string
+    duration: string
+  }
 }
 
 export const portfolioLabs: PortfolioLab[] = [
@@ -39,6 +44,11 @@ export const portfolioLabs: PortfolioLab[] = [
     statusLabel: 'Real Crestview source · ERP extraction in progress',
     modules: ['Identity and role access', 'Admissions and CRM', 'Billing and finance', 'Inventory and transport', 'Operations reporting'],
     productKey: 'crestview',
+    recording: {
+      src: '/media/crestview-school.mp4',
+      label: 'Crestview operations dashboard recording',
+      duration: '00:06',
+    },
   },
   {
     slug: 'buildproof-ai',

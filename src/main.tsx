@@ -22,6 +22,7 @@ import './styles/business-center.css'
 import './styles/messaging.css'
 import './styles/labs.css'
 import './styles/aura-brand.css'
+import './styles/portfolio-media.css'
 import App from './App.tsx'
 
 const queryClient = new QueryClient({
