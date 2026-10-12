@@ -1,64 +1,80 @@
-import { lazy, Suspense, useEffect } from 'react'
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
-import { Footer } from './components/layout/Footer'
-import { Navbar } from './components/layout/Navbar'
-import { ProtectedRoute } from './components/shared/ProtectedRoute'
-import { StatePanel } from './components/ui/StatePanel'
-import { Legal } from './pages/Legal'
-import { useAuth } from './context/AuthContext'
+import { lazy, Suspense, useEffect } from "react";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { Footer } from "./components/layout/Footer";
+import { Navbar } from "./components/layout/Navbar";
+import { ProtectedRoute } from "./components/shared/ProtectedRoute";
+import { StatePanel } from "./components/ui/StatePanel";
+import { Legal } from "./pages/Legal";
+import { useAuth } from "./context/AuthContext";
 
-const Home = lazy(() => import('./pages/Home'))
-const AfcPlatform = lazy(() => import('./pages/AfcPlatform'))
-const Services = lazy(() => import('./pages/Services'))
-const Solutions = lazy(() => import('./pages/Solutions'))
-const SolutionDetail = lazy(() => import('./pages/SolutionDetail'))
-const Templates = lazy(() => import('./pages/Templates'))
-const TemplateDetail = lazy(() => import('./pages/TemplateDetail'))
-const Portfolio = lazy(() => import('./pages/Portfolio'))
-const About = lazy(() => import('./pages/About'))
-const Blog = lazy(() => import('./pages/Blog'))
-const BlogPost = lazy(() => import('./pages/BlogPost'))
-const Pricing = lazy(() => import('./pages/Pricing'))
-const Contact = lazy(() => import('./pages/Contact'))
-const Login = lazy(() => import('./pages/Auth/Login'))
-const Register = lazy(() => import('./pages/Auth/Register'))
-const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'))
-const DashboardLayout = lazy(() => import('./pages/Dashboard/DashboardLayout'))
-const DashboardHome = lazy(() => import('./pages/Dashboard/DashboardHome'))
-const MyProjects = lazy(() => import('./pages/Dashboard/MyProjects'))
-const MyTemplates = lazy(() => import('./pages/Dashboard/MyTemplates'))
-const NewRequest = lazy(() => import('./pages/Dashboard/NewRequest'))
-const Messages = lazy(() => import('./pages/Dashboard/Messages'))
-const Activity = lazy(() => import('./pages/Dashboard/Activity'))
-const DesignStudio = lazy(() => import('./pages/Dashboard/DesignStudio'))
-const AdminConsole = lazy(() => import('./pages/Dashboard/AdminConsole'))
-const Settings = lazy(() => import('./pages/Dashboard/Settings'))
-const NotFound = lazy(() => import('./pages/NotFound'))
-const BusinessSystems = lazy(() => import('./pages/Dashboard/BusinessSystems'))
-const BusinessCenterWorkspace = lazy(() => import('./pages/Dashboard/BusinessCenterWorkspace'))
-const BusinessSite = lazy(() => import('./pages/BusinessSite'))
-const BusinessCenter = lazy(() => import('./pages/BusinessCenter'))
-const Labs = lazy(() => import('./pages/Labs'))
+const Home = lazy(() => import("./pages/Home"));
+const AfcPlatform = lazy(() => import("./pages/AfcPlatform"));
+const Services = lazy(() => import("./pages/Services"));
+const Solutions = lazy(() => import("./pages/Solutions"));
+const SolutionDetail = lazy(() => import("./pages/SolutionDetail"));
+const Templates = lazy(() => import("./pages/Templates"));
+const TemplateDetail = lazy(() => import("./pages/TemplateDetail"));
+const About = lazy(() => import("./pages/About"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Login = lazy(() => import("./pages/Auth/Login"));
+const Register = lazy(() => import("./pages/Auth/Register"));
+const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
+const DashboardLayout = lazy(() => import("./pages/Dashboard/DashboardLayout"));
+const DashboardHome = lazy(() => import("./pages/Dashboard/DashboardHome"));
+const MyProjects = lazy(() => import("./pages/Dashboard/MyProjects"));
+const MyTemplates = lazy(() => import("./pages/Dashboard/MyTemplates"));
+const NewRequest = lazy(() => import("./pages/Dashboard/NewRequest"));
+const Messages = lazy(() => import("./pages/Dashboard/Messages"));
+const Activity = lazy(() => import("./pages/Dashboard/Activity"));
+const DesignStudio = lazy(() => import("./pages/Dashboard/DesignStudio"));
+const AdminConsole = lazy(() => import("./pages/Dashboard/AdminConsole"));
+const Settings = lazy(() => import("./pages/Dashboard/Settings"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const BusinessSystems = lazy(() => import("./pages/Dashboard/BusinessSystems"));
+const BusinessCenterWorkspace = lazy(
+  () => import("./pages/Dashboard/BusinessCenterWorkspace"),
+);
+const BusinessSite = lazy(() => import("./pages/BusinessSite"));
+const BusinessCenter = lazy(() => import("./pages/BusinessCenter"));
+const Labs = lazy(() => import("./pages/Labs"));
 
 function PublicLayout() {
+  const { hash, pathname, search } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    const frame = requestAnimationFrame(() => {
+      document
+        .getElementById(hash.slice(1))
+        ?.scrollIntoView({ block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [hash, pathname, search]);
   return (
     <>
+      <a className="pf-skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <Navbar />
-      <Outlet />
+      <div id="main-content" tabIndex={-1}>
+        <Outlet />
+      </div>
       <Footer />
     </>
-  )
+  );
 }
 function AdminOnly() {
-  const { admin } = useAuth()
-  return admin ? <AdminConsole /> : <Navigate to="/dashboard" replace />
+  const { admin } = useAuth();
+  return admin ? <AdminConsole /> : <Navigate to="/dashboard" replace />;
 }
 export default function App() {
-  const location = useLocation()
+  const location = useLocation();
   useEffect(() => {
-    if (!location.pathname.startsWith('/studio'))
-      window.scrollTo(0, 0)
-  }, [location.pathname])
+    if (!location.pathname.startsWith("/studio") && !location.hash)
+      window.scrollTo(0, 0);
+  }, [location.pathname, location.hash]);
   return (
     <Suspense fallback={<StatePanel loading />}>
       <Routes>
@@ -67,7 +83,7 @@ export default function App() {
           <Route
             path="/"
             element={
-              import.meta.env.VITE_APP_ONLY === 'true' ? (
+              import.meta.env.VITE_APP_ONLY === "true" ? (
                 <Navigate to="/dashboard" replace />
               ) : (
                 <Home />
@@ -78,11 +94,13 @@ export default function App() {
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/labs" element={<Labs />} />
           <Route path="/labs/:slug" element={<Labs />} />
+          <Route path="/work" element={<Labs />} />
+          <Route path="/work/:slug" element={<Labs />} />
           <Route path="/business-center" element={<BusinessCenter />} />
           <Route path="/solutions/:slug" element={<SolutionDetail />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/templates/:slug" element={<TemplateDetail />} />
-          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/portfolio" element={<Navigate to="/work" replace />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/about" element={<About />} />
           <Route path="/blog" element={<Blog />} />
@@ -147,8 +165,14 @@ export default function App() {
           <Route path="requests/:id" element={<MyProjects />} />
           <Route path="messages" element={<Messages />} />
           <Route path="activity" element={<Activity />} />
-          <Route path="studio" element={<Navigate to={`/studio${location.search}`} replace />} />
-          <Route path="design-studio" element={<Navigate to={`/studio${location.search}`} replace />} />
+          <Route
+            path="studio"
+            element={<Navigate to={`/studio${location.search}`} replace />}
+          />
+          <Route
+            path="design-studio"
+            element={<Navigate to={`/studio${location.search}`} replace />}
+          />
           <Route path="businesses" element={<BusinessSystems />} />
           <Route path="business-center" element={<BusinessCenterWorkspace />} />
           <Route path="afc" element={<Navigate to="/afc/learn" replace />} />
@@ -159,5 +183,5 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
-  )
+  );
 }

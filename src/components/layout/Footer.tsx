@@ -1,30 +1,30 @@
-import { Link } from 'react-router-dom'
-import { Brand } from '../shared/Brand'
+import { Link } from "react-router-dom";
+import { Brand } from "../shared/Brand";
 
 export function Footer() {
   return (
-    <footer className="public-footer">
+    <footer className="public-footer pf-footer">
       <div className="section-shell">
         <div className="footer-top">
           <div>
             <Brand />
             <p>
-              Engineering systems and applied software.
+              Web, software and data solutions.
               <br />
-              Built in Ghana. Made to hold up.
+              Built in Ghana. Open to the world.
             </p>
           </div>
           <div>
             <h3>Portfolio</h3>
             <Link to="/">Home</Link>
-            <Link to="/labs">Flagship systems</Link>
-            <Link to="/labs/cloud-erp">Modular Cloud ERP</Link>
-            <Link to="/labs/buildproof-ai">BuildProof AI</Link>
-            <Link to="/labs/energymat-ml">EnergyMat ML Studio</Link>
+            <Link to="/work">Our work</Link>
+            <Link to="/services">Development services</Link>
+            <Link to="/services#research">Research support</Link>
+            <Link to="/work?category=designs">Design studies</Link>
           </div>
           <div>
             <h3>Platforms</h3>
-            <Link to="/business-center">Business Center</Link>
+            <Link to="/dashboard">Client workspace</Link>
             <Link to="/afc">AuraFlow Class</Link>
             <Link to="/about">About the engineer</Link>
             <Link to="/contact">Start a conversation</Link>
@@ -33,7 +33,7 @@ export function Footer() {
             <h3>Let's talk</h3>
             <a href="mailto:elishaafari0@gmail.com">elishaafari0@gmail.com</a>
             <a href="tel:+233506624529">+233 50 662 4529</a>
-            <a href="tel:+233547395699">+233 54 739 5699</a>
+            <a href="tel:+233535868572">+233 53 586 8572</a>
             <a
               href="https://wa.me/233506624529"
               target="_blank"
@@ -55,5 +55,5 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

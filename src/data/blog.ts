@@ -1,25 +1,25 @@
-import { IMAGES } from '../lib/images'
-import elishaAfariPhoto from '../assets/images/elisha-afari.jpg'
-import type { BlogPost } from '../types'
+import { IMAGES } from "../lib/images";
+const elishaAfariPhoto = "/media/portfolio/elisha-afari.webp";
+import type { BlogPost } from "../types";
 
 const author = {
-  name: 'Elisha Afari',
-  role: 'AuraFlow Studio',
+  name: "Elisha Afari",
+  role: "AuraFlow Studio",
   avatar: elishaAfariPhoto,
-}
+};
 
 export const seedPosts: BlogPost[] = [
   {
-    id: 'post-1',
-    slug: 'firebase-launch-checklist',
-    title: 'A Firebase Launch Checklist for Client Apps',
+    id: "post-1",
+    slug: "firebase-launch-checklist",
+    title: "A Firebase Launch Checklist for Client Apps",
     excerpt:
-      'Rules, environments, indexes, storage, and monitoring are easier to fix before launch day.',
-    category: 'Firebase',
+      "Rules, environments, indexes, storage, and monitoring are easier to fix before launch day.",
+    category: "Firebase",
     coverImage: IMAGES.blog.firebase,
     author,
-    publishedAt: '2026-04-08',
-    readTime: '7 min read',
+    publishedAt: "2026-04-08",
+    readTime: "7 min read",
     content: `## Start with the data contract
 Firestore gets easier when collections answer a real product question. Define ownership, timestamps, and the smallest query shape each page needs before adding rules.
 
@@ -37,16 +37,16 @@ match /projects/{projectId} {
 Keep environment variables, deploy notes, index changes, and support contacts in the handoff so the next iteration starts calmly.`,
   },
   {
-    id: 'post-2',
-    slug: 'designing-mobile-quote-flows',
-    title: 'Designing Quote Flows People Finish on Mobile',
+    id: "post-2",
+    slug: "designing-mobile-quote-flows",
+    title: "Designing Quote Flows People Finish on Mobile",
     excerpt:
-      'A good wizard lowers ambiguity without hiding cost, urgency, or contact details.',
-    category: 'Mobile',
+      "A good wizard lowers ambiguity without hiding cost, urgency, or contact details.",
+    category: "Mobile",
     coverImage: IMAGES.blog.mobile,
     author,
-    publishedAt: '2026-03-19',
-    readTime: '5 min read',
+    publishedAt: "2026-03-19",
+    readTime: "5 min read",
     content: `## Ask one decision at a time
 A project intake is not a database schema. Use large choices early, reveal detail later, and keep progress visible.
 
@@ -57,16 +57,16 @@ Budget and timeline controls should be precise enough to qualify the lead and qu
 A final review step catches errors and gives the client confidence about what will be sent.`,
   },
   {
-    id: 'post-3',
-    slug: 'agency-sites-that-scan',
-    title: 'Agency Sites That Scan Before They Dazzle',
+    id: "post-3",
+    slug: "agency-sites-that-scan",
+    title: "Agency Sites That Scan Before They Dazzle",
     excerpt:
-      'Motion matters more when hierarchy, contrast, and proof already make the page easy to read.',
-    category: 'Design',
+      "Motion matters more when hierarchy, contrast, and proof already make the page easy to read.",
+    category: "Design",
     coverImage: IMAGES.blog.design,
     author,
-    publishedAt: '2026-02-27',
-    readTime: '6 min read',
+    publishedAt: "2026-02-27",
+    readTime: "6 min read",
     content: `## Make the offer visible
 The first viewport should say what is built, who it helps, and where to act.
 
@@ -77,16 +77,16 @@ Testimonials, screenshots, stats, and process steps work when they answer doubt 
 Use transitions to connect state changes and hierarchy. Decoration alone gets old quickly.`,
   },
   {
-    id: 'post-4',
-    slug: 'ai-features-with-guardrails',
-    title: 'AI Features Need Product Guardrails',
+    id: "post-4",
+    slug: "ai-features-with-guardrails",
+    title: "AI Features Need Product Guardrails",
     excerpt:
-      'The useful question is rarely which model. It is where a prediction or generation earns trust.',
-    category: 'AI & ML',
+      "The useful question is rarely which model. It is where a prediction or generation earns trust.",
+    category: "AI & ML",
     coverImage: IMAGES.blog.ai,
     author,
-    publishedAt: '2026-02-03',
-    readTime: '8 min read',
+    publishedAt: "2026-02-03",
+    readTime: "8 min read",
     content: `## Tie output to a workflow
 An assistant should shorten a real task: triage a lead, draft a summary, or search a knowledge base.
 
@@ -97,16 +97,16 @@ Build examples, edge cases, fallback states, and human review before shipping a 
 Track usage, correction, latency, and exits so the feature can improve after launch.`,
   },
   {
-    id: 'post-5',
-    slug: 'template-to-product',
-    title: 'From Template to Product Without Starting Over',
+    id: "post-5",
+    slug: "template-to-product",
+    title: "From Template to Product Without Starting Over",
     excerpt:
-      'A template should buy time on structure while leaving room for real brand and data work.',
-    category: 'Business',
+      "A template should buy time on structure while leaving room for real brand and data work.",
+    category: "Business",
     coverImage: IMAGES.templates.tech,
     author,
-    publishedAt: '2026-01-18',
-    readTime: '4 min read',
+    publishedAt: "2026-01-18",
+    readTime: "4 min read",
     content: `## Reuse strong structure
 Navigation, service blocks, trust proof, and contact flows do not need to be invented for every launch.
 
@@ -114,16 +114,16 @@ Navigation, service blocks, trust proof, and contact flows do not need to be inv
 Voice, offers, forms, data, motion, and business rules create the product shape that matters.`,
   },
   {
-    id: 'post-6',
-    slug: 'dashboard-case-study',
-    title: 'Design Study: A Clearer Operations Dashboard',
+    id: "post-6",
+    slug: "dashboard-case-study",
+    title: "Design Study: A Clearer Operations Dashboard",
     excerpt:
-      'An example of how filters, statuses, and a focused activity feed could simplify project reporting.',
-    category: 'Case Studies',
+      "An example of how filters, statuses, and a focused activity feed could simplify project reporting.",
+    category: "Case Studies",
     coverImage: IMAGES.services.dataAnalytics,
     author,
-    publishedAt: '2025-12-12',
-    readTime: '9 min read',
+    publishedAt: "2025-12-12",
+    readTime: "9 min read",
     content: `## An example scenario
 This is a design study, not a report about a delivered client project. Consider a team whose delivery updates are scattered across messages and spreadsheets.
 
@@ -133,4 +133,4 @@ A shared dashboard could organize the work by status, owner, deadline, and excep
 ## What to test
 Measure whether the team can find overdue work and ownership more quickly. Validate the workflow with real users before claiming an improvement.`,
   },
-]
+];

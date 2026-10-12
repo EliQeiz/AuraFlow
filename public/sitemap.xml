@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://auraflow.dev/</loc></url>
-  <url><loc>https://auraflow.dev/services</loc></url>
-  <url><loc>https://auraflow.dev/solutions</loc></url>
-  <url><loc>https://auraflow.dev/templates</loc></url>
-  <url><loc>https://auraflow.dev/portfolio</loc></url>
-  <url><loc>https://auraflow.dev/pricing</loc></url>
-  <url><loc>https://auraflow.dev/blog</loc></url>
-  <url><loc>https://auraflow.dev/about</loc></url>
-  <url><loc>https://auraflow.dev/contact</loc></url>
-  <url><loc>https://auraflow.dev/quote</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/services</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/work</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/work/crestview</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/work/buildproof</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/work/edma</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/work/minat</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/work/jollofvibes</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/about</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/contact</loc></url>
+  <url><loc>https://aura-flow-red.vercel.app/afc</loc></url>
 </urlset>

@@ -1,77 +1,114 @@
-import { ArrowRight, Mail, MapPin, Phone } from 'lucide-react'
-import { ButtonLink } from '../components/ui/Button'
-import { SEOHead } from '../components/shared/SEOHead'
+import { ArrowRight, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ProjectBriefForm } from "../components/forms/ProjectBriefForm";
+import { PublicPageHero } from "../components/portfolio/PublicPageHero";
+import { SEOHead } from "../components/shared/SEOHead";
 
 export default function Contact() {
+  const [params] = useSearchParams();
+  const service = params.get("service");
   return (
-    <main className="section-shell pb-20">
+    <main className="pf-page">
       <SEOHead
-        title="Contact"
-        description="Talk to AuraFlow in Ghana about your next website or business platform."
+        title="Start a project"
+        description="Share your next website, application, data or research project with AuraFlow in Ghana."
+        path="/contact"
       />
-      <header className="public-page-heading">
-        <span className="eyebrow">Let's talk</span>
-        <h1>
-          Your next project starts
-          <br />
-          with a conversation.
-        </h1>
-        <p>
-          Tell us what you have in mind. We will help you find the right next
-          step.
-        </p>
-      </header>
-      <div className="contact-layout">
-        <section>
-          <div className="contact-method">
-            <Mail />
-            <div>
-              <h2>Email</h2>
-              <a href="mailto:elishaafari0@gmail.com">elishaafari0@gmail.com</a>
-            </div>
-          </div>
-          <div className="contact-method">
-            <Phone />
-            <div>
-              <h2>Call us</h2>
-              <a href="tel:+233506624529">+233 50 662 4529</a>
-              <a href="tel:+233547395699">+233 54 739 5699</a>
-            </div>
-          </div>
-          <div className="contact-method">
-            <MapPin />
-            <div>
-              <h2>Based in Ghana</h2>
-              <p>Working with businesses across Africa.</p>
-            </div>
-          </div>
+      <PublicPageHero
+        eyebrow="Start a conversation"
+        image="/media/portfolio/hero-hospitality-v2.webp"
+        title={
+          <>
+            Bring the problem. <em>We’ll shape the next step.</em>
+          </>
+        }
+        summary={
+          service
+            ? `You’re enquiring about ${service}. Share the context below and we’ll respond with a practical next step.`
+            : "Tell us what should become easier, clearer or possible. We’ll review the context before recommending a path."
+        }
+        links={[
+          { href: "#brief", label: "Project brief" },
+          { href: "#direct", label: "Direct contact" },
+          { href: "#expect", label: "What happens next" },
+        ]}
+      />
+      <div className="pf-container pf-section pf-contact-page">
+        <section id="brief">
+          <ProjectBriefForm initialService={service || ""} />
+        </section>
+        <aside id="direct" className="pf-contact-direct">
+          <p className="pf-kicker">Direct contact</p>
+          <h2>Prefer to speak first?</h2>
+          <p>
+            Use whichever channel is most comfortable. Do not send passwords or
+            confidential client records through email or WhatsApp.
+          </p>
+          <a href="mailto:elishaafari0@gmail.com">
+            <Mail aria-hidden="true" />
+            <span>
+              <strong>Email</strong>elishaafari0@gmail.com
+            </span>
+          </a>
+          <a href="tel:+233506624529">
+            <Phone aria-hidden="true" />
+            <span>
+              <strong>Call</strong>+233 50 662 4529
+            </span>
+          </a>
           <a
-            className="af-button af-button--secondary mt-4"
             href="https://wa.me/233506624529"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
           >
-            Talk on WhatsApp
-            <ArrowRight size={15} />
+            <MessageCircle aria-hidden="true" />
+            <span>
+              <strong>WhatsApp</strong>Start a conversation
+            </span>
           </a>
-        </section>
-        <section>
-          <h2 className="text-2xl mb-4">Bring your idea into the workspace.</h2>
-          <p className="text-sm text-aura-muted leading-8 max-w-lg">
-            Share your brief and files, explore design options, and keep the
-            whole conversation attached to your project.
-          </p>
-          <div className="page-actions mt-7">
-            <ButtonLink to="/dashboard/requests/new">
-              Start a project
-              <ArrowRight />
-            </ButtonLink>
-            <ButtonLink variant="secondary" to="/dashboard/messages">
-              Message our team
-            </ButtonLink>
+          <div>
+            <MapPin aria-hidden="true" />
+            <span>
+              <strong>Based in Ghana</strong>Working with organisations across
+              Africa and beyond.
+            </span>
           </div>
-        </section>
+        </aside>
       </div>
+      <section className="pf-work-band" id="expect">
+        <div className="pf-container pf-section pf-next-steps">
+          <div>
+            <p className="pf-kicker">What happens next</p>
+            <h2>A considered response, not an automated sales script.</h2>
+          </div>
+          <ol>
+            <li>
+              <span>01</span>
+              <p>
+                <strong>Review</strong>We read the context and identify the
+                important unknowns.
+              </p>
+            </li>
+            <li>
+              <span>02</span>
+              <p>
+                <strong>Conversation</strong>We clarify users, scope, timing and
+                a responsible starting point.
+              </p>
+            </li>
+            <li>
+              <span>03</span>
+              <p>
+                <strong>Workspace</strong>Once there is a fit, private files and
+                project decisions move into your secure workspace.
+              </p>
+            </li>
+          </ol>
+          <Link className="pf-text-link" to="/privacy">
+            Read how we handle information <ArrowRight size={16} />
+          </Link>
+        </div>
+      </section>
     </main>
-  )
+  );
 }

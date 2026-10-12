@@ -1,131 +1,262 @@
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
+import { SEOHead } from "../components/shared/SEOHead";
 import {
-  ArrowLeft,
-  ArrowRight,
-  BarChart3,
-  Boxes,
-  CheckCircle2,
-  ChevronRight,
-  Cpu,
-  Database,
-  ExternalLink,
-  FileWarning,
-  Smartphone,
-} from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
-import { SEOHead } from '../components/shared/SEOHead'
-import { ButtonLink } from '../components/ui/Button'
-import { ProductRecording } from '../components/shared/ProductRecording'
-import { LabDemo } from '../components/labs/LabDemos'
-import { getPortfolioLab, portfolioLabs, type PortfolioLab } from '../data/labs'
-import { getProductUrl } from '../lib/productLinks'
+  ProjectCard,
+  ProductLaunch,
+} from "../components/portfolio/ProjectCard";
+import { ShowcaseMedia } from "../components/portfolio/ShowcaseMedia";
+import { PublicPageHero } from "../components/portfolio/PublicPageHero";
+import { ScrollReveal } from "../components/portfolio/ScrollReveal";
+import {
+  industrialDesigns,
+  portfolioProjects,
+  websiteDesigns,
+} from "../data/portfolio";
 
-const icons = {
-  'cloud-erp': Boxes,
-  'buildproof-ai': FileWarning,
-  'energymat-ml': Cpu,
-  'fieldsync-mobile': Smartphone,
-}
-
-function LabCard({ lab }: { lab: PortfolioLab }) {
-  const Icon = icons[lab.slug]
-  return (
-    <article className="lab-card">
-      {lab.recording ? (
-        <ProductRecording src={lab.recording.src} title={lab.title} label={lab.recording.label} duration={lab.recording.duration} controls={false} />
-      ) : (
-        <div className="lab-card__status-visual">
-          <span>{lab.index}</span><Icon /><p>{lab.status === 'planned' ? 'Planned product direction' : 'Source available for review'}</p>
-        </div>
-      )}
-      <div className="lab-card__body">
-        <span className={`lab-status lab-status--${lab.status}`}>{lab.statusLabel}</span>
-        <p className="eyebrow">{lab.category}</p>
-        <h2>{lab.title}</h2>
-        <p>{lab.summary}</p>
-        <div className="lab-card__footer">
-          <span>{lab.metric}</span>
-          <ButtonLink to={`/labs/${lab.slug}`} variant="secondary">
-            Explore case study <ArrowRight />
-          </ButtonLink>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-function Architecture({ lab }: { lab: PortfolioLab }) {
-  return (
-    <section className="lab-architecture">
-      <div><p className="eyebrow">System architecture</p><h2>Designed as a system, not a screen.</h2></div>
-      <div className="lab-architecture__flow" aria-label={`${lab.title} architecture`}>
-        {lab.architecture.map((part, index) => <div key={part}><span>{part}</span>{index < lab.architecture.length - 1 && <ChevronRight aria-hidden="true" />}</div>)}
-      </div>
-    </section>
-  )
-}
-
-function LabDetail({ lab }: { lab: PortfolioLab }) {
-  const Icon = icons[lab.slug]
-  const productUrl = lab.productKey ? getProductUrl(lab.productKey) : undefined
-  return (
-    <main className="labs-page">
-      <SEOHead title={`${lab.title} | AuraFlow Labs`} description={lab.summary} />
-      <section className="labs-detail-hero section-shell">
-        <Link to="/labs" className="labs-back"><ArrowLeft /> All flagship systems</Link>
-        <div className="labs-detail-hero__grid">
-          <div><p className="eyebrow">{lab.eyebrow}</p><h1>{lab.title}</h1><p className="labs-detail-hero__lede">{lab.summary}</p><div className="labs-detail-hero__facts"><span><Icon /> {lab.category}</span><span><BarChart3 /> {lab.metric}</span></div></div>
-          {lab.recording ? (
-            <ProductRecording src={lab.recording.src} title={lab.title} label={lab.recording.label} duration={lab.recording.duration} />
-          ) : <aside className="lab-demo-teaser"><Icon /><span>{lab.statusLabel}</span><strong>Interactive concept demo below</strong><p>Explore the designed workflow using controlled browser-only sample data.</p></aside>}
-        </div>
-      </section>
-      <section className="section-shell lab-demo-section">
-        <div className="lab-demo-section__heading"><p className="eyebrow">Explore the workflow</p><h2>Try the core product interaction.</h2><p>All controls use sample data in this browser. Nothing is sent to a product backend or stored after a reset.</p></div>
-        <LabDemo slug={lab.slug} />
-      </section>
-      <Architecture lab={lab} />
-      <section className="section-shell lab-product-module">
-        <div>
-          <p className="eyebrow">Product module status</p>
-          <h2>{lab.status === 'verified' ? 'A buildable product, not a concept.' : lab.status === 'in-progress' ? 'A working product becoming a reusable core.' : 'A defined build, not a deployed claim.'}</h2>
-          <p className={`lab-status lab-status--${lab.status}`}>{lab.statusLabel}</p>
-          {productUrl ? (
-            <a href={productUrl} target="_blank" rel="noreferrer" className="lab-external-link">Open the product <ExternalLink /></a>
-          ) : lab.productKey ? (
-            <p className="lab-product-note">A public product address can be connected securely through this deployment's environment configuration once the app is deployed.</p>
-          ) : (
-            <p className="lab-product-note">This direction is retained as a planned portfolio build until its source repository and deployment are available.</p>
-          )}
-        </div>
-        <div className="lab-module-list">
-          {lab.modules.map((module, index) => <span key={module}><b>{String(index + 1).padStart(2, '0')}</b>{module}</span>)}
-        </div>
-      </section>
-      <section className="section-shell lab-case-grid">
-        <article><p className="eyebrow">The problem</p><h2>What this system has to solve.</h2><p>{lab.problem}</p></article>
-        <article><p className="eyebrow">The outcome</p><h2>What a usable answer looks like.</h2><p>{lab.outcome}</p></article>
-        <article className="lab-capabilities"><p className="eyebrow">Core capabilities</p>{lab.capabilities.map((capability) => <span key={capability}><CheckCircle2 /> {capability}</span>)}</article>
-      </section>
-      <section className="section-shell lab-stack-section"><div><p className="eyebrow">Engineering stack</p><h2>Tools selected for the problem.</h2></div><div className="lab-stack-list">{lab.stack.map((item) => <span key={item}><Database /> {item}</span>)}</div></section>
-      <section className="lab-contact-band"><div className="section-shell"><div><p className="eyebrow">Build the next proof point</p><h2>Have a problem worth modelling?</h2><p>Discuss a system, prototype, audit tool, or applied machine-learning product with AuraFlow.</p></div><ButtonLink to="/contact">Start a conversation <ArrowRight /></ButtonLink></div></section>
-    </main>
-  )
-}
-
-function LabIndex() {
-  return (
-    <main className="labs-page">
-      <SEOHead title="AuraFlow Labs | Flagship Engineering Systems" description="Four portfolio systems spanning multi-tenant operations, industrial audit, applied machine learning, and offline-first mobile workflows." />
-      <section className="labs-hero section-shell"><p className="eyebrow">AuraFlow Labs · Ghana to global</p><h1>Engineering systems that hold up in the real world.</h1><p>Explore two active product codebases with recorded walkthroughs, alongside two clearly marked research directions in industrial intelligence, applied machine learning, and field operations.</p><div className="hero-actions"><ButtonLink to="/labs/cloud-erp">Explore flagship systems <ArrowRight /></ButtonLink><ButtonLink to="/about" variant="secondary">Meet the engineer</ButtonLink></div></section>
-      <section className="section-shell labs-grid">{portfolioLabs.map((lab) => <LabCard key={lab.slug} lab={lab} />)}</section>
-      <section className="labs-method"><div className="section-shell"><p className="eyebrow">How the work is presented</p><h2>Less marketing theatre. More evidence.</h2><div>{[['01', 'Source recordings', 'Watch real product walkthroughs where a released product recording is available.'], ['02', 'Architecture context', 'See the boundaries between the user interface, trusted services, data, and events.'], ['03', 'Technical case study', 'Understand the trade-offs, the stack, and the problem each system addresses.']].map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}</div></div></section>
-    </main>
-  )
-}
+const aliases: Record<string, string> = {
+  "cloud-erp": "crestview",
+  "buildproof-ai": "buildproof",
+};
 
 export default function Labs() {
-  const { slug } = useParams()
-  const lab = getPortfolioLab(slug)
-  if (slug && !lab) return <main className="section-shell py-24"><h1>Case study not found</h1><ButtonLink to="/labs" className="mt-6">See all flagship systems</ButtonLink></main>
-  return lab ? <LabDetail lab={lab} /> : <LabIndex />
+  const { slug } = useParams();
+  const [params, setParams] = useSearchParams();
+  if (slug && aliases[slug])
+    return <Navigate to={`/work/${aliases[slug]}`} replace />;
+  if (slug === "energymat-ml")
+    return <Navigate to="/work?category=designs#industrial" replace />;
+  if (slug === "fieldsync-mobile")
+    return <Navigate to="/services#mobile" replace />;
+  const project = portfolioProjects.find((item) => item.slug === slug);
+  if (slug && !project)
+    return (
+      <main className="pf-page pf-container pf-section">
+        <h1>Project not found</h1>
+        <Link className="pf-text-link" to="/work">
+          Explore our work <ArrowRight size={17} />
+        </Link>
+      </main>
+    );
+  if (project)
+    return (
+      <main className="pf-page pf-project-page">
+        <SEOHead
+          title={`${project.title} | AuraFlow portfolio`}
+          description={project.description}
+          path={`/work/${project.slug}`}
+          image={project.media[0]?.poster || project.media[0]?.src}
+        />
+        <PublicPageHero
+          eyebrow={project.category}
+          image={
+            ["crestview", "buildproof"].includes(project.key)
+              ? "/media/portfolio/hero-operations-v2.webp"
+              : "/media/portfolio/hero-hospitality-v2.webp"
+          }
+          title={
+            <>
+              {project.title}. <em>Built around real use.</em>
+            </>
+          }
+          summary={project.description}
+          links={[
+            { href: "#overview", label: "Overview" },
+            { href: "#walkthrough", label: "Walkthrough" },
+            { href: "#workflows", label: "Workflows" },
+            { href: "#safeguards", label: "Safeguards" },
+          ]}
+        >
+          <div className="pf-actions">
+            <ProductLaunch project={project} />
+            <Link className="pf-text-link" to="/work">
+              <ArrowLeft size={17} /> All work
+            </Link>
+          </div>
+        </PublicPageHero>
+        <div className="pf-container pf-section" id="overview">
+          <section className="pf-case-intro">
+            <div>
+              <p className="pf-kicker">The problem</p>
+              <h2>{project.problem}</h2>
+            </div>
+            <div>
+              <p className="pf-kicker">AuraFlow’s role</p>
+              <p>{project.role}</p>
+              <p className="pf-case-status">
+                <strong>Current status</strong>
+                {project.status}
+              </p>
+            </div>
+          </section>
+          <ScrollReveal className="pf-case-media">
+            <div id="walkthrough">
+              <ShowcaseMedia
+                slides={project.media}
+                label={project.title}
+                priority
+              />
+            </div>
+          </ScrollReveal>
+          <section className="pf-case-grid" id="workflows">
+            <div>
+              <p className="pf-kicker">Key workflows</p>
+              <h2>What the experience is designed to support.</h2>
+              <ul>
+                {project.workflows.map((item) => (
+                  <li key={item}>
+                    <Check size={17} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="pf-kicker">Implementation</p>
+              <h3>Technology chosen for the product.</h3>
+              <div className="pf-tech-list">
+                {project.technologies.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </div>
+              <p>
+                {project.note ||
+                  "Open the public product to experience the current implementation in context."}
+              </p>
+            </div>
+          </section>
+          <section className="pf-case-safeguards" id="safeguards">
+            <div>
+              <p className="pf-kicker">Responsible delivery</p>
+              <h2>Security, access and clarity are part of the product.</h2>
+            </div>
+            <ul>
+              {project.safeguards.map((item) => (
+                <li key={item}>
+                  <Check size={17} />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+          <div className="pf-detail-contact">
+            <div>
+              <p className="pf-kicker">Your project</p>
+              <h2>Something similar in mind?</h2>
+            </div>
+            <Link className="pf-button" to="/contact">
+              Discuss your project <ArrowRight size={17} />
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+
+  const filter = ["software", "websites", "designs"].includes(
+    params.get("category") || "",
+  )
+    ? params.get("category")
+    : "all";
+  const projects = portfolioProjects.filter(
+    (item) =>
+      filter === "all" ||
+      (filter === "software"
+        ? ["crestview", "buildproof"].includes(item.key)
+        : filter === "websites"
+          ? !["crestview", "buildproof"].includes(item.key)
+          : false),
+  );
+  return (
+    <main className="pf-page">
+      <SEOHead
+        title="Our work | AuraFlow"
+        description="Explore real AuraFlow software recordings, restaurant websites and visual studies for hospitality, healthcare and industrial dashboards."
+        path="/work"
+      />
+      <PublicPageHero
+        eyebrow="The AuraFlow portfolio"
+        image="/media/portfolio/hero-operations-v2.webp"
+        title={
+          <>
+            Proof in the details. <em>Work in context.</em>
+          </>
+        }
+        summary="Explore real product recordings, public websites and clearly labelled design studies—then open the work on its own platform where available."
+        links={[
+          { href: "#portfolio", label: "Projects" },
+          { href: "#web-designs", label: "Website studies" },
+          { href: "#industrial", label: "Industrial dashboards" },
+        ]}
+      />
+      <div className="pf-container pf-section" id="portfolio">
+        <div className="pf-work-filters" aria-label="Filter portfolio">
+          {[
+            ["all", "All work"],
+            ["software", "Software"],
+            ["websites", "Websites"],
+            ["designs", "Design studies"],
+          ].map(([value, title]) => (
+            <button
+              type="button"
+              key={value}
+              aria-pressed={filter === value}
+              onClick={() =>
+                setParams(value === "all" ? {} : { category: value })
+              }
+            >
+              {title}
+            </button>
+          ))}
+        </div>
+        {projects.length > 0 && (
+          <div className="pf-project-grid">
+            {projects.map((item) => (
+              <ProjectCard key={item.slug} project={item} />
+            ))}
+          </div>
+        )}
+        {(filter === "all" || filter === "designs") && (
+          <div className="pf-design-galleries">
+            <section id="web-designs">
+              <div className="pf-section-heading">
+                <div>
+                  <p className="pf-kicker">Visual concepts / Website design</p>
+                  <h2>Made for the setting.</h2>
+                </div>
+                <p>
+                  Hospitality and pharmacy website studies. These are visual
+                  design concepts, not live booking or pharmacy services.
+                </p>
+              </div>
+              <ShowcaseMedia
+                slides={websiteDesigns}
+                label="Website designs"
+                autoplay
+              />
+            </section>
+            <section id="industrial">
+              <div className="pf-section-heading">
+                <div>
+                  <p className="pf-kicker">
+                    Visual concepts / Data & machine learning
+                  </p>
+                  <h2>Operations, in focus.</h2>
+                </div>
+                <p>
+                  Mining, plant control and smelter dashboard concepts. The
+                  figures shown are illustrative, not live industrial
+                  measurements.
+                </p>
+              </div>
+              <ShowcaseMedia
+                slides={industrialDesigns}
+                label="Industrial dashboards"
+                autoplay
+              />
+            </section>
+          </div>
+        )}
+      </div>
+    </main>
+  );
 }
