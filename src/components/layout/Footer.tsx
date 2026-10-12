@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Brand } from "../shared/Brand";
+import { ProfessionalLinks } from "../portfolio/ProfessionalLinks";
 
 export function Footer() {
   return (
@@ -19,7 +20,7 @@ export function Footer() {
             <Link to="/">Home</Link>
             <Link to="/work">Our work</Link>
             <Link to="/services">Development services</Link>
-            <Link to="/services#research">Research support</Link>
+            <Link to="/services#research">Scientific computing</Link>
             <Link to="/work?category=designs">Design studies</Link>
           </div>
           <div>
@@ -43,6 +44,7 @@ export function Footer() {
             </a>
           </div>
         </div>
+        <ProfessionalLinks className="pf-professional-links--footer" />
         <div className="footer-bottom">
           <span>
             © {new Date().getFullYear()} AuraFlow. All rights reserved.

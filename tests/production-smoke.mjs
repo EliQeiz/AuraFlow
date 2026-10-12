@@ -50,6 +50,7 @@ try {
     "/services",
     "/work",
     "/work/crestview",
+    "/work/perovskite-machine-learning",
     "/login",
     "/register",
     "/solutions",
@@ -68,6 +69,27 @@ try {
     );
   }
   await page.goto(`${baseUrl}/`);
+  assert.equal(
+    await page
+      .getByRole("link", { name: /GitHub/ })
+      .first()
+      .getAttribute("href"),
+    "https://github.com/EliQeiz",
+  );
+  assert.equal(
+    await page
+      .getByRole("link", { name: /LinkedIn/ })
+      .first()
+      .getAttribute("href"),
+    "https://www.linkedin.com/in/elisha-afari",
+  );
+  assert.equal(
+    await page
+      .getByRole("link", { name: /Download résumé/ })
+      .first()
+      .getAttribute("href"),
+    "/media/portfolio/Elisha-Afari-Resume.pdf",
+  );
   await page.getByRole("button", { name: "Web applications" }).click();
   await page.getByRole("heading", { name: "Web applications" }).waitFor();
   await page.getByRole("link", { name: "All projects & designs" }).click();
@@ -138,6 +160,73 @@ try {
     await page.locator('link[rel="canonical"]').getAttribute("href"),
     "https://aura-flow-red.vercel.app/",
   );
+  for (const slug of [
+    "crestview",
+    "buildproof",
+    "perovskite-machine-learning",
+    "edma",
+    "minat",
+    "jollofvibes",
+  ]) {
+    await page.goto(`${baseUrl}/work/${slug}`);
+    await page
+      .getByRole("heading", { name: "What I built and shaped." })
+      .waitFor();
+    await page
+      .getByRole("heading", { name: "What exists as a result." })
+      .waitFor();
+  }
+  const resumeResponse = await page.request.get(
+    `${baseUrl}/media/portfolio/Elisha-Afari-Resume.pdf`,
+  );
+  assert.equal(resumeResponse.status(), 200);
+  assert.match(
+    resumeResponse.headers()["content-type"] || "",
+    /application\/pdf/,
+  );
+
+  const mobileContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  await mobileContext.route(/\/media\/portfolio\/.*\.mp4$/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    await route.continue();
+  });
+  const freshPage = await mobileContext.newPage();
+  const mobileErrors = [];
+  freshPage.on("pageerror", (error) => mobileErrors.push(error.message));
+  for (const slug of [
+    "crestview",
+    "buildproof",
+    "edma",
+    "minat",
+    "jollofvibes",
+  ]) {
+    await freshPage.goto(`${baseUrl}/work/${slug}`);
+    const preview = freshPage.locator(".showcase-media video").first();
+    await preview.scrollIntoViewIfNeeded();
+    await freshPage.waitForTimeout(250);
+    assert.equal(
+      await freshPage.locator(".showcase-error").count(),
+      0,
+      `Transient unavailable state on ${slug}`,
+    );
+    await preview.evaluate((element) => {
+      const video = element;
+      video.muted = true;
+      void video.play().catch(() => undefined);
+    });
+    await freshPage.waitForFunction(
+      (element) => element.readyState >= 1 || element.error !== null,
+      await preview.elementHandle(),
+    );
+    assert.equal(await preview.evaluate((video) => video.error), null);
+    assert.equal(await freshPage.locator(".showcase-error").count(), 0);
+  }
+  assert.deepEqual(mobileErrors, []);
+  await mobileContext.close();
   assert.deepEqual(errors, []);
   console.log(
     "Production bundle smoke passed: public routes, no runtime errors or horizontal overflow, and template preview handoff to sign-in.",

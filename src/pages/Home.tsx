@@ -10,6 +10,7 @@ import { PortfolioHero } from "../components/portfolio/PortfolioHero";
 import { ServiceShowcase } from "../components/portfolio/ServiceShowcase";
 import { ProjectCard } from "../components/portfolio/ProjectCard";
 import { ShowcaseMedia } from "../components/portfolio/ShowcaseMedia";
+import { ProfessionalLinks } from "../components/portfolio/ProfessionalLinks";
 import { portfolioProjects, serviceFlyers } from "../data/portfolio";
 
 export default function Home() {
@@ -17,7 +18,7 @@ export default function Home() {
     <main className="pf-page">
       <SEOHead
         title="AuraFlow | Websites, Software & Data"
-        description="Websites, web and mobile applications, data analysis and research support from Ghana. Explore AuraFlow's work and meet founder Elisha Afari."
+        description="Websites, software, scientific computing and machine-learning work from Ghana. Explore AuraFlow's portfolio and meet founder Elisha Afari."
         path="/"
         preloadImage="/media/portfolio/hero-development-v2.webp"
         structuredData={[
@@ -35,7 +36,7 @@ export default function Home() {
               "Software development",
               "Data analysis",
               "Machine learning",
-              "Research support",
+              "Scientific computing",
             ],
           },
           {
@@ -44,6 +45,10 @@ export default function Home() {
             name: "Elisha Afari",
             jobTitle: "Founder and software developer",
             worksFor: { "@type": "Organization", name: "AuraFlow" },
+            sameAs: [
+              "https://github.com/EliQeiz",
+              "https://www.linkedin.com/in/elisha-afari",
+            ],
           },
         ]}
       />
@@ -54,7 +59,7 @@ export default function Home() {
           <span>Web applications</span>
           <span>Mobile apps</span>
           <span>Data & machine learning</span>
-          <span>Research & academic support</span>
+          <span>Research data & scientific computing</span>
         </div>
       </div>
       <ServiceShowcase />
@@ -84,28 +89,28 @@ export default function Home() {
       </section>
       <section className="pf-container pf-section pf-research" id="research">
         <div>
-          <p className="pf-kicker">Research, project & academic solutions</p>
+          <p className="pf-kicker">Research data & scientific computing</p>
           <h2>
             Turn a good question
             <br />
             into meaningful work.
           </h2>
           <p>
-            Practical help with research methods, statistical analysis, academic
-            prototypes and the clarity of your writing. Support that develops
-            your own work and understanding.
+            Reproducible data analysis, statistical modelling, scientific
+            software and machine-learning prototypes for technically grounded
+            research questions. Methods and limitations remain explicit.
           </p>
           <div className="pf-research__topics">
-            <span>Research methodology</span>
-            <span>Statistical analysis & ML</span>
-            <span>Software prototypes</span>
-            <span>Writing & refinement</span>
+            <span>Reproducible analysis</span>
+            <span>Statistical modelling & ML</span>
+            <span>Scientific software</span>
+            <span>Simulation workflows</span>
           </div>
           <Link
             className="pf-button pf-button--outline"
             to="/services#research"
           >
-            Explore research support <ArrowRight size={17} />
+            Explore scientific computing <ArrowRight size={17} />
           </Link>
         </div>
         <ShowcaseMedia
@@ -146,6 +151,7 @@ export default function Home() {
                 Get in touch <ArrowRight size={17} />
               </a>
             </div>
+            <ProfessionalLinks />
           </div>
         </div>
       </section>

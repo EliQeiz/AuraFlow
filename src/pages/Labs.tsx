@@ -50,9 +50,11 @@ export default function Labs() {
         <PublicPageHero
           eyebrow={project.category}
           image={
-            ["crestview", "buildproof"].includes(project.key)
-              ? "/media/portfolio/hero-operations-v2.webp"
-              : "/media/portfolio/hero-hospitality-v2.webp"
+            project.key === "perovskite"
+              ? "/media/portfolio/perovskite-ml.webp"
+              : ["crestview", "buildproof"].includes(project.key)
+                ? "/media/portfolio/hero-operations-v2.webp"
+                : "/media/portfolio/hero-hospitality-v2.webp"
           }
           title={
             <>
@@ -63,6 +65,8 @@ export default function Labs() {
           links={[
             { href: "#overview", label: "Overview" },
             { href: "#walkthrough", label: "Walkthrough" },
+            { href: "#contributions", label: "Contributions" },
+            { href: "#outcomes", label: "Outcomes" },
             { href: "#workflows", label: "Workflows" },
             { href: "#safeguards", label: "Safeguards" },
           ]}
@@ -98,6 +102,32 @@ export default function Labs() {
               />
             </div>
           </ScrollReveal>
+          <section className="pf-evidence-grid">
+            <article id="contributions">
+              <p className="pf-kicker">Concrete contributions</p>
+              <h2>What I built and shaped.</h2>
+              <ul>
+                {project.contributions.map((item) => (
+                  <li key={item}>
+                    <Check size={17} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </article>
+            <article id="outcomes">
+              <p className="pf-kicker">Delivered outcomes</p>
+              <h2>What exists as a result.</h2>
+              <ul>
+                {project.outcomes.map((item) => (
+                  <li key={item}>
+                    <Check size={17} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </section>
           <section className="pf-case-grid" id="workflows">
             <div>
               <p className="pf-kicker">Key workflows</p>
@@ -152,19 +182,17 @@ export default function Labs() {
       </main>
     );
 
-  const filter = ["software", "websites", "designs"].includes(
+  const filter = ["software", "websites", "research", "designs"].includes(
     params.get("category") || "",
   )
     ? params.get("category")
     : "all";
-  const projects = portfolioProjects.filter(
-    (item) =>
-      filter === "all" ||
-      (filter === "software"
-        ? ["crestview", "buildproof"].includes(item.key)
-        : filter === "websites"
-          ? !["crestview", "buildproof"].includes(item.key)
-          : false),
+  const projects = portfolioProjects.filter((item) =>
+    filter === "all"
+      ? true
+      : filter === "designs"
+        ? false
+        : item.group === filter,
   );
   return (
     <main className="pf-page">
@@ -194,6 +222,7 @@ export default function Labs() {
             ["all", "All work"],
             ["software", "Software"],
             ["websites", "Websites"],
+            ["research", "Research & ML"],
             ["designs", "Design studies"],
           ].map(([value, title]) => (
             <button

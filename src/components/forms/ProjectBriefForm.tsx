@@ -149,7 +149,7 @@ export function ProjectBriefForm({
             <option>Business web application</option>
             <option>Mobile application</option>
             <option>Data dashboard or machine learning</option>
-            <option>Research or academic support</option>
+            <option>Research data or scientific computing</option>
             <option>Not sure yet</option>
           </select>
           {errors.service && <small>{errors.service.message}</small>}

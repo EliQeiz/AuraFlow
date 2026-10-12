@@ -34,9 +34,11 @@ export function ShowcaseMedia({
   const [manual, setManual] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [visible, setVisible] = useState(!document.hidden);
   const container = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
+  const retryTimer = useRef<number | undefined>(undefined);
   const inView = useInView(container, { amount: 0.2 });
   const reduced = useReducedMotion();
   const saveData = (
@@ -77,10 +79,32 @@ export function ShowcaseMedia({
       element.pause();
     };
   }, [active, slide.src]);
+  useEffect(
+    () => () => {
+      if (retryTimer.current) window.clearTimeout(retryTimer.current);
+    },
+    [],
+  );
 
   function select(next: number) {
+    if (retryTimer.current) window.clearTimeout(retryTimer.current);
     setIndex((next + slides.length) % slides.length);
     setFailed(false);
+    setRetryCount(0);
+  }
+  function handleVideoError() {
+    setPlaying(false);
+    if (retryCount < 1) {
+      setRetryCount((value) => value + 1);
+      retryTimer.current = window.setTimeout(() => {
+        const element = video.current;
+        if (!element) return;
+        element.load();
+        if (active) void element.play().catch(() => undefined);
+      }, 700);
+      return;
+    }
+    setFailed(true);
   }
   function toggle() {
     if (
@@ -114,20 +138,24 @@ export function ShowcaseMedia({
             {slide.kind === "video" ? (
               <video
                 ref={video}
-                src={inView || priority ? slide.src : undefined}
+                src={slide.src}
                 poster={slide.poster}
                 muted
                 loop
                 playsInline
                 autoPlay={active}
-                preload={active ? "auto" : "none"}
+                preload={active || priority ? "metadata" : "none"}
                 aria-label={slide.title}
-                onPlay={() => setPlaying(true)}
-                onPause={() => setPlaying(false)}
-                onError={() => {
-                  setFailed(true);
-                  setPlaying(false);
+                onCanPlay={() => {
+                  setFailed(false);
+                  setRetryCount(0);
                 }}
+                onPlay={() => {
+                  setFailed(false);
+                  setPlaying(true);
+                }}
+                onPause={() => setPlaying(false)}
+                onError={handleVideoError}
               />
             ) : (
               <img
@@ -136,6 +164,7 @@ export function ShowcaseMedia({
                 loading={priority ? "eager" : "lazy"}
                 fetchPriority={priority ? "high" : undefined}
                 onError={() => setFailed(true)}
+                onLoad={() => setFailed(false)}
               />
             )}
           </motion.div>

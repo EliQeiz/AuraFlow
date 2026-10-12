@@ -23,7 +23,7 @@ export function ProductLaunch({ project }: { project: PortfolioProject }) {
       className="pf-button pf-button--outline"
       href={`mailto:elishaafari0@gmail.com?subject=${encodeURIComponent(`${project.title} walkthrough request`)}`}
     >
-      Request a walkthrough
+      {project.fallbackLabel || "Request a walkthrough"}
       <ArrowUpRight size={17} />
     </a>
   );
@@ -56,6 +56,10 @@ export function ProjectCard({ project }: { project: PortfolioProject }) {
         </Link>
       </div>
       <p>{project.description}</p>
+      <div className="pf-project__outcome">
+        <span>Outcome</span>
+        <p>{project.outcomes[0]}</p>
+      </div>
       <div className="pf-project__actions">
         <ProductLaunch project={project} />
         <Link className="pf-text-link" to={`/work/${project.slug}`}>

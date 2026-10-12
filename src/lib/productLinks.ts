@@ -1,5 +1,5 @@
 export type ProductKey =
-  "buildproof" | "crestview" | "edma" | "minat" | "jollofvibes";
+  "buildproof" | "crestview" | "edma" | "minat" | "jollofvibes" | "perovskite";
 
 const configuredUrls: Record<ProductKey, string | undefined> = {
   buildproof:
@@ -11,6 +11,7 @@ const configuredUrls: Record<ProductKey, string | undefined> = {
   edma: import.meta.env.VITE_EDMA_APP_URL || "https://edma1.vercel.app/",
   minat: import.meta.env.VITE_MINAT_APP_URL || "https://minat.vercel.app/",
   jollofvibes: import.meta.env.VITE_JOLLOFVIBES_APP_URL,
+  perovskite: undefined,
 };
 
 /** Only trusted HTTPS product origins can be presented as external launches. */

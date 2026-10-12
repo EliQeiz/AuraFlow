@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PublicPageHero } from "../components/portfolio/PublicPageHero";
+import { ProfessionalLinks } from "../components/portfolio/ProfessionalLinks";
 import { ScrollReveal } from "../components/portfolio/ScrollReveal";
 import { SEOHead } from "../components/shared/SEOHead";
 
@@ -85,6 +86,13 @@ export default function About() {
             operational software, data experiences and research tools.
           </p>
           <p>
+            My technical foundation is a BSc in Materials Engineering from
+            KNUST. I now work as a Research and Teaching Assistant while
+            developing software, data and scientific-computing systems,
+            including a hybrid machine-learning and SCAPS-1D workflow for
+            perovskite solar-cell research.
+          </p>
+          <p>
             The work begins with the people, decisions and constraints behind
             the interface. That means asking what must be simpler, what
             information must remain private, and what a responsible first
@@ -103,6 +111,7 @@ export default function About() {
               Email Elisha
             </a>
           </div>
+          <ProfessionalLinks />
         </ScrollReveal>
       </section>
       <section className="pf-work-band" id="principles">

@@ -56,9 +56,9 @@ const slides = [
     image: "hero-research-v2",
     label: "Knowledge. Ideas. Impact.",
     description:
-      "Research guidance, statistical analysis and working prototypes to move your project forward.",
+      "Research data, reproducible analysis, simulation and machine learning for technically grounded questions.",
     to: "/services#research",
-    action: "Explore research support",
+    action: "Explore scientific computing",
     flyer: false,
   },
 ];

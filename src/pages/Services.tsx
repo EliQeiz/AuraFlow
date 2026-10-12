@@ -27,7 +27,7 @@ export default function Services() {
     <main className="pf-page">
       <SEOHead
         title="Development & Research Services | AuraFlow"
-        description="Websites, web and mobile apps, data dashboards, machine learning and academic research support from Ghana."
+        description="Websites, web and mobile apps, data dashboards, machine learning, research data and scientific computing from Ghana."
         path="/services"
       />
       <PublicPageHero
@@ -96,28 +96,32 @@ export default function Services() {
       <section className="pf-work-band" id="research">
         <div className="pf-container pf-section pf-research">
           <div>
-            <p className="pf-kicker">05 / Research & academic support</p>
+            <p className="pf-kicker">
+              05 / Research Data & Scientific Computing
+            </p>
             <h2>
               Good questions.
               <br />
               Careful work.
             </h2>
             <p>
-              Research-method guidance, statistical analysis, software
-              prototypes and editing support for your own academic work.
+              Reproducible data analysis, statistical modelling, simulation
+              workflows, machine-learning prototypes and scientific software for
+              clearly defined research questions.
             </p>
             <div className="pf-research__topics">
-              <span>Research methodology</span>
-              <span>Statistical analysis & ML</span>
-              <span>Academic prototypes</span>
-              <span>Structure & refinement</span>
+              <span>Research-data workflows</span>
+              <span>Statistical modelling & ML</span>
+              <span>Scientific software</span>
+              <span>Simulation automation</span>
             </div>
             <p>
-              We support your learning and authorship. You remain responsible
-              for your research, citations and your institution's requirements.
+              Methods, sources and uncertainty stay visible. We do not invent
+              results, conceal model limitations or replace a researcher's own
+              authorship and institutional responsibilities.
             </p>
             <Link className="pf-button pf-button--outline" to="/contact">
-              Discuss your research <ArrowRight size={17} />
+              Discuss scientific computing <ArrowRight size={17} />
             </Link>
           </div>
           <ShowcaseMedia
